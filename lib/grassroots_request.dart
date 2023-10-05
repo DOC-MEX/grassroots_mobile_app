@@ -4,8 +4,8 @@ import 'package:http/http.dart' as http;
 class GrassrootsRequest {
   static Future<Map<String, dynamic>> sendRequest(String requestString) async {
     final response = await http.post(
-      //Uri.parse('https://grassroots.tools/public_backend'),
-      Uri.parse('https://grassroots.tools/dev/grassroots/public_backend'),
+      Uri.parse('https://grassroots.tools/public_backend'),
+      //Uri.parse('https://grassroots.tools/dev/grassroots/public_backend'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
