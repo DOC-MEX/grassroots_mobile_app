@@ -24,6 +24,8 @@ class _HomePageState extends State<HomePage> {
   List<dynamic> observations = [];
   dynamic selectedRawValue;
 
+  String? studyName;
+
   dynamic findRawValueForSelectedPhenotype(String selectedPhenotype) {
     for (var observation in observations) {
       if (observation['phenotype']['variable'] == selectedPhenotype) {
@@ -79,6 +81,13 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min, // To avoid taking up the whole screen height
                 children: [
+                  if (studyName != null) // Only display if there's a study name
+                    Text(
+                      '$studyName',
+                      style: TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  SizedBox(height: 10), // A spacing of 10 pixels
                   Text(
                     '$serverResponse',
                     style: TextStyle(fontSize: 12, color: Colors.black),
@@ -149,6 +158,7 @@ class _HomePageState extends State<HomePage> {
                     isCameraOpen = false; // Close the camera after detection
                     isLoading = true; // Show loading
                     selectedRawValue = null; // Clear the previous raw value
+                    studyName = null; // Clear the previous study name
                   });
                   try {
                     final Map<String, dynamic> responseData =
@@ -161,6 +171,8 @@ class _HomePageState extends State<HomePage> {
                       int? observationsCount =
                           (responseData['results'][0]['results'][0]['data']['observations'] as List).length;
 
+                      String? studyName = responseData['results'][0]['results'][0]['data']['study']['so:name'];
+                      print('Study Name: $studyName');
                       parsedPhenotypeNames.clear(); // Clear the list first
 
                       observations = responseData['results'][0]['results'][0]['data']['observations'];
@@ -170,10 +182,6 @@ class _HomePageState extends State<HomePage> {
                           parsedPhenotypeNames.add(variable);
                         }
                       }
-
-                      //for (int i = 0; i < parsedPhenotypeNames.length; i++) {
-                      //  traits.add('$i'); // Adding the counter
-                      //}
 
                       var phenotypesInfo = responseData['results'][0]['results'][0]['data']['phenotypes'];
                       traits.clear(); // Clear the traits list as well
@@ -188,13 +196,10 @@ class _HomePageState extends State<HomePage> {
                         }
                       }
 
-                      print('** Traits List: $traits');
-
-                      //print('Traits List: $traits');
+                      //print('** Traits List: $traits');
                       print('ParsedPhenotypeNames List: $parsedPhenotypeNames');
 
                       setState(() {
-                        //selectedValue = null; // Resetting the selected value
                         selectedPhenotype = null; // Resetting the selected value
                         serverResponse =
                             'Study Index: $studyIndex. \n Accession: $accession \n Number of Observations: $observationsCount';
@@ -204,6 +209,7 @@ class _HomePageState extends State<HomePage> {
                         } else {
                           currentValue = null;
                         }
+                        this.studyName = studyName; // Updating the studyName state here
                       });
                       isLoading = false; // Hide loading indicator
                     }
