@@ -26,13 +26,17 @@ class _HomePageState extends State<HomePage> {
 
   String? studyName;
 
-  dynamic findRawValueForSelectedPhenotype(String selectedPhenotype) {
+  List<Map<String, dynamic>> findRawValuesForSelectedPhenotype(String selectedPhenotype) {
+    List<Map<String, dynamic>> matchingObservations = [];
     for (var observation in observations) {
       if (observation['phenotype']['variable'] == selectedPhenotype) {
-        return observation['raw_value'];
+        matchingObservations.add({
+          'raw_value': observation['raw_value'],
+          'date': observation['date'] ?? '',
+        });
       }
     }
-    return null; // Return null if no matching observation is found
+    return matchingObservations;
   }
 
   @override
@@ -113,15 +117,65 @@ class _HomePageState extends State<HomePage> {
                         setState(() {
                           selectedPhenotype = newPhenotype;
                           selectedRawValue = null; // Clear the previous raw value
-                          selectedRawValue = findRawValueForSelectedPhenotype(newPhenotype!);
                         });
-                        // Find and print the raw_value for the selected phenotype
-                        dynamic rawValue = findRawValueForSelectedPhenotype(selectedPhenotype!);
-                        if (rawValue != null) {
-                          print('Raw value for $selectedPhenotype: $rawValue');
-                        } else {
-                          print('No raw value found for $selectedPhenotype');
-                        }
+
+                        List<Map<String, dynamic>> rawValues = findRawValuesForSelectedPhenotype(newPhenotype!);
+
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            int selectedIndex = parsedPhenotypeNames.indexOf(selectedPhenotype!);
+                            String displayTrait = (selectedIndex != -1) ? traits[selectedIndex] : "Unknown Trait";
+                            return AlertDialog(
+                              title: Text(displayTrait),
+                              content: (rawValues.isEmpty)
+                                  ? Text('No Data Found')
+                                  : SingleChildScrollView(
+                                      child: Table(
+                                        border: TableBorder.symmetric(
+                                          inside: BorderSide(width: 1, color: Colors.black38),
+                                          outside: BorderSide(width: 1, color: Colors.black38),
+                                        ),
+                                        columnWidths: {
+                                          0: FlexColumnWidth(1),
+                                          1: FlexColumnWidth(1),
+                                        },
+                                        children: [
+                                          TableRow(
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                            ),
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: Text('Value'),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: Text('Date'),
+                                              ),
+                                            ],
+                                          ),
+                                          for (var observation in rawValues)
+                                            TableRow(
+                                              children: [
+                                                Padding(
+                                                  padding: const EdgeInsets.all(8.0),
+                                                  child: Text('${observation['raw_value']}'),
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.all(8.0),
+                                                  child: Text('${observation['date']}'),
+                                                ),
+                                              ],
+                                            )
+                                        ],
+                                      ),
+                                    ),
+                            );
+                          },
+                        );
+
                         int index = parsedPhenotypeNames.indexOf(newPhenotype!); // Getting index using phenotype
                         print('Selected display value: ${traits[index]}');
                         print('Actual value (phenotype): $newPhenotype');
@@ -196,7 +250,7 @@ class _HomePageState extends State<HomePage> {
                         }
                       }
 
-                      //print('** Traits List: $traits');
+                      print('** Traits List: $traits');
                       print('ParsedPhenotypeNames List: $parsedPhenotypeNames');
 
                       setState(() {
