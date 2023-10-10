@@ -20,6 +20,7 @@ class _HomePageState extends State<HomePage> {
 
   List<String> parsedPhenotypeNames = [];
   List<String> traits = [];
+  List<String> units = [];
   String? selectedValue;
   List<dynamic> observations = [];
   dynamic selectedRawValue;
@@ -126,6 +127,7 @@ class _HomePageState extends State<HomePage> {
                           builder: (BuildContext context) {
                             int selectedIndex = parsedPhenotypeNames.indexOf(selectedPhenotype!);
                             String displayTrait = (selectedIndex != -1) ? traits[selectedIndex] : "Unknown Trait";
+                            String displayUnit = (selectedIndex != -1) ? units[selectedIndex] : "No Unit";
                             return AlertDialog(
                               title: Text(displayTrait),
                               content: (rawValues.isEmpty)
@@ -139,6 +141,7 @@ class _HomePageState extends State<HomePage> {
                                         columnWidths: {
                                           0: FlexColumnWidth(1),
                                           1: FlexColumnWidth(1),
+                                          2: FlexColumnWidth(1),
                                         },
                                         children: [
                                           TableRow(
@@ -154,6 +157,10 @@ class _HomePageState extends State<HomePage> {
                                                 padding: const EdgeInsets.all(8.0),
                                                 child: Text('Date'),
                                               ),
+                                              Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: Text('Units'),
+                                              ),
                                             ],
                                           ),
                                           for (var observation in rawValues)
@@ -166,6 +173,10 @@ class _HomePageState extends State<HomePage> {
                                                 Padding(
                                                   padding: const EdgeInsets.all(8.0),
                                                   child: Text('${observation['date']}'),
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.all(8.0),
+                                                  child: Text(displayUnit),
                                                 ),
                                               ],
                                             )
@@ -244,9 +255,11 @@ class _HomePageState extends State<HomePage> {
                         var phenotypeData = phenotypesInfo[phenotypeName];
                         if (phenotypeData != null) {
                           String? traitName = phenotypeData['definition']['trait']['so:name'];
+                          String? unitName = phenotypeData['definition']['unit']['so:name'];
                           if (traitName != null) {
                             traits.add(traitName);
                           }
+                          units.add(unitName ?? 'No Unit');
                         }
                       }
 
