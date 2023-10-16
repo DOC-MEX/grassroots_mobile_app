@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'grassroots_request.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart';
 //import 'dart:convert';
 
 class HomePage extends StatefulWidget {
@@ -26,6 +28,7 @@ class _HomePageState extends State<HomePage> {
   dynamic selectedRawValue;
 
   String? studyName;
+  final Uri _websiteUrl = Uri.parse('https://grasstools.tools');
 
   List<Map<String, dynamic>> findRawValuesForSelectedPhenotype(String selectedPhenotype) {
     List<Map<String, dynamic>> matchingObservations = [];
@@ -47,16 +50,43 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(title: Text('QR Reader')),
       body: Stack(
         children: [
-          // Welcome Text
           if (detectedQRString == null)
             Positioned(
               top: 50.0, // Adjust as needed
-              left: 0,
-              right: 0,
-              child: Text(
-                "Welcome, open the camera to start capturing QR codes",
-                style: TextStyle(fontSize: 16, color: Colors.black),
+              left: 3,
+              right: 3,
+              child: RichText(
                 textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: TextStyle(fontSize: 16, color: Colors.black),
+                  children: [
+                    TextSpan(
+                      text: "Welcome to the QR reader for Grasstools.\n\n",
+                    ),
+                    TextSpan(
+                      text: "Open the camera to start capturing QR codes.\n\n",
+                    ),
+                    TextSpan(
+                      text: "Visit our ",
+                    ),
+                    TextSpan(
+                      text: "website",
+                      style: TextStyle(
+                        decoration: TextDecoration.underline,
+                        color: Colors.blue,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () async {
+                          if (!await launchUrl(_websiteUrl)) {
+                            print('Could not launch $_websiteUrl');
+                          }
+                        },
+                    ),
+                    TextSpan(
+                      text: " for more information.",
+                    ),
+                  ],
+                ),
               ),
             ),
 

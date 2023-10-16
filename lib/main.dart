@@ -13,7 +13,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'QR Reader',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch:
+            Colors.blue, // You can keep this as the default blue or choose another color for other parts of your app
+        primaryColor: Color(0xFF2c3e50),
       ),
       //home: const QRReaderScreen(),
       home: HomePage(),
