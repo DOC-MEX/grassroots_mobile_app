@@ -28,7 +28,37 @@ class _HomePageState extends State<HomePage> {
   dynamic selectedRawValue;
 
   String? studyName;
-  final Uri _websiteUrl = Uri.parse('https://grasstools.tools');
+  final Uri _websiteUrl = Uri.parse('https://grassroots.tools/');
+
+  void showTopSnackBar(BuildContext context, String message) {
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 100.0, // Adjust this to position it lower on the screen
+        left: MediaQuery.of(context).size.width * 0.1,
+        right: MediaQuery.of(context).size.width * 0.1, // This helps constrain the width
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            color: Colors.blue,
+            child: Text(
+              message,
+              style: TextStyle(color: Colors.white),
+              maxLines: 2, // Allows text to wrap to the next line
+              overflow: TextOverflow.ellipsis, // If there's still overflow, it'll end with "..."
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+
+    Future.delayed(Duration(seconds: 5), () {
+      overlayEntry.remove();
+    });
+  }
 
   List<Map<String, dynamic>> findRawValuesForSelectedPhenotype(String selectedPhenotype) {
     List<Map<String, dynamic>> matchingObservations = [];
@@ -62,6 +92,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     TextSpan(
                       text: "Welcome to the QR reader for Grasstools.\n\n",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     TextSpan(
                       text: "Open the camera to start capturing QR codes.\n\n",
@@ -263,52 +294,75 @@ class _HomePageState extends State<HomePage> {
                     if (statusText == "Succeeded" || statusText == "Partially succeeded") {
                       int? studyIndex = responseData['results'][0]['results'][0]['data']['study_index'];
                       String? accession = responseData['results'][0]['results'][0]['data']['material']['accession'];
-                      int? observationsCount =
-                          (responseData['results'][0]['results'][0]['data']['observations'] as List).length;
 
-                      String? studyName = responseData['results'][0]['results'][0]['data']['study']['so:name'];
-                      print('Study Name: $studyName');
-                      parsedPhenotypeNames.clear(); // Clear the list first
+                      if (responseData['results'][0]['results'][0]['data'].containsKey('observations')) {
+                        int? observationsCount =
+                            (responseData['results'][0]['results'][0]['data']['observations'] as List).length;
+                        print(observationsCount);
 
-                      observations = responseData['results'][0]['results'][0]['data']['observations'];
-                      for (var observation in observations) {
-                        String? variable = observation['phenotype']['variable'];
-                        if (variable != null && !parsedPhenotypeNames.contains(variable)) {
-                          parsedPhenotypeNames.add(variable);
-                        }
-                      }
+                        String? studyName = responseData['results'][0]['results'][0]['data']['study']['so:name'];
+                        print('Study Name: $studyName');
+                        parsedPhenotypeNames.clear(); // Clear the list first
 
-                      var phenotypesInfo = responseData['results'][0]['results'][0]['data']['phenotypes'];
-                      traits.clear(); // Clear the traits list as well
-
-                      for (var phenotypeName in parsedPhenotypeNames) {
-                        var phenotypeData = phenotypesInfo[phenotypeName];
-                        if (phenotypeData != null) {
-                          String? traitName = phenotypeData['definition']['trait']['so:name'];
-                          String? unitName = phenotypeData['definition']['unit']['so:name'];
-                          if (traitName != null) {
-                            traits.add(traitName);
+                        observations = responseData['results'][0]['results'][0]['data']['observations'];
+                        for (var observation in observations) {
+                          String? variable = observation['phenotype']['variable'];
+                          if (variable != null && !parsedPhenotypeNames.contains(variable)) {
+                            parsedPhenotypeNames.add(variable);
                           }
-                          units.add(unitName ?? 'No Unit');
                         }
+
+                        var phenotypesInfo = responseData['results'][0]['results'][0]['data']['phenotypes'];
+                        traits.clear(); // Clear the traits list as well
+
+                        for (var phenotypeName in parsedPhenotypeNames) {
+                          var phenotypeData = phenotypesInfo[phenotypeName];
+                          if (phenotypeData != null) {
+                            String? traitName = phenotypeData['definition']['trait']['so:name'];
+                            String? unitName = phenotypeData['definition']['unit']['so:name'];
+                            if (traitName != null) {
+                              traits.add(traitName);
+                            }
+                            units.add(unitName ?? 'No Unit');
+                          }
+                        }
+
+                        print('** Traits List: $traits');
+                        print('ParsedPhenotypeNames List: $parsedPhenotypeNames');
+
+                        setState(() {
+                          selectedPhenotype = null; // Resetting the selected value
+                          serverResponse =
+                              'Study Index: $studyIndex. \n Accession: $accession \n Number of Observations: $observationsCount';
+                          phenotypeNames = parsedPhenotypeNames;
+                          if (phenotypeNames.isNotEmpty) {
+                            currentValue = phenotypeNames[0]; // Reset to the first value
+                          } else {
+                            currentValue = null;
+                          }
+                          this.studyName = studyName; // Updating the studyName state here
+                        });
+                        isLoading = false; // Hide loading indicator
+                      } else {
+                        print('Observations list not found in JSON response.');
+                        // Handle the scenario here where there's no 'observations' key in the JSON
+                        // Show the Snackbar to the user
+                        //showTopSnackBar(
+                        //    context, "Plot has no observations. Open the camera again to capture a new QR code");
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Plot has no observations. Open the camera again to capture a new QR code"),
+                            duration: Duration(seconds: 5), // duration the snackbar is displayed, can be adjusted
+                            //action: SnackBarAction(
+                            //  label: 'Close',
+                            //  onPressed: () {
+                            //   // Optional: provide an action when the user taps on 'Close'
+                            //    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            //  },
+                            //),
+                          ),
+                        );
                       }
-
-                      print('** Traits List: $traits');
-                      print('ParsedPhenotypeNames List: $parsedPhenotypeNames');
-
-                      setState(() {
-                        selectedPhenotype = null; // Resetting the selected value
-                        serverResponse =
-                            'Study Index: $studyIndex. \n Accession: $accession \n Number of Observations: $observationsCount';
-                        phenotypeNames = parsedPhenotypeNames;
-                        if (phenotypeNames.isNotEmpty) {
-                          currentValue = phenotypeNames[0]; // Reset to the first value
-                        } else {
-                          currentValue = null;
-                        }
-                        this.studyName = studyName; // Updating the studyName state here
-                      });
-                      isLoading = false; // Hide loading indicator
                     }
                   } catch (e) {
                     // Handle any errors here
