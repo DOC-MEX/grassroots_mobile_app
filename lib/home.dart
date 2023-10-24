@@ -4,7 +4,6 @@ import 'grassroots_request.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
-//import 'dart:convert';
 
 class HomePage extends StatefulWidget {
   @override
@@ -64,9 +63,19 @@ class _HomePageState extends State<HomePage> {
     List<Map<String, dynamic>> matchingObservations = [];
     for (var observation in observations) {
       if (observation['phenotype']['variable'] == selectedPhenotype) {
+        String formattedDate = '';
+        if (observation['date'] != null) {
+          try {
+            DateTime date = DateTime.parse(observation['date']);
+            formattedDate =
+                '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+          } catch (e) {
+            print('Error parsing date: $e');
+          }
+        }
         matchingObservations.add({
           'raw_value': observation['raw_value'],
-          'date': observation['date'] ?? '',
+          'date': formattedDate,
         });
       }
     }
@@ -96,13 +105,16 @@ class _HomePageState extends State<HomePage> {
                     ),
                     TextSpan(
                       text: "Open the camera to start capturing QR codes.\n\n",
+                      style: TextStyle(fontSize: 18),
                     ),
                     TextSpan(
-                      text: "Visit our ",
+                      text: "Visit ",
+                      style: TextStyle(fontSize: 18),
                     ),
                     TextSpan(
-                      text: "website",
+                      text: "grassroots.tools",
                       style: TextStyle(
+                        fontSize: 18,
                         decoration: TextDecoration.underline,
                         color: Colors.blue,
                       ),
@@ -115,6 +127,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     TextSpan(
                       text: " for more information.",
+                      style: TextStyle(fontSize: 18),
                     ),
                   ],
                 ),
@@ -189,64 +202,78 @@ class _HomePageState extends State<HomePage> {
                             int selectedIndex = parsedPhenotypeNames.indexOf(selectedPhenotype!);
                             String displayTrait = (selectedIndex != -1) ? traits[selectedIndex] : "Unknown Trait";
                             String displayUnit = (selectedIndex != -1) ? units[selectedIndex] : "No Unit";
-                            return AlertDialog(
-                              title: Text(displayTrait),
-                              content: (rawValues.isEmpty)
-                                  ? Text('No Data Found')
-                                  : SingleChildScrollView(
-                                      child: Table(
-                                        border: TableBorder.symmetric(
-                                          inside: BorderSide(width: 1, color: Colors.black38),
-                                          outside: BorderSide(width: 1, color: Colors.black38),
-                                        ),
-                                        columnWidths: {
-                                          0: FlexColumnWidth(1),
-                                          1: FlexColumnWidth(1),
-                                          2: FlexColumnWidth(1),
-                                        },
-                                        children: [
-                                          TableRow(
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[300],
-                                            ),
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: Text('Value'),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: Text('Date'),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: Text('Units'),
-                                              ),
-                                            ],
+
+                            double width = MediaQuery.of(context).size.width * 0.9; // Calculate 90% of screen width
+
+                            return Dialog(
+                              child: Container(
+                                width: width,
+                                padding: EdgeInsets.all(20.0),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(displayTrait, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                    SizedBox(height: 20),
+                                    if (rawValues.isEmpty)
+                                      Text('No Data Found')
+                                    else
+                                      SingleChildScrollView(
+                                        child: Table(
+                                          border: TableBorder.symmetric(
+                                            inside: BorderSide(width: 1, color: Colors.black38),
+                                            outside: BorderSide(width: 1, color: Colors.black38),
                                           ),
-                                          for (var observation in rawValues)
+                                          columnWidths: {
+                                            0: FlexColumnWidth(1),
+                                            1: FlexColumnWidth(1),
+                                            2: FlexColumnWidth(1),
+                                          },
+                                          children: [
                                             TableRow(
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[300],
+                                              ),
                                               children: [
                                                 Padding(
                                                   padding: const EdgeInsets.all(8.0),
-                                                  child: Text('${observation['raw_value']}'),
+                                                  child: Text('Value'),
                                                 ),
                                                 Padding(
                                                   padding: const EdgeInsets.all(8.0),
-                                                  child: Text('${observation['date']}'),
+                                                  child: Text('Date'),
                                                 ),
                                                 Padding(
                                                   padding: const EdgeInsets.all(8.0),
-                                                  child: Text(displayUnit),
+                                                  child: Text('Units'),
                                                 ),
                                               ],
-                                            )
-                                        ],
+                                            ),
+                                            for (var observation in rawValues)
+                                              TableRow(
+                                                children: [
+                                                  Padding(
+                                                    padding: const EdgeInsets.all(8.0),
+                                                    child: Text('${observation['raw_value']}'),
+                                                  ),
+                                                  Padding(
+                                                    padding: const EdgeInsets.all(8.0),
+                                                    child: Text('${observation['date']}'),
+                                                  ),
+                                                  Padding(
+                                                    padding: const EdgeInsets.all(8.0),
+                                                    child: Text(displayUnit),
+                                                  ),
+                                                ],
+                                              )
+                                          ],
+                                        ),
                                       ),
-                                    ),
+                                  ],
+                                ),
+                              ),
                             );
                           },
-                        );
+                        ); //SHOW DIALOG
 
                         int index = parsedPhenotypeNames.indexOf(newPhenotype!); // Getting index using phenotype
                         print('Selected display value: ${traits[index]}');
@@ -351,17 +378,21 @@ class _HomePageState extends State<HomePage> {
                         //    context, "Plot has no observations. Open the camera again to capture a new QR code");
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text("Plot has no observations. Open the camera again to capture a new QR code"),
-                            duration: Duration(seconds: 5), // duration the snackbar is displayed, can be adjusted
-                            //action: SnackBarAction(
-                            //  label: 'Close',
-                            //  onPressed: () {
-                            //   // Optional: provide an action when the user taps on 'Close'
-                            //    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            //  },
-                            //),
+                            duration: Duration(seconds: 5),
+                            content: Row(
+                              children: [
+                                Icon(Icons.warning, color: Colors.yellow),
+                                SizedBox(width: 10),
+                                Expanded(
+                                    child: Text(
+                                  "Plot has no observations. Open the camera again to capture a new QR code",
+                                  style: TextStyle(fontSize: 20.0), // Here's where you insert the style
+                                )),
+                              ],
+                            ),
                           ),
                         );
+                        //duration: Duration(seconds: 5), // duration the snackbar is displayed, can be adjusted
                       }
                     }
                   } catch (e) {
