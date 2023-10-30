@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'welcome_message.dart';
+import 'genera_details.dart';
 import 'qr_code_service.dart';
 import 'package:flutter/services.dart';
 
@@ -116,30 +117,16 @@ class _HomePageState extends State<HomePage> {
           if (detectedQRString != null && !isLoading)
             Center(
               child: Column(
+                //  Column(
                 mainAxisSize: MainAxisSize.min, // To avoid taking up the whole screen height
                 children: [
-                  if (studyName != null) // Only display if there's a study name
-                    Text(
-                      '$studyName',
-                      style: TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                  SizedBox(height: 10), // A spacing of 10 pixels
-                  Text(
-                    '$serverResponse',
-                    style: TextStyle(fontSize: 12, color: Colors.black),
-                    textAlign: TextAlign.center,
+                  GeneralDetails(
+                    studyName: studyName,
+                    serverResponse: serverResponse,
+                    selectedRawValue: selectedRawValue,
                   ),
-                  SizedBox(height: 20), // A spacing of 20 pixels for visual separation
-                  if (selectedRawValue != null) // Only display if there's a value selected
-                    Text(
-                      'Selected Raw Value: $selectedRawValue',
-                      style: TextStyle(fontSize: 14, color: Colors.black),
-                      textAlign: TextAlign.center,
-                    ),
 
-                  SizedBox(height: 20), // A spacing of 20 pixels for visual separation
-                  // Determine the width here:
+                  SizedBox(height: 20), // spacing of 20 pixels for visual separation
 
                   Container(
                     width: width, // You can adjust this value based on your needs
@@ -257,10 +244,10 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
+                  ), // Container
+                ], // CHILDREN
+              ), // COLUMN
+            ), // CENTER
 
           // Conditionally show camera when its state is open
           if (isCameraOpen)
