@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'grassroots_request.dart';
+import 'welcome_message.dart';
 import 'qr_code_service.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/gestures.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -29,7 +27,6 @@ class _HomePageState extends State<HomePage> {
   dynamic selectedRawValue;
 
   String? studyName;
-  final Uri _websiteUrl = Uri.parse('https://grassroots.tools/');
 
   void showTopSnackBar(BuildContext context, String message) {
     final overlay = Overlay.of(context);
@@ -93,50 +90,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(title: Text('QR Reader')),
       body: Stack(
         children: [
-          if (detectedQRString == null)
-            Positioned(
-              top: 50.0, // Adjust as needed
-              left: 3,
-              right: 3,
-              child: RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: TextStyle(fontSize: 16, color: Colors.black),
-                  children: [
-                    TextSpan(
-                      text: "Welcome to the QR reader for Grasstools.\n\n",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    TextSpan(
-                      text: "Open the camera to start capturing QR codes.\n\n",
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    TextSpan(
-                      text: "Visit ",
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    TextSpan(
-                      text: "grassroots.tools",
-                      style: TextStyle(
-                        fontSize: 18,
-                        decoration: TextDecoration.underline,
-                        color: Colors.blue,
-                      ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () async {
-                          if (!await launchUrl(_websiteUrl)) {
-                            print('Could not launch $_websiteUrl');
-                          }
-                        },
-                    ),
-                    TextSpan(
-                      text: " for more information.",
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          if (detectedQRString == null) WelcomeMessageWidget(),
 
           Positioned(
             bottom: 10, // Adjust this value to position the button at your preferred location.
