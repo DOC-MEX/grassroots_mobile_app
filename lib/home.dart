@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'welcome_message.dart';
 import 'genera_details.dart';
 import 'qr_code_service.dart';
+import 'observation_page.dart';
 import 'package:flutter/services.dart';
 
 class HomePage extends StatefulWidget {
@@ -94,8 +95,8 @@ class _HomePageState extends State<HomePage> {
           if (detectedQRString == null) WelcomeMessageWidget(),
 
           Positioned(
-            bottom: 10, // Adjust this value to position the button at your preferred location.
-            left: 5,
+            bottom: 15, // Adjust this value to position the button at your preferred location.
+            left: 10,
             // right: 80,
             child: Center(
               child: ElevatedButton(
@@ -106,6 +107,32 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+
+          // Add Observation Button (centered)
+          if (detectedQRString != null)
+            Positioned(
+              bottom: 15,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ObservationPage(
+                          studyName: studyName ?? 'No Study Name',
+                          serverResponse: serverResponse ?? 'No Response',
+                          phenotypeNames: phenotypeNames,
+                          traits: traits,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text('Add Observation'),
+                ),
+              ),
+            ),
 
           // Loading Indicator
           if (isLoading)
@@ -333,21 +360,31 @@ class _HomePageState extends State<HomePage> {
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (isCameraOpen) {
-            // If camera is open, close it
-            setState(() {
-              isCameraOpen = false;
-            });
-          } else {
-            // Otherwise, open the camera
-            setState(() {
-              isCameraOpen = true;
-            });
-          }
-        },
-        child: Icon(isCameraOpen ? Icons.close : Icons.camera),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(right: 10.0, bottom: 5.0), // Add some right and bottom padding
+        child: ElevatedButton(
+          onPressed: () {
+            if (isCameraOpen) {
+              setState(() {
+                isCameraOpen = false;
+              });
+            } else {
+              setState(() {
+                isCameraOpen = true;
+              });
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).primaryColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(5.0), // Slightly rounded corners
+            ),
+            padding:
+                EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Padding around the icon for better appearance
+          ),
+          child: Icon(isCameraOpen ? Icons.close : Icons.camera),
+        ),
       ),
     );
   }
