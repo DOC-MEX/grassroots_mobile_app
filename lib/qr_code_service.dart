@@ -7,11 +7,14 @@ class ParsedData {
   String? accession;
   int? observationsCount;
   String? studyName;
+  String? studyID;
   List<String> parsedPhenotypeNames = [];
   List<dynamic> observations = [];
   List<String> traits = [];
   List<String> units = [];
-  // Add any other necessary fields
+
+  List<String> allPhenotypeNames = []; // New list for all possible phenotypes
+  List<String> allTraits = []; // New list for all possible traits
 }
 
 class QRCodeService {
@@ -28,7 +31,7 @@ class QRCodeService {
   Future<Map<String, dynamic>> fetchDataFromQR(String qrRawValue) async {
     try {
       final Map<String, dynamic> responseData =
-          await GrassrootsRequest.sendRequest(GrassrootsRequest.getRequestString(qrRawValue));
+          await GrassrootsRequest.sendRequest(GrassrootsRequest.getRequestString(qrRawValue), 'public');
 
       // Additional logic ...
 
@@ -54,7 +57,7 @@ class QRCodeService {
             (responseData['results'][0]['results'][0]['data']['observations'] as List).length;
 
         parsedData.studyName = responseData['results'][0]['results'][0]['data']['study']['so:name'];
-
+        parsedData.studyID = responseData['results'][0]['results'][0]['data']['study']['_id']['\$oid'];
         var observations = responseData['results'][0]['results'][0]['data']['observations'];
         parsedData.observations = observations; // Store observations to parsedData
         for (var observation in observations) {
@@ -76,8 +79,23 @@ class QRCodeService {
             parsedData.units.add(unitName ?? 'No Unit');
           }
         }
+        //print("phenotypeNames: ${parsedData.parsedPhenotypeNames}");
       }
-    }
+      // Additional logic to extract all phenotypes names from the 'phenotypes' key
+      var phenotypesInfo = responseData['results'][0]['results'][0]['data']['phenotypes'];
+      for (var phenotypeKey in phenotypesInfo.keys) {
+        String? phenotypeName = phenotypesInfo[phenotypeKey]['definition']['variable']['so:name'];
+        String? traitName = phenotypesInfo[phenotypeKey]['definition']['trait']['so:name'];
+
+        if (phenotypeName != null && !parsedData.allPhenotypeNames.contains(phenotypeName)) {
+          parsedData.allPhenotypeNames.add(phenotypeName);
+        }
+
+        if (traitName != null && !parsedData.allTraits.contains(traitName)) {
+          parsedData.allTraits.add(traitName);
+        }
+      }
+    } // end of if (parsedData.statusText == "Succeeded" )
 
     return parsedData;
   }

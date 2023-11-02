@@ -19,16 +19,18 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = false;
   String? selectedPhenotype;
   List<String> phenotypeNames = [];
-  String? currentValue;
-
-  //List<String> parsedPhenotypeNames = [];
   List<String> traits = [];
+  List<String> allPhenotypeNames = []; // New list for all possible phenotypes
+  List<String> allTraits = [];
+
   List<String> units = [];
+  String? currentValue;
   String? selectedValue;
   List<dynamic> observations = [];
   dynamic selectedRawValue;
 
   String? studyName;
+  String? studyID;
 
   void showTopSnackBar(BuildContext context, String message) {
     final overlay = Overlay.of(context);
@@ -122,9 +124,13 @@ class _HomePageState extends State<HomePage> {
                       MaterialPageRoute(
                         builder: (context) => ObservationPage(
                           studyName: studyName ?? 'No Study Name',
+                          studyID: studyID ?? 'No Study ID',
                           serverResponse: serverResponse ?? 'No Response',
+                          detectedQRCode: detectedQRString ?? 'No QR Code Detected',
                           phenotypeNames: phenotypeNames,
                           traits: traits,
+                          allPhenotypeNames: allPhenotypeNames,
+                          allTraits: allTraits,
                         ),
                       ),
                     );
@@ -289,6 +295,7 @@ class _HomePageState extends State<HomePage> {
                     isLoading = true;
                     selectedRawValue = null;
                     studyName = null;
+                    studyID = null;
                     selectedPhenotype = null;
                   });
 
@@ -309,6 +316,7 @@ class _HomePageState extends State<HomePage> {
                     serverResponse =
                         'Study Index: ${parsedData.studyIndex}. \n Accession: ${parsedData.accession} \n Number of Observations: ${parsedData.observationsCount}';
                     studyName = parsedData.studyName;
+                    studyID = parsedData.studyID;
                     phenotypeNames.clear();
                     phenotypeNames = parsedData.parsedPhenotypeNames;
                     traits.clear();
@@ -316,6 +324,8 @@ class _HomePageState extends State<HomePage> {
                     units = parsedData.units;
                     observations.clear();
                     observations = parsedData.observations;
+                    allPhenotypeNames = parsedData.allPhenotypeNames;
+                    allTraits = parsedData.allTraits;
                     if (phenotypeNames.isNotEmpty) {
                       currentValue = phenotypeNames[0];
                     } else {

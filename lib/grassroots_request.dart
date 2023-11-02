@@ -2,54 +2,50 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GrassrootsRequest {
-  static Future<Map<String, dynamic>> sendRequest(String requestString) async {
+  // Updated to include a map of servers for flexibility
+  static const Map<String, String> _serverUrls = {
+    'public': 'https://grassroots.tools/public_backend',
+    'private': 'https://grassroots.tools/private_backend',
+    'queen_bee_backend': 'https://grassroots.tools/queen_bee_backend'
+  };
+
+  // Assuming 'doc' and 'PASSWORDTEST' are placeholders for the real credentials
+  static const String _username = 'doc';
+  static const String _password = 'NOt the actual password in github';
+
+  static Future<Map<String, dynamic>> sendRequest(String requestString, String serverKey) async {
+    // Determine the URL based on the serverKey provided
+    String? url = _serverUrls[serverKey];
+
+    if (url == null) {
+      throw Exception('Server key "$serverKey" does not correspond to a known server.');
+    }
+
+    // Creating a Map for headers
+    Map<String, String> headers = {
+      'Content-Type': 'application/json; charset=UTF-8',
+    };
+
+    // If the server key is for the queen_bee_backend, add the Authorization header
+    if (serverKey == 'queen_bee_backend') {
+      String basicAuth = 'Basic ' + base64Encode(utf8.encode('$_username:$_password'));
+      headers['Authorization'] = basicAuth;
+    }
+
     final response = await http.post(
-      Uri.parse('https://grassroots.tools/public_backend'),
-      //Uri.parse('https://grassroots.tools/dev/grassroots/public_backend'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+      Uri.parse(url),
+      headers: headers,
       body: requestString,
     );
 
+    // The rest of your method remains unchanged
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
-
       if ((data['results'] as List).isEmpty) {
-        //return "EmptyResults";
         throw Exception("EmptyResults");
       }
-
-      // Check if status_text is either 'Succeeded' or 'Partially succeeded'
-      //String statusText = data['results'][0]['status_text'];
-      //if (statusText == "Succeeded" || statusText == "Partially succeeded") {
-      // Extract the study_index value
-      //  int? studyIndex = data['results'][0]['results'][0]['data']['study_index'];
-      // String? accession = data['results'][0]['results'][0]['data']['material']['accession'];
-      // Count the number of observations
-      //  int? observationsCount = (data['results'][0]['results'][0]['data']['observations'] as List).length;
-      //  List<String> phenotypeNames = [];
-      //  List observations = data['results'][0]['results'][0]['data']['observations'];
-
-      //  for (var observation in observations) {
-      //    String? variable = observation['phenotype']['variable'];
-      //    if (variable != null && !phenotypeNames.contains(variable)) {
-      //      phenotypeNames.add(variable);
-      //    }
-      //  }
-
-      //  if (studyIndex != null && accession != null && observationsCount != null) {
-      //    return 'Study Index: $studyIndex. \n Accession: $accession \n Number of Observations: $observationsCount \n Phenotype Names: $phenotypeNames';
-      //  } else {
-      //    return 'Study index not found in response';
-      //  }
-      //}
-      //return statusText;
       return data;
     } else {
-      // If the server did not return a 200 OK response,
-      //throw Exception('Failed to load data from the server');
-      //return 'Failed to load data from the server';
       throw Exception('Failed to load data from the server with status: ${response.statusCode}');
     }
   }
