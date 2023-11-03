@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'welcome_message.dart';
 import 'genera_details.dart';
 import 'qr_code_service.dart';
+import 'qr_code_processor.dart';
 import 'observation_page.dart';
 import 'package:flutter/services.dart';
 
@@ -13,6 +14,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final QRCodeService qrCodeService = QRCodeService();
+  late QRCodeProcessor qrProcessor;
   bool isCameraOpen = false; // State to check if camera is open or not
   String? detectedQRString; // Variable to store detected QR code string
   String? serverResponse;
@@ -31,6 +33,33 @@ class _HomePageState extends State<HomePage> {
 
   String? studyName;
   String? studyID;
+  // Add the updateUIWithParsedData method
+  void updateUIWithParsedData(ParsedData parsedData) {
+    setState(() {
+      serverResponse =
+          'Study Index: ${parsedData.studyIndex}.\nAccession: ${parsedData.accession}\nNumber of Observations: ${parsedData.observationsCount}';
+      studyName = parsedData.studyName;
+      studyID = parsedData.studyID;
+      phenotypeNames = parsedData.parsedPhenotypeNames;
+      traits = parsedData.traits;
+      units = parsedData.units;
+      observations = parsedData.observations;
+      allPhenotypeNames = parsedData.allPhenotypeNames;
+      allTraits = parsedData.allTraits;
+      currentValue = phenotypeNames.isNotEmpty ? phenotypeNames[0] : null;
+      isLoading = false;
+    });
+
+    // Handle case with no observations
+    //if ((parsedData.observationsCount ?? 0) == 0) {
+    //  ScaffoldMessenger.of(context).showSnackBar(
+    //    SnackBar(
+    //      content: Text("Plot has no observations."),
+    //      duration: Duration(seconds: 2),
+    //    ),
+    //  );
+    // }
+  }
 
   void showTopSnackBar(BuildContext context, String message) {
     final overlay = Overlay.of(context);
@@ -54,9 +83,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
-
     overlay.insert(overlayEntry);
-
     Future.delayed(Duration(seconds: 5), () {
       overlayEntry.remove();
     });
@@ -85,6 +112,13 @@ class _HomePageState extends State<HomePage> {
       }
     }
     return matchingObservations;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    qrProcessor = QRCodeProcessor(qrCodeService: qrCodeService); // Initialize qrProcessor
+    // Any other
   }
 
   @override
@@ -118,8 +152,10 @@ class _HomePageState extends State<HomePage> {
               right: 0,
               child: Center(
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    // Notice the 'async' keyword here
+                    // Use 'await' to wait for the 'ObservationPage' to return a value
+                    final hasSuccessfullySubmitted = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
                         builder: (context) => ObservationPage(
@@ -134,6 +170,34 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     );
+
+                    // If the 'ObservationPage' returned 'true', it means an observation was successfully submitted
+                    if (hasSuccessfullySubmitted == true) {
+                      setState(() {
+                        isLoading = true;
+                      });
+
+                      try {
+                        final Map<String, dynamic> responseData = await qrProcessor.fetchDataFromQR(detectedQRString!);
+
+                        if (responseData.containsKey("error")) {
+                          setState(() {
+                            serverResponse = responseData["error"];
+                            isLoading = false;
+                          });
+                          return;
+                        }
+
+                        final ParsedData updatedParsedData = await qrProcessor.parseResponseData(responseData);
+                        updateUIWithParsedData(updatedParsedData);
+                      } catch (e) {
+                        print('An error occurred while fetching updated data: $e');
+                        setState(() {
+                          serverResponse = 'An error occurred while fetching updated data.';
+                          isLoading = false;
+                        });
+                      }
+                    }
                   },
                   child: Text('Add Observation'),
                 ),
@@ -287,7 +351,7 @@ class _HomePageState extends State<HomePage> {
             MobileScanner(
               controller: MobileScannerController(),
               onDetect: (capture) async {
-                final detectedValue = qrCodeService.processDetectedQR(capture);
+                final detectedValue = qrProcessor.processCapture(capture);
                 if (detectedValue != null) {
                   setState(() {
                     detectedQRString = detectedValue;
@@ -299,71 +363,60 @@ class _HomePageState extends State<HomePage> {
                     selectedPhenotype = null;
                   });
 
-                  final Map<String, dynamic> responseData = await qrCodeService.fetchDataFromQR(detectedQRString!);
+                  try {
+                    final Map<String, dynamic> responseData = await qrProcessor.fetchDataFromQR(detectedQRString!);
 
-                  if (responseData.containsKey("error")) {
+                    if (responseData.containsKey("error")) {
+                      setState(() {
+                        serverResponse = responseData["error"];
+                        isLoading = false;
+                      });
+                      return;
+                    }
+
+                    final ParsedData parsedData = await qrProcessor.parseResponseData(responseData);
+                    updateUIWithParsedData(parsedData); // Call the new method to update UI with parsed data
+
+                    print('** Traits List: $traits');
+                    print('PhenotypeNames List: $phenotypeNames');
+
+                    if ((parsedData.observationsCount ?? 0) == 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          duration: Duration(seconds: 5),
+                          content: Row(
+                            children: [
+                              Icon(Icons.warning, color: Colors.yellow),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  "Plot has no observations yet. Please add an observation.",
+                                  style: TextStyle(fontSize: 20.0),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                      setState(() {
+                        isLoading = false; // Stop showing loading spinner
+                        phenotypeNames.clear(); // Clear the names so dropdown is not displayed
+                        currentValue = null; // Clear current value
+                      });
+                    }
+                  } catch (e) {
+                    // Handle any errors that occur during fetch or parsing
+                    print('An error occurred while processing the QR code: $e');
                     setState(() {
-                      serverResponse = responseData["error"];
+                      serverResponse = 'An error occurred while processing the QR code.';
                       isLoading = false;
                     });
-                    return;
-                  }
-
-                  final ParsedData parsedData = qrCodeService.parseResponseData(responseData);
-
-                  // Now use the parsedData object to update your UI
-                  setState(() {
-                    serverResponse =
-                        'Study Index: ${parsedData.studyIndex}. \n Accession: ${parsedData.accession} \n Number of Observations: ${parsedData.observationsCount}';
-                    studyName = parsedData.studyName;
-                    studyID = parsedData.studyID;
-                    phenotypeNames.clear();
-                    phenotypeNames = parsedData.parsedPhenotypeNames;
-                    traits.clear();
-                    traits = parsedData.traits;
-                    units = parsedData.units;
-                    observations.clear();
-                    observations = parsedData.observations;
-                    allPhenotypeNames = parsedData.allPhenotypeNames;
-                    allTraits = parsedData.allTraits;
-                    if (phenotypeNames.isNotEmpty) {
-                      currentValue = phenotypeNames[0];
-                    } else {
-                      currentValue = null;
-                    }
-                  });
-
-                  print('** Traits List: $traits');
-                  print('phenotypeNames List: $phenotypeNames');
-
-                  // If there are no observations, show the snackbar and don't show the dropdown:
-                  if ((parsedData.observationsCount ?? 0) == 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
+                        content: Text('An error occurred. Please try again.'),
                         duration: Duration(seconds: 5),
-                        content: Row(
-                          children: [
-                            Icon(Icons.warning, color: Colors.yellow),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                "Plot has no observations. Open the camera again to capture a new QR code",
-                                style: TextStyle(fontSize: 20.0),
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     );
-                    setState(() {
-                      isLoading = true; // Show loading spinner
-                      phenotypeNames = []; // Clear the names so dropdown is not displayed
-                      currentValue = null; // Clear current value
-                    });
-                  } else {
-                    setState(() {
-                      isLoading = false; // Hide loading spinner
-                    });
                   }
                 }
               },

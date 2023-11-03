@@ -30,6 +30,7 @@ class ObservationPage extends StatefulWidget {
 }
 
 class _ObservationPageState extends State<ObservationPage> {
+  bool hasSuccessfullySubmitted = false; // State variable
   String? accession;
 
   @override
@@ -142,7 +143,7 @@ class _ObservationPageState extends State<ObservationPage> {
 
   @override
   Widget build(BuildContext context) {
-// Helper function to clear form and reset state
+    // Helper function to clear form and reset state
     void clearForm() {
       _formKey.currentState!.reset();
       setState(() {
@@ -153,7 +154,7 @@ class _ObservationPageState extends State<ObservationPage> {
       });
     }
 
-// Helper function to show snackbar with a message
+    // Helper function to show snackbar with a message
     void showSnackBarMessage(String message) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -161,7 +162,11 @@ class _ObservationPageState extends State<ObservationPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('Add Observation')),
+      appBar: AppBar(
+        title: Text('Add Observation'),
+        automaticallyImplyLeading: false,
+      ),
+
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
         child: Form(
@@ -176,6 +181,7 @@ class _ObservationPageState extends State<ObservationPage> {
                 Padding(
                   padding: const EdgeInsets.only(top: 36.0), // This will add space above the Accession Text
                   child: Text('Accession: $accession', style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
+                  //child: Text('$widget.serverResponse', style: TextStyle(fontSize: 16), textAlign: TextAlign.center),
                 ),
 
               DropdownButtonFormField<String>(
@@ -255,81 +261,97 @@ class _ObservationPageState extends State<ObservationPage> {
               ),
 
               SizedBox(height: 20),
+              SizedBox(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        // If the form is valid, display a Snackbar and print form values.
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Processing Data')),
+                        );
 
-              ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    // If the form is valid, display a Snackbar and print form values.
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Processing Data')),
-                    );
+                        print('detectedQRCode: ${widget.detectedQRCode}');
+                        print('studyID: ${widget.studyID}');
+                        print('Selected Trait: $selectedTrait');
+                        print('Measurement: ${measurementController.text}');
+                        print('Selected Date: ${DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now())}');
+                        print('Optional Note: ${optionalNoteController.text}');
 
-                    print('detectedQRCode: ${widget.detectedQRCode}');
-                    print('studyID: ${widget.studyID}');
-                    print('Selected Trait: $selectedTrait');
-                    print('Measurement: ${measurementController.text}');
-                    print('Selected Date: ${DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now())}');
-                    print('Optional Note: ${optionalNoteController.text}');
+                        try {
+                          // Create the primary request string from the form inputs
+                          String jsonString = createGrassrootsRequest(
+                            detectedQRCode: widget.detectedQRCode,
+                            selectedTrait: selectedTrait,
+                            measurement: measurementController.text,
+                            dateString: DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now()),
+                            note: optionalNoteController.text.isNotEmpty ? optionalNoteController.text : null,
+                          );
 
-                    try {
-                      // Create the primary request string from the form inputs
-                      String jsonString = createGrassrootsRequest(
-                        detectedQRCode: widget.detectedQRCode,
-                        selectedTrait: selectedTrait,
-                        measurement: measurementController.text,
-                        dateString: DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now()),
-                        note: optionalNoteController.text.isNotEmpty ? optionalNoteController.text : null,
-                      );
+                          print('JSON Request: $jsonString');
 
-                      print('JSON Request: $jsonString');
+                          // Send the primary request to the server and await the response
+                          var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
 
-                      // Send the primary request to the server and await the response
-                      var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
+                          // Handle the response data
+                          print('Response from server: $response');
 
-                      // Handle the response data
-                      print('Response from server: $response');
+                          // Optionally show a success dialog or snackbar message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Data successfully submitted')),
+                          );
 
-                      // Optionally show a success dialog or snackbar message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Data successfully submitted')),
-                      );
+                          // If the code reaches this point, it means the request was successful
+                          // Update the flag here
+                          setState(() {
+                            hasSuccessfullySubmitted = true;
+                          });
 
-                      // After the primary request is successful, initiate the secondary request
-                      // Create the cache clear request string using the studyID
-                      String cacheClearRequestJson = clearCacheRequest(widget.studyID);
-                      print('CACHE Request: $cacheClearRequestJson');
-                      // Fire-and-forget the clear cache request, no await used
-                      GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend').then((cacheResponse) {
-                        // Log the cache clear response
-                        print('+++Cache clear response: $cacheResponse');
-                      }).catchError((error) {
-                        // Log any errors from the cache clear request
-                        print('Error sending cache clear request: $error');
-                      });
-                    } catch (e) {
-                      // Handle any errors that occur during the primary request
-                      print('Error sending request: $e');
-                      // Optionally show an error dialog or snackbar message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to submit data')),
-                      );
-                    } finally {
-                      // Clear the form fields after processing the request
-                      clearForm();
-                    }
-                  }
-                },
-                child: Text('Submit Observation'),
-              )
+                          // After the primary request is successful, initiate the secondary request
+                          // Create the cache clear request string using the studyID
+                          String cacheClearRequestJson = clearCacheRequest(widget.studyID);
+                          print('CACHE Request: $cacheClearRequestJson');
+                          // Fire-and-forget the clear cache request, no await used
+                          GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend')
+                              .then((cacheResponse) {
+                            // Log the cache clear response
+                            print('+++Cache clear response: $cacheResponse');
+                          }).catchError((error) {
+                            // Log any errors from the cache clear request
+                            print('Error sending cache clear request: $error');
+                          });
+                        } catch (e) {
+                          // Handle any errors that occur during the primary request
+                          print('Error sending request: $e');
+                          // Optionally show an error dialog or snackbar message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to submit data')),
+                          );
+                        } finally {
+                          // Clear the form fields after processing the request
+                          clearForm();
+                        }
+                      }
+                    },
+                    child: Text('Submit Observation'),
+                  ), // ElevatedButton
+                ),
+              ),
             ],
           ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.pop(context);
+          if (hasSuccessfullySubmitted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Refreshing observation')),
+            );
+          }
+          Navigator.pop(context, hasSuccessfullySubmitted); // Send the flag back to the home page
         },
-        child: Icon(Icons.arrow_back),
+        child: Icon(Icons.arrow_back), //Back Button
       ), //FloatingActionButton
     ); // Scaffold
   }

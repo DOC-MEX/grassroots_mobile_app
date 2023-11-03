@@ -11,7 +11,7 @@ class GrassrootsRequest {
 
   // Assuming 'doc' and 'PASSWORDTEST' are placeholders for the real credentials
   static const String _username = 'doc';
-  static const String _password = 'NOt the actual password in github';
+  static const String _password = 'NOT ACTUAL PASSWORD';
 
   static Future<Map<String, dynamic>> sendRequest(String requestString, String serverKey) async {
     // Determine the URL based on the serverKey provided
