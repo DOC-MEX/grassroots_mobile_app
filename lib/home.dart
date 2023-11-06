@@ -5,6 +5,7 @@ import 'genera_details.dart';
 import 'qr_code_service.dart';
 import 'qr_code_processor.dart';
 import 'observation_page.dart';
+import 'table_observations.dart';
 import 'package:flutter/services.dart';
 
 class HomePage extends StatefulWidget {
@@ -105,9 +106,18 @@ class _HomePageState extends State<HomePage> {
             print('Error parsing date: $e');
           }
         }
+
+        // Initialize an empty string for notes
+        //String notes = '';
+        // Check if 'notes' exists and is not null, then add it to the matching observations
+        //if (observation['notes'] != null) {
+        //  notes = observation['notes'];
+        //}
+
         matchingObservations.add({
           'raw_value': observation['raw_value'],
           'date': formattedDate,
+          'notes': observation['notes'] ?? '',
         });
       }
     }
@@ -263,57 +273,7 @@ class _HomePageState extends State<HomePage> {
                                     if (rawValues.isEmpty)
                                       Text('No Data Found')
                                     else
-                                      SingleChildScrollView(
-                                        child: Table(
-                                          border: TableBorder.symmetric(
-                                            inside: BorderSide(width: 1, color: Colors.black38),
-                                            outside: BorderSide(width: 1, color: Colors.black38),
-                                          ),
-                                          columnWidths: {
-                                            0: FlexColumnWidth(1),
-                                            1: FlexColumnWidth(1),
-                                            2: FlexColumnWidth(1),
-                                          },
-                                          children: [
-                                            TableRow(
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey[300],
-                                              ),
-                                              children: [
-                                                Padding(
-                                                  padding: const EdgeInsets.all(8.0),
-                                                  child: Text('Value'),
-                                                ),
-                                                Padding(
-                                                  padding: const EdgeInsets.all(8.0),
-                                                  child: Text('Date'),
-                                                ),
-                                                Padding(
-                                                  padding: const EdgeInsets.all(8.0),
-                                                  child: Text('Units'),
-                                                ),
-                                              ],
-                                            ),
-                                            for (var observation in rawValues)
-                                              TableRow(
-                                                children: [
-                                                  Padding(
-                                                    padding: const EdgeInsets.all(8.0),
-                                                    child: Text('${observation['raw_value']}'),
-                                                  ),
-                                                  Padding(
-                                                    padding: const EdgeInsets.all(8.0),
-                                                    child: Text('${observation['date']}'),
-                                                  ),
-                                                  Padding(
-                                                    padding: const EdgeInsets.all(8.0),
-                                                    child: Text(displayUnit),
-                                                  ),
-                                                ],
-                                              )
-                                          ],
-                                        ),
-                                      ),
+                                      ObservationTable(rawValues: rawValues, displayUnit: displayUnit),
                                   ],
                                 ),
                               ),

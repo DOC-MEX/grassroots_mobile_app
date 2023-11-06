@@ -185,6 +185,7 @@ class _ObservationPageState extends State<ObservationPage> {
                 ),
 
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 value: selectedTrait,
                 hint: Text("Select phenotype"),
                 onChanged: (newValue) {
