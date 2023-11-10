@@ -31,10 +31,10 @@ class ObservationTable extends StatelessWidget {
                   width: 1,
                 ),
                 columnWidths: const {
-                  0: FlexColumnWidth(),
-                  1: FlexColumnWidth(),
-                  2: FlexColumnWidth(),
-                  3: FlexColumnWidth(),
+                  0: FlexColumnWidth(1.4),
+                  1: FlexColumnWidth(1.5),
+                  2: FlexColumnWidth(1.5),
+                  3: FlexColumnWidth(3),
                 },
                 children: [
                   TableRow(
@@ -51,13 +51,14 @@ class ObservationTable extends StatelessWidget {
                           Padding(padding: EdgeInsets.all(8.0), child: Text('${observation['raw_value']}')),
                           Padding(padding: EdgeInsets.all(8.0), child: Text('${observation['date']}')),
                           Padding(padding: EdgeInsets.all(8.0), child: Text(displayUnit)),
-                          Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Text(observation['notes'] ?? ''),
-                            ),
-                          ),
+                          Padding(padding: EdgeInsets.all(8.0), child: Text(observation['notes'] ?? '')),
+                          //Padding(
+                          //  padding: EdgeInsets.all(8.0),
+                          //  child: SingleChildScrollView(
+                          //    scrollDirection: Axis.horizontal,
+                          //    child: Text(observation['notes'] ?? ''),
+                          //  ),
+                          //),
                         ],
                       )),
                 ],

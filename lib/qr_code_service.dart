@@ -51,11 +51,10 @@ class QRCodeService {
     if (parsedData.statusText == "Succeeded" || parsedData.statusText == "Partially succeeded") {
       parsedData.studyIndex = responseData['results'][0]['results'][0]['data']['study_index'];
       parsedData.accession = responseData['results'][0]['results'][0]['data']['material']['accession'];
+      parsedData.observationsCount =
+          (responseData['results'][0]['results'][0]['data']['observations'] as List?)?.length ?? 0;
 
       if (responseData['results'][0]['results'][0]['data'].containsKey('observations')) {
-        parsedData.observationsCount =
-            (responseData['results'][0]['results'][0]['data']['observations'] as List).length;
-
         parsedData.studyName = responseData['results'][0]['results'][0]['data']['study']['so:name'];
         parsedData.studyID = responseData['results'][0]['results'][0]['data']['study']['_id']['\$oid'];
         var observations = responseData['results'][0]['results'][0]['data']['observations'];
