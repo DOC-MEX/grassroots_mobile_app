@@ -9,8 +9,11 @@ class GrassrootsStudies extends StatefulWidget {
 
 class _GrassrootsPageState extends State<GrassrootsStudies> {
   bool isLoading = true;
+  bool isSingleStudyLoading = false;
   List<Map<String, String>> studies = []; // Store both name and ID
   String? selectedStudy;
+  String? studyTitle;
+  String? studyDescription;
 
   @override
   void initState() {
@@ -56,6 +59,28 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
     }
   }
 
+  Future<Map<String, dynamic>> fetchSingleStudy(String studyId) async {
+    String requestString = jsonEncode({
+      "services": [
+        {
+          "so:name": "Search Field Trials",
+          "start_service": true,
+          "parameter_set": {
+            "level": "advanced",
+            "parameters": [
+              {"param": "ST Id", "current_value": studyId},
+              {"param": "Get all Plots for Study", "current_value": true},
+              {"param": "ST Search Studies", "current_value": true}
+            ]
+          }
+        }
+      ]
+    });
+
+    var response = await GrassrootsRequest.sendRequest(requestString, 'public');
+    return response;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,27 +91,63 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
           ? Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16.0),
-              child: DropdownButtonFormField<String>(
-                isExpanded: true, // Add this line
-                value: selectedStudy,
-                hint: Text("Select a study"),
-                onChanged: (newValue) {
-                  setState(() {
-                    selectedStudy = newValue;
-                  });
-                  print('Selected Study ID: $newValue');
-                },
-                items: studies.map<DropdownMenuItem<String>>((study) {
-                  return DropdownMenuItem<String>(
-                    value: study['id'], // Use study ID as value
-                    child: Text(
-                      study['name'] ?? 'Unknown Study',
-                      overflow: TextOverflow.ellipsis, // Use ellipsis for text overflow
-                      softWrap: false,
+              child: isSingleStudyLoading
+                  ? Center(child: CircularProgressIndicator()) // Show loading indicator while fetching single study
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        DropdownButtonFormField<String>(
+                          isExpanded: true, // Ensure the dropdown is expanded
+                          value: selectedStudy,
+                          hint: Text("Select a study"),
+                          onChanged: (newValue) async {
+                            setState(() {
+                              selectedStudy = newValue;
+                              isSingleStudyLoading = true; // Start loading
+                            });
+                            try {
+                              var studyDetails = await fetchSingleStudy(newValue!);
+                              setState(() {
+                                studyTitle = studyDetails['results'][0]['results'][0]['title'];
+                                studyDescription = studyDetails['results'][0]['results'][0]['data']['so:description'];
+                              });
+                              print('Selected Study ID: $newValue');
+                              print('Study Title: $studyTitle');
+                              print('Study Description: $studyDescription');
+                            } catch (e) {
+                              print('Error fetching study details: $e');
+                            } finally {
+                              setState(() {
+                                isSingleStudyLoading = false; // Ensure loading is stopped in all cases
+                              });
+                            }
+                          },
+                          items: studies.map<DropdownMenuItem<String>>((study) {
+                            return DropdownMenuItem<String>(
+                              value: study['id'], // Use study ID as value
+                              child: Text(
+                                study['name'] ?? 'Unknown Study',
+                                overflow: TextOverflow.ellipsis, // Use ellipsis for text overflow
+                                softWrap: false,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        SizedBox(height: 20),
+                        // Display study details
+                        if (studyTitle != null) ...[
+                          Text(
+                            '$studyTitle',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            'Description: ${studyDescription ?? 'Not available'}',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ],
                     ),
-                  );
-                }).toList(),
-              ),
             ),
     );
   }
