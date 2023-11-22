@@ -7,6 +7,7 @@ import 'qr_code_processor.dart';
 import 'observation_page.dart';
 import 'table_observations.dart';
 import 'package:flutter/services.dart';
+import 'grassroots_studies.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -141,7 +142,7 @@ class _HomePageState extends State<HomePage> {
           if (detectedQRString == null) WelcomeMessageWidget(),
 
           Positioned(
-            bottom: 15, // Adjust this value to position the button at your preferred location.
+            bottom: 15, //  value to position the button vertically
             left: 10,
             // right: 80,
             child: Center(
@@ -153,6 +154,25 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+
+          // Positioned 'Browse all studies' button
+          if (detectedQRString == null) // Display this button only when no QR code is detected
+            Positioned(
+              bottom: 15, // Adjust as needed
+              left: 0,
+              right: 0,
+              child: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => GrassrootsStudies()),
+                    );
+                  },
+                  child: Text('Browse all studies'),
+                ),
+              ),
+            ),
 
           // Add Observation Button (centered)
           if (detectedQRString != null)
@@ -385,7 +405,7 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(right: 10.0, bottom: 5.0), // Add some right and bottom padding
+        padding: const EdgeInsets.only(right: 10.0, bottom: 3.0), // Add some right and bottom padding
         child: ElevatedButton(
           onPressed: () {
             if (isCameraOpen) {
