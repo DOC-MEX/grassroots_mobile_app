@@ -14,6 +14,11 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
   String? selectedStudy;
   String? studyTitle;
   String? studyDescription;
+  String? programme;
+  String? address;
+  String? FTrial;
+  int numberOfPlots = 0;
+  List<String> plotIDList = [];
 
   @override
   void initState() {
@@ -47,7 +52,16 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
           // Ensure that both 'name' and 'id' are non-null and are Strings
           String name = study['title'] as String? ?? 'Unknown Study';
           String id = study['data']['_id']['\$oid'] as String? ?? 'Unknown ID';
-          return {'name': name, 'id': id};
+          String parent_programme = study['data']['parent_program']['so:name'] as String? ?? 'Unknown Programme';
+          String address_name = study['data']['address']['name'] as String? ?? 'Unknown Address';
+          String field_trial = study['data']['parent_field_trial']['so:name'] as String? ?? 'Unknown Field Trial';
+          return {
+            'name': name,
+            'id': id,
+            'parent_programme': parent_programme,
+            'address_name': address_name,
+            'field_trial': field_trial
+          };
         }).toList();
         isLoading = false;
       });
@@ -105,15 +119,53 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                               selectedStudy = newValue;
                               isSingleStudyLoading = true; // Start loading
                             });
+
                             try {
                               var studyDetails = await fetchSingleStudy(newValue!);
+
+                              // Check if 'plots' exists and is not null
+                              if (studyDetails['results'][0]['results'][0]['data'].containsKey('plots') &&
+                                  studyDetails['results'][0]['results'][0]['data']['plots'] != null) {
+                                var plots = studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
+                                List<String> plotIDs = [];
+                                int nPlots = 0;
+
+                                for (var plot in plots) {
+                                  if (plot['rows'] != null && plot['rows'].isNotEmpty) {
+                                    var row = plot['rows'][0];
+                                    if (!(row.containsKey('discard') || row.containsKey('blank'))) {
+                                      String plotID = row['_id']['\$oid'];
+                                      plotIDs.add(plotID);
+                                      nPlots++;
+                                    }
+                                  }
+                                }
+
+                                // Update the state with the number of plots and their IDs
+                                setState(() {
+                                  numberOfPlots = nPlots;
+                                  plotIDList = plotIDs;
+                                });
+
+                                print('Number of Plots: $nPlots');
+                                print('Plot IDs: $plotIDs');
+                              }
+
+                              // Updating the state with other study details
                               setState(() {
                                 studyTitle = studyDetails['results'][0]['results'][0]['title'];
                                 studyDescription = studyDetails['results'][0]['results'][0]['data']['so:description'];
+                                programme =
+                                    studyDetails['results'][0]['results'][0]['data']['parent_program']['so:name'];
+                                address = studyDetails['results'][0]['results'][0]['data']['address']['name'];
+                                FTrial =
+                                    studyDetails['results'][0]['results'][0]['data']['parent_field_trial']['so:name'];
                               });
+
                               print('Selected Study ID: $newValue');
                               print('Study Title: $studyTitle');
                               print('Study Description: $studyDescription');
+                              print('Study Programme: $programme');
                             } catch (e) {
                               print('Error fetching study details: $e');
                             } finally {
@@ -122,6 +174,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                               });
                             }
                           },
+
                           items: studies.map<DropdownMenuItem<String>>((study) {
                             return DropdownMenuItem<String>(
                               value: study['id'], // Use study ID as value
@@ -141,10 +194,40 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 10),
-                          Text(
-                            'Description: ${studyDescription ?? 'Not available'}',
-                            style: TextStyle(fontSize: 16),
-                          ),
+                          if (studyDescription != null && studyDescription!.isNotEmpty) ...[
+                            Text(
+                              'Description: $studyDescription',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            SizedBox(height: 10),
+                          ],
+                          if (programme != null && programme!.isNotEmpty) ...[
+                            Text(
+                              'Programme: $programme',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ],
+                          SizedBox(height: 10),
+                          if (FTrial != null && FTrial!.isNotEmpty) ...[
+                            Text(
+                              'Field Trial: $FTrial',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ],
+                          SizedBox(height: 10),
+                          if (address != null && address!.isNotEmpty) ...[
+                            Text(
+                              'Address: $address',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ],
+                          SizedBox(height: 10),
+                          if (numberOfPlots > 0) ...[
+                            Text(
+                              'Number of Plots: $numberOfPlots',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ],
                         ],
                       ],
                     ),
