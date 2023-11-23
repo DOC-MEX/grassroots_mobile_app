@@ -136,7 +136,23 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width * 0.8;
     return Scaffold(
-      appBar: AppBar(title: Text('QR Reader')),
+      appBar: AppBar(
+        title: Text('QR Reader'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            // Custom action when back button is pressed
+            setState(() {
+              detectedQRString = null; // Clearing the detected QR code string
+              selectedRawValue = null;
+              studyName = null;
+              studyID = null;
+              selectedPhenotype = null;
+              // ...reset others if needed
+            });
+          },
+        ),
+      ),
       body: Stack(
         children: [
           if (detectedQRString == null) WelcomeMessageWidget(),
