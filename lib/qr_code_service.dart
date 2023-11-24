@@ -1,5 +1,6 @@
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'grassroots_request.dart';
+import 'dart:convert';
 
 class ParsedData {
   String? statusText;
@@ -97,5 +98,62 @@ class QRCodeService {
     } // end of if (parsedData.statusText == "Succeeded" )
 
     return parsedData;
+  }
+
+  //fetch all studies from Grassroots. Used when loading grassroot_studies.dart
+  static Future<List<Map<String, String>>> fetchAllStudies() async {
+    String requestString = jsonEncode({
+      "services": [
+        {
+          "so:name": "Search Field Trials",
+          "start_service": true,
+          "parameter_set": {
+            "level": "simple",
+            "parameters": [
+              {"param": "FT Keyword Search", "current_value": ""},
+              {"param": "FT Study Facet", "current_value": true},
+              {"param": "FT Results Page Number", "current_value": 0},
+              {"param": "FT Results Page Size", "current_value": 500}
+            ]
+          }
+        }
+      ]
+    });
+
+    try {
+      var response = await GrassrootsRequest.sendRequest(requestString, 'public');
+      return response['results'][0]['results'].map<Map<String, String>>((study) {
+        String name = study['title'] as String? ?? 'Unknown Study';
+        String id = study['data']['_id']['\$oid'] as String? ?? 'Unknown ID';
+        // Add other fields if necessary
+        return {'name': name, 'id': id};
+      }).toList();
+    } catch (e) {
+      print('Error fetching studies: $e');
+      // Optionally, handle the error in a specific way or rethrow it
+      throw e;
+    }
+  }
+
+  //fetch single study from Grassroots. Used after a study is selected in grassroot_studies.dart
+  static Future<Map<String, dynamic>> fetchSingleStudy(String studyId) async {
+    String requestString = jsonEncode({
+      "services": [
+        {
+          "so:name": "Search Field Trials",
+          "start_service": true,
+          "parameter_set": {
+            "level": "advanced",
+            "parameters": [
+              {"param": "ST Id", "current_value": studyId},
+              {"param": "Get all Plots for Study", "current_value": true},
+              {"param": "ST Search Studies", "current_value": true}
+            ]
+          }
+        }
+      ]
+    });
+
+    return await GrassrootsRequest.sendRequest(requestString, 'public');
   }
 }

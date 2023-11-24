@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'grassroots_request.dart';
+import 'qr_code_service.dart';
 
 class GrassrootsStudies extends StatefulWidget {
   @override
@@ -23,46 +22,18 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
   @override
   void initState() {
     super.initState();
-    fetchAllStudies();
+    fetchStudies(); // Updated to call the new method
   }
 
-  void fetchAllStudies() async {
-    String requestString = jsonEncode({
-      "services": [
-        {
-          "so:name": "Search Field Trials",
-          "start_service": true,
-          "parameter_set": {
-            "level": "simple",
-            "parameters": [
-              {"param": "FT Keyword Search", "current_value": ""},
-              {"param": "FT Study Facet", "current_value": true},
-              {"param": "FT Results Page Number", "current_value": 0},
-              {"param": "FT Results Page Size", "current_value": 500}
-            ]
-          }
-        }
-      ]
+  void fetchStudies() async {
+    setState(() {
+      isLoading = true;
     });
 
     try {
-      var response = await GrassrootsRequest.sendRequest(requestString, 'public');
+      var studiesData = await QRCodeService.fetchAllStudies();
       setState(() {
-        studies = response['results'][0]['results'].map<Map<String, String>>((study) {
-          // Ensure that both 'name' and 'id' are non-null and are Strings
-          String name = study['title'] as String? ?? 'Unknown Study';
-          String id = study['data']['_id']['\$oid'] as String? ?? 'Unknown ID';
-          String parent_programme = study['data']['parent_program']['so:name'] as String? ?? 'Unknown Programme';
-          String address_name = study['data']['address']['name'] as String? ?? 'Unknown Address';
-          String field_trial = study['data']['parent_field_trial']['so:name'] as String? ?? 'Unknown Field Trial';
-          return {
-            'name': name,
-            'id': id,
-            'parent_programme': parent_programme,
-            'address_name': address_name,
-            'field_trial': field_trial
-          };
-        }).toList();
+        studies = studiesData;
         isLoading = false;
       });
     } catch (e) {
@@ -71,28 +42,6 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
         isLoading = false;
       });
     }
-  }
-
-  Future<Map<String, dynamic>> fetchSingleStudy(String studyId) async {
-    String requestString = jsonEncode({
-      "services": [
-        {
-          "so:name": "Search Field Trials",
-          "start_service": true,
-          "parameter_set": {
-            "level": "advanced",
-            "parameters": [
-              {"param": "ST Id", "current_value": studyId},
-              {"param": "Get all Plots for Study", "current_value": true},
-              {"param": "ST Search Studies", "current_value": true}
-            ]
-          }
-        }
-      ]
-    });
-
-    var response = await GrassrootsRequest.sendRequest(requestString, 'public');
-    return response;
   }
 
   @override
@@ -121,7 +70,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                             });
 
                             try {
-                              var studyDetails = await fetchSingleStudy(newValue!);
+                              var studyDetails = await QRCodeService.fetchSingleStudy(newValue!);
 
                               // Check if 'plots' exists and is not null
                               if (studyDetails['results'][0]['results'][0]['data'].containsKey('plots') &&
