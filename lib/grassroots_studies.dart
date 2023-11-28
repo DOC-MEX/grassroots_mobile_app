@@ -81,16 +81,10 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                             try {
                               var studyDetails = await QRCodeService.fetchSingleStudy(newValue!);
 
-                              //setState(() {
-                              //  fetchedStudyDetails = studyDetails; // Store the fetched details
-                              //});
-
                               // Check if 'plots' exists and is not null
                               if (studyDetails['results'][0]['results'][0]['data'].containsKey('plots') &&
                                   studyDetails['results'][0]['results'][0]['data']['plots'] != null) {
                                 var plots = studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
-                                //List<String> tempPlotIDs = [];
-                                //List<String> tempPlotDisplayValues = []; // Will hold plot indices for display
                                 int nPlots = 0;
 
                                 for (var plot in plots) {
@@ -100,20 +94,29 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                       String plotID = row['_id']['\$oid'];
                                       String plotIndex = row['study_index']
                                           .toString(); // Assuming study_index is the value you want to display
-                                      //tempPlotIDs.add(plotID);
-                                      //tempPlotDisplayValues.add(plotIndex);
                                       plotIDs.add(plotID);
                                       plotDisplayValues.add(plotIndex);
                                       nPlots++;
                                     }
                                   }
                                 }
+                                // REORGANIZE THE PLOT IDS AND PLOT DISPLAY VALUES
+                                // Step 1: Combine plotIDs and plotDisplayValues into a list of MapEntry
+                                var combinedList = List<MapEntry<String, String>>.generate(
+                                  plotIDs.length,
+                                  (index) => MapEntry(plotIDs[index], plotDisplayValues[index]),
+                                );
+
+                                // Step 2: Sort based on plotDisplayValues
+                                combinedList.sort((a, b) => int.parse(a.value).compareTo(int.parse(b.value)));
+                                // Step 3: Extract back into separate lists
+                                plotIDs = combinedList.map((e) => e.key).toList();
+                                plotDisplayValues = combinedList.map((e) => e.value).toList();
+
                                 // Update the state with the number of plots and their IDs
                                 setState(() {
                                   numberOfPlots = nPlots;
                                   fetchedStudyDetails = studyDetails; // Store the fetched details
-                                  //plotIDs = tempPlotIDs; // Update class-level variable
-                                  //plotDisplayValues = tempPlotDisplayValues; // Update class-level variable
                                 });
 
                                 print('Number of Plots: $nPlots');
@@ -137,7 +140,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                               print('Study Description: $studyDescription');
                               print('Study Programme: $programme');
                             } catch (e) {
-                              print('Error fetching study details: $e');
+                              print('**Error fetching study details: $e');
                             } finally {
                               setState(() {
                                 isSingleStudyLoading = false; // Ensure loading is stopped in all cases

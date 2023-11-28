@@ -122,12 +122,16 @@ class QRCodeService {
 
     try {
       var response = await GrassrootsRequest.sendRequest(requestString, 'public');
-      return response['results'][0]['results'].map<Map<String, String>>((study) {
+      List<Map<String, String>> studies = response['results'][0]['results'].map<Map<String, String>>((study) {
         String name = study['title'] as String? ?? 'Unknown Study';
         String id = study['data']['_id']['\$oid'] as String? ?? 'Unknown ID';
-        // Add other fields if necessary
         return {'name': name, 'id': id};
       }).toList();
+
+      // Sort studies alphabetically by name
+      studies.sort((a, b) => a['name']!.compareTo(b['name']!));
+
+      return studies;
     } catch (e) {
       print('Error fetching studies: $e');
       // Optionally, handle the error in a specific way or rethrow it
@@ -153,7 +157,6 @@ class QRCodeService {
         }
       ]
     });
-
     return await GrassrootsRequest.sendRequest(requestString, 'public');
   }
 }
