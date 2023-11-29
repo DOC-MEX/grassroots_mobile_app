@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'qr_code_service.dart';
+import 'study_details_widget.dart';
+import 'new_observation.dart';
 
 class GrassrootsStudies extends StatefulWidget {
   @override
@@ -21,7 +23,9 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
   List<String> plotIDs = [];
   List<String> plotDisplayValues = [];
   String? selectedPlotDisplayValue;
+  int observationCount = 0;
   Map<String, dynamic>? fetchedStudyDetails;
+  Map<String, dynamic>? selectedPlot;
 
   @override
   void initState() {
@@ -76,6 +80,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                               plotDisplayValues.clear();
                               selectedPlotId = null; // Also reset the selected plot ID
                               selectedPlotDisplayValue = null;
+                              observationCount = 0;
                             });
 
                             try {
@@ -162,45 +167,29 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                         SizedBox(height: 20),
                         // Display study details
                         if (studyTitle != null) ...[
-                          Text(
-                            '$studyTitle',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          StudyDetailsWidget(
+                            studyTitle: studyTitle!,
+                            studyDescription: studyDescription ?? 'Not available',
+                            programme: programme ?? 'Not available',
+                            address: address ?? 'Not available',
+                            FTrial: FTrial ?? 'Not available',
+                            numberOfPlots: numberOfPlots,
+                            observationCount: observationCount,
+                            selectedPlotId: selectedPlotId ?? '',
+                            selectedPlotDetails: selectedPlot ?? {},
+                            onAddObservation: (Map<String, dynamic> plotDetails) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => NewObservationPage(
+                                    studyDetails: fetchedStudyDetails!,
+                                    plotId: selectedPlotId!,
+                                    plotDetails: selectedPlot ?? {},
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                          SizedBox(height: 10),
-                          if (studyDescription != null && studyDescription!.isNotEmpty) ...[
-                            Text(
-                              'Description: $studyDescription',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                            SizedBox(height: 10),
-                          ],
-                          if (programme != null && programme!.isNotEmpty) ...[
-                            Text(
-                              'Programme: $programme',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ],
-                          SizedBox(height: 10),
-                          if (FTrial != null && FTrial!.isNotEmpty) ...[
-                            Text(
-                              'Field Trial: $FTrial',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ],
-                          SizedBox(height: 10),
-                          if (address != null && address!.isNotEmpty) ...[
-                            Text(
-                              'Address: $address',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ],
-                          SizedBox(height: 10),
-                          if (numberOfPlots > 0) ...[
-                            Text(
-                              'Number of Plots: $numberOfPlots',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ],
                           SizedBox(height: 20),
                           if (plotDisplayValues.isNotEmpty) ...[
                             DropdownButtonFormField<String>(
@@ -219,19 +208,21 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                         as List<dynamic>;
 
                                     // Find the plot that matches the selectedPlotId
-                                    var selectedPlot = plots.firstWhere(
+                                    selectedPlot = plots.firstWhere(
                                       (plot) =>
                                           plot['rows'] != null && plot['rows'][0]['_id']['\$oid'] == selectedPlotId,
                                       orElse: () => null,
                                     );
 
                                     if (selectedPlot != null) {
-                                      // Count the number of observations
-                                      var observationCount = selectedPlot['rows'][0]['observations'] != null
-                                          ? selectedPlot['rows'][0]['observations'].length
-                                          : 0;
-
-                                      print('Number of Observations in the selected plot: $observationCount');
+                                      // Since we've checked for null, it's safe to use '!'
+                                      var observations = selectedPlot!['rows'][0]['observations'];
+                                      if (observations != null) {
+                                        var count = observations.length;
+                                        observationCount = count;
+                                      } else {
+                                        observationCount = 0;
+                                      }
                                     }
                                   }
                                 });
@@ -250,12 +241,14 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                             if (selectedPlotDisplayValue != null) ...[
                               SizedBox(height: 10),
                               Text(
-                                'Selected plot: $selectedPlotDisplayValue',
+                                'Selected plot index: $selectedPlotDisplayValue',
                                 style: TextStyle(fontSize: 16),
                               ),
+                              SizedBox(height: 10),
+                              Text('Number of observations: $observationCount'),
                             ],
                           ],
-                        ],
+                        ], // IF studyTitle is not null
                       ],
                     ),
             ),
