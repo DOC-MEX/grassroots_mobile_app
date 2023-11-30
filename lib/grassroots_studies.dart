@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'qr_code_service.dart';
 import 'study_details_widget.dart';
 import 'new_observation.dart';
+import 'table_observations.dart';
 
 class GrassrootsStudies extends StatefulWidget {
   @override
@@ -28,9 +29,9 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
   Map<String, dynamic>? selectedPlot;
   String? selectedPhenotype;
   Map<String, String> traits = {};
+  Map<String, String> units = {};
   List<String> variableNames = [];
   List<String> traitNames = [];
-  //List<DropdownMenuItem<String>> phenotypeMenuItems = [];
 
   @override
   void initState() {
@@ -57,6 +58,59 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
     }
   }
 
+//////////////////////////////////////////////////////////
+// SIMPLE Function to find and process observations
+  void processSelectedPhenotype() {
+    // Check if both selectedPlot and selectedPhenotype are available
+    if (selectedPlot != null && selectedPhenotype != null) {
+      List<dynamic> observations = selectedPlot!['rows'][0]['observations'];
+
+      // List to store the raw values
+      List<double> rawValues = [];
+
+      // Iterate over observations
+      for (var observation in observations) {
+        if (observation['phenotype'] != null && observation['phenotype']['variable'] == selectedPhenotype) {
+          // If it matches the selected phenotype, extract the raw value
+          double rawValue = observation['raw_value']?.toDouble() ?? 0.0;
+          rawValues.add(rawValue);
+        }
+      }
+
+      // For now, let's just print it
+      print('Raw values for $selectedPhenotype: $rawValues');
+    }
+  }
+
+  //////////////////////////////////////////////////////////
+  List<Map<String, dynamic>> findRawValuesForSelectedPhenotype() {
+    List<Map<String, dynamic>> matchingObservations = [];
+    List<dynamic> observations = selectedPlot!['rows'][0]['observations'];
+
+    for (var observation in observations) {
+      if (observation['phenotype'] != null && observation['phenotype']['variable'] == selectedPhenotype) {
+        //print('Matched observation for phenotype: $selectedPhenotype');
+        String formattedDate = '';
+        if (observation['date'] != null) {
+          try {
+            DateTime date = DateTime.parse(observation['date']);
+            formattedDate =
+                '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+          } catch (e) {
+            print('Error parsing date: $e');
+          }
+        }
+        matchingObservations.add({
+          'raw_value': observation['raw_value'],
+          'date': formattedDate,
+          'notes': observation['notes'] ?? '',
+        });
+      }
+    }
+    return matchingObservations;
+  }
+
+//////////////////////////////////////////////////////////
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,7 +166,6 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                 }
 
                                 // Create the traits dictionary
-                                //Map<String, String> traits = {};
                                 if (studyDetails['results'][0]['results'][0]['data'].containsKey('phenotypes')) {
                                   var phenotypes = studyDetails['results'][0]['results'][0]['data']['phenotypes']
                                       as Map<String, dynamic>;
@@ -123,9 +176,11 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                       String variableName = definition['variable']['so:name'];
                                       String traitName = definition['trait']['so:name'];
                                       traits[variableName] = traitName;
+                                      units[variableName] = definition['unit']['so:name'];
                                     }
                                   });
                                   print('dictionary of traits: $traits');
+                                  //print('dictionary of units: $units');
                                 }
 
                                 // REORGANIZE THE PLOT IDS AND PLOT DISPLAY VALUES
@@ -254,9 +309,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                               observation['phenotype'].containsKey('variable')) {
                                             String variable = observation['phenotype']['variable'];
                                             variableNames.add(variable);
-                                            //print(
-                                            //    'Checking variable: $variable in traits: ${traits.containsKey(variable)}');
-                                            // Add print statement for debugging
+
                                             print(
                                                 'Variable: $variable, Exists in traits: ${traits.containsKey(variable)}');
                                             // Check if the trait exists for this variable and create a DropdownMenuItem
@@ -298,7 +351,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                               SizedBox(height: 10),
                               Text('Number of observations: $observationCount'),
                             ],
-                          ], // IF plotDisplayValues is not empty (SELECTED PLOT DROPDOWN)
+                          ], // enf if (plotDisplayValues is not empty) SELECTED PLOT DROPDOWN
                           SizedBox(height: 20),
                           if (observationCount > 0) ...[
                             DropdownButtonFormField<String>(
@@ -309,7 +362,42 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                 setState(() {
                                   selectedPhenotype = newValue;
                                 });
-                                // Additional logic for when a phenotype is selected
+                                //processSelectedPhenotype();
+                                List<Map<String, dynamic>> rawValues = findRawValuesForSelectedPhenotype();
+                                // Display the dialog with the ObservationTable
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    // find selectedphenotype in units and assign it to displayUnit
+                                    String displayUnit = 'Some Unit'; //
+                                    if (units.containsKey(selectedPhenotype)) {
+                                      displayUnit = units[selectedPhenotype]!;
+                                    }
+                                    // find selectedphenotype in traits and assign it to displayTrait
+                                    String displayTrait = 'Some trait';
+                                    if (traits.containsKey(selectedPhenotype)) {
+                                      displayTrait = traits[selectedPhenotype]!;
+                                    }
+
+                                    return Dialog(
+                                      child: Container(
+                                        padding: EdgeInsets.all(20.0),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(displayTrait,
+                                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                            SizedBox(height: 20),
+                                            if (rawValues.isEmpty)
+                                              Text('No Data Found')
+                                            else
+                                              ObservationTable(rawValues: rawValues, displayUnit: displayUnit),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ); // End of showDialog
                               },
                               items: List<DropdownMenuItem<String>>.generate(
                                 variableNames.length,
