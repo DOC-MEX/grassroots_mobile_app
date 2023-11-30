@@ -26,6 +26,11 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
   int observationCount = 0;
   Map<String, dynamic>? fetchedStudyDetails;
   Map<String, dynamic>? selectedPlot;
+  String? selectedPhenotype;
+  Map<String, String> traits = {};
+  List<String> variableNames = [];
+  List<String> traitNames = [];
+  //List<DropdownMenuItem<String>> phenotypeMenuItems = [];
 
   @override
   void initState() {
@@ -105,6 +110,24 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                     }
                                   }
                                 }
+
+                                // Create the traits dictionary
+                                //Map<String, String> traits = {};
+                                if (studyDetails['results'][0]['results'][0]['data'].containsKey('phenotypes')) {
+                                  var phenotypes = studyDetails['results'][0]['results'][0]['data']['phenotypes']
+                                      as Map<String, dynamic>;
+
+                                  phenotypes.forEach((key, value) {
+                                    if (value.containsKey('definition')) {
+                                      var definition = value['definition'];
+                                      String variableName = definition['variable']['so:name'];
+                                      String traitName = definition['trait']['so:name'];
+                                      traits[variableName] = traitName;
+                                    }
+                                  });
+                                  print('dictionary of traits: $traits');
+                                }
+
                                 // REORGANIZE THE PLOT IDS AND PLOT DISPLAY VALUES
                                 // Step 1: Combine plotIDs and plotDisplayValues into a list of MapEntry
                                 var combinedList = List<MapEntry<String, String>>.generate(
@@ -202,6 +225,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                   int index = plotIDs.indexOf(newValue!);
                                   if (index != -1) {
                                     selectedPlotDisplayValue = plotDisplayValues[index];
+                                    selectedPhenotype = null;
                                     ///////////// Additional logic when a plot is selected /////
                                     /// Example: Count the number of observations in the selected plot
                                     var plots = fetchedStudyDetails!['results'][0]['results'][0]['data']['plots']
@@ -220,6 +244,33 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                       if (observations != null) {
                                         var count = observations.length;
                                         observationCount = count;
+                                        //  **********lists for phenotypes dropdown menu********
+                                        //List<String> variableNames = []; # make it class level to use it in other places
+                                        variableNames.clear();
+                                        traitNames.clear();
+
+                                        for (var observation in observations) {
+                                          if (observation.containsKey('phenotype') &&
+                                              observation['phenotype'].containsKey('variable')) {
+                                            String variable = observation['phenotype']['variable'];
+                                            variableNames.add(variable);
+                                            //print(
+                                            //    'Checking variable: $variable in traits: ${traits.containsKey(variable)}');
+                                            // Add print statement for debugging
+                                            print(
+                                                'Variable: $variable, Exists in traits: ${traits.containsKey(variable)}');
+                                            // Check if the trait exists for this variable and create a DropdownMenuItem
+                                            if (traits.containsKey(variable)) {
+                                              traitNames.add(traits[variable]!);
+                                            }
+                                          }
+                                        }
+
+                                        // Remove duplicates
+                                        variableNames = variableNames.toSet().toList();
+                                        traitNames = traitNames.toSet().toList();
+                                        print('Variable Names: $variableNames');
+                                        print('TRAIT Names: $traitNames');
                                       } else {
                                         observationCount = 0;
                                       }
@@ -247,6 +298,32 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                               SizedBox(height: 10),
                               Text('Number of observations: $observationCount'),
                             ],
+                          ], // IF plotDisplayValues is not empty (SELECTED PLOT DROPDOWN)
+                          SizedBox(height: 20),
+                          if (observationCount > 0) ...[
+                            DropdownButtonFormField<String>(
+                              isExpanded: true,
+                              value: selectedPhenotype,
+                              hint: Text("Select phenotype"),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  selectedPhenotype = newValue;
+                                });
+                                // Additional logic for when a phenotype is selected
+                              },
+                              items: List<DropdownMenuItem<String>>.generate(
+                                variableNames.length,
+                                (index) => DropdownMenuItem<String>(
+                                  value: variableNames[index],
+                                  child: Text(
+                                    traitNames[index],
+                                    overflow: TextOverflow.ellipsis, // Use ellipsis for text overflow
+                                    softWrap: false, // Prevents text wrapping onto the next line
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 20),
                           ],
                         ], // IF studyTitle is not null
                       ],
