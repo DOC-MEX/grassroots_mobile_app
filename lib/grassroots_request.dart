@@ -4,14 +4,15 @@ import 'package:http/http.dart' as http;
 class GrassrootsRequest {
   // Updated to include a map of servers for flexibility
   static const Map<String, String> _serverUrls = {
-    'public': 'https://grassroots.tools/public_backend',
+    'public': 'https://grassroots.tools/dev/grassroots/public_backend',
+    //'public': 'https://grassroots.tools/public_backend',
     'private': 'https://grassroots.tools/private_backend',
     'queen_bee_backend': 'https://grassroots.tools/queen_bee_backend'
   };
 
   // Assuming 'doc' and 'PASSWORDTEST' are placeholders for the real credentials
   static const String _username = 'doc';
-  static const String _password = 'NOT ACTUAL PASSWORD';
+  static const String _password = 'PASSWORDTEST';
 
   static Future<Map<String, dynamic>> sendRequest(String requestString, String serverKey) async {
     // Determine the URL based on the serverKey provided

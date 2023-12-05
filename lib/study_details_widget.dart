@@ -38,6 +38,7 @@ class StudyDetailsWidget extends StatelessWidget {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 10),
+
         Text(
           'Description: ${studyDescription.isNotEmpty ? studyDescription : 'Not available'}',
           style: TextStyle(fontSize: 16),

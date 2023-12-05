@@ -111,6 +111,39 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
   }
 
 //////////////////////////////////////////////////////////
+// Function to show the study details dialog
+  void _showStudyDetailsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(studyTitle!),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Description: ${studyDescription ?? 'Not available'}'),
+                Text('Programme: ${programme ?? 'Not available'}'),
+                Text('Address: ${address ?? 'Not available'}'),
+                Text('Field Trial: ${FTrial ?? 'Not available'}'),
+                Text('Number of Plots: $numberOfPlots'),
+                // Other details...
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+//////////////////////////////////////////////////////////
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -243,32 +276,34 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                           }).toList(),
                         ),
                         SizedBox(height: 20),
-                        // Display study details
+                        //__________Display study details______________
                         if (studyTitle != null) ...[
-                          StudyDetailsWidget(
-                            studyTitle: studyTitle!,
-                            studyDescription: studyDescription ?? 'Not available',
-                            programme: programme ?? 'Not available',
-                            address: address ?? 'Not available',
-                            FTrial: FTrial ?? 'Not available',
-                            numberOfPlots: numberOfPlots,
-                            observationCount: observationCount,
-                            selectedPlotId: selectedPlotId ?? '',
-                            selectedPlotDetails: selectedPlot ?? {},
-                            onAddObservation: (Map<String, dynamic> plotDetails) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => NewObservationPage(
-                                    studyDetails: fetchedStudyDetails!,
-                                    plotId: selectedPlotId!,
-                                    plotDetails: selectedPlot ?? {},
-                                  ),
-                                ),
-                              );
-                            },
+                          // Button to open the details dialog
+                          TextButton(
+                            onPressed: () => _showStudyDetailsDialog(context),
+                            child: Text('View Study Details'),
                           ),
                           SizedBox(height: 20),
+                          // Add New Observation Button
+                          if (selectedPlotId?.isNotEmpty == true)
+                            ElevatedButton(
+                              onPressed: () {
+                                // Use Navigator to push NewObservationPage with the required details
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => NewObservationPage(
+                                      studyDetails: fetchedStudyDetails!,
+                                      plotId: selectedPlotId!,
+                                      plotDetails: selectedPlot ?? {},
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Text('Add New Observation'),
+                            ),
+                          SizedBox(height: 20),
+
                           if (plotDisplayValues.isNotEmpty) ...[
                             DropdownButtonFormField<String>(
                               isExpanded: true,
