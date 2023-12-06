@@ -97,8 +97,19 @@ class _NewObservationPageState extends State<NewObservationPage> {
                       // _inputType = TextInputType.datetime;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Enter number of days or select a date'),
                           duration: Duration(seconds: 3),
+                          content: Row(
+                            children: [
+                              Icon(Icons.warning_amber_rounded, color: Colors.yellow),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  "Enter number of days or select a date",
+                                  style: TextStyle(fontSize: 16.0),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     } // else {
@@ -123,6 +134,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
               ),
               SizedBox(height: 20),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.end, // Align the TextFormField and Text vertically
                 children: [
                   Expanded(
                     child: TextFormField(
@@ -141,15 +153,38 @@ class _NewObservationPageState extends State<NewObservationPage> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter a value';
                         }
-                        // Additional validation based on selected trait can be added here
+                        if (units[selectedTraitKey] == '%') {
+                          final num? numberValue = num.tryParse(value);
+                          if (numberValue == null) {
+                            return 'Please enter a valid number';
+                          }
+                          if (numberValue < 0 || numberValue > 100) {
+                            return 'Value must be between 0 and 100';
+                          }
+                        }
+                        // Additional validation based on selected trait...
                         return null;
                       },
                     ),
                   ),
+                  // Conditionally display the unit next to the TextFormField
+                  if (units[selectedTraitKey] != null && units[selectedTraitKey]!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Text(
+                        units[selectedTraitKey] ?? '', // Display the unit
+                        style: TextStyle(fontSize: 16), // Adjust styling as needed
+                      ),
+                    ),
+
                   if (units[selectedTraitKey] == 'day')
-                    IconButton(
-                      icon: Icon(Icons.calendar_today),
-                      onPressed: () => _selectDate(context),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0), // Add padding to left and right
+                      child: IconButton(
+                        icon: Icon(Icons.calendar_today),
+                        onPressed: () => _selectDate(context),
+                        iconSize: 30,
+                      ),
                     ),
                 ],
               ),
