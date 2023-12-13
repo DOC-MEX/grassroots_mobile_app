@@ -30,27 +30,26 @@ class _NewObservationPageState extends State<NewObservationPage> {
   DateTime? selectedDate;
   File? _image;
   String? studyID;
+  int? plotNumber;
 
   @override
   void initState() {
     super.initState();
     _extractPhenotypeDetails();
-    //_extractStudyID();
   }
-
-  //void _extractStudyID() {
-  //  // Extract the studyID
-  //  print("TEST ${widget.studyDetails['results'][0]['results'][0]['data']}");
-  //  try {
-  //    studyID = widget.studyDetails['results'][0]['results'][0]['data']['_id']['\$oid'];
-  //    print('Extracted Study ID: $studyID');
-  // } catch (e) {
-  //    print('Error extracting Study ID: $e');
-  //  }
-  //}
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
+
+  // Function to pick an image from the gallery
+  Future<void> _pickImageFromGallery() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -64,7 +63,17 @@ class _NewObservationPageState extends State<NewObservationPage> {
       var request = http.MultipartRequest('POST', uri);
 
       // Attach the image file
-      request.files.add(await http.MultipartFile.fromPath('image', _image!.path));
+      //request.files.add(await http.MultipartFile.fromPath('image', _image!.path));
+
+      // Generate the new filename using plotNumber
+      String newFileName = 'photo_plot_${plotNumber.toString()}.jpg'; // Assuming the image is a JPEG file
+
+      // Attach the image file with the new filename
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        _image!.path,
+        filename: newFileName,
+      ));
 
       // Add the subfolder field
       request.fields['subfolder'] = studyID ?? 'defaultFolder';
@@ -115,9 +124,16 @@ class _NewObservationPageState extends State<NewObservationPage> {
     // Extract the studyID
     try {
       studyID = widget.studyDetails['results'][0]['results'][0]['data']['_id']['\$oid'];
-      print('Extracted Study ID: $studyID');
+      //  print('Extracted Study ID: $studyID');
     } catch (e) {
       print('Error extracting Study ID: $e');
+    }
+    //Extract the plotNumber (['study_index'])
+    try {
+      plotNumber = widget.plotDetails['rows'][0]['study_index'];
+      print('Extracted Plot Number: $plotNumber');
+    } catch (e) {
+      print('Error extracting Plot Number: $e');
     }
   }
 
@@ -310,13 +326,30 @@ class _NewObservationPageState extends State<NewObservationPage> {
                   },
                   child: Text('Submit Observation'),
                 ),
+                ////////////////////////////////////////////////////////
                 SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    _pickImage();
-                  },
-                  child: Text('Take a picture'),
+                // put take picture button and select from gallery button in the same row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _pickImage();
+                        },
+                        child: Text('Take a picture'),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _pickImageFromGallery,
+                        child: Text('Select from gallery'),
+                      ),
+                    ),
+                  ],
                 ),
+                ////////////////////////////////////////////////////////
                 // Conditional rendering of the image and the upload button
                 if (_image != null)
                   Container(

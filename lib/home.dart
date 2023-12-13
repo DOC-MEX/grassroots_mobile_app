@@ -185,7 +185,13 @@ class _HomePageState extends State<HomePage> {
                       MaterialPageRoute(builder: (context) => GrassrootsStudies()),
                     );
                   },
-                  child: Text('Browse all studies'),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 6), // Adjust the padding here
+                  ),
+                  child: Text(
+                    'Browse \n all studies',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             ),
