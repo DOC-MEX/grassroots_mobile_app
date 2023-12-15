@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'dart:typed_data';
+import 'full_size_image_screen.dart';
 
 class NewObservationPage extends StatefulWidget {
   final Map<String, dynamic> studyDetails;
@@ -365,6 +366,9 @@ class _NewObservationPageState extends State<NewObservationPage> {
                 ////////////////////////////////////////////////////////
                 SizedBox(height: 20),
                 // put take picture button and select from gallery button in the same row
+
+                ////////////////////////////////////////////////////////
+                // Conditional rendering of the image and the upload button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -380,27 +384,60 @@ class _NewObservationPageState extends State<NewObservationPage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: _pickImageFromGallery,
-                        child: Text('Select from gallery'),
+                        child: Text(
+                          'Select from gallery',
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                ////////////////////////////////////////////////////////
-                // Conditional rendering of the image and the upload button
+                // Conditional rendering of the image with Hero for expanding
                 if (_image != null)
-                  Container(
-                    height: 200,
-                    width: double.infinity, // Adjust width as needed
-                    child: Image.file(_image!, fit: BoxFit.cover),
+                  GestureDetector(
+                    onTap: () {
+                      // When the user taps on the image, navigate to a new screen with the full-size image
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => FullSizeImageScreenFile(imageFile: _image),
+                        ),
+                      );
+                    },
+                    child: Hero(
+                      tag: 'imageHero', // Unique tag for the Hero widget
+                      child: Container(
+                        height: 200,
+                        width: double.infinity,
+                        child: Image.file(_image!, fit: BoxFit.cover),
+                      ),
+                    ),
                   ),
-                ///////////////////////////////////////////////
-                // Conditional rendering retrieved image
+                // Conditional rendering retrieved image (if needed)
                 if (_imageBytes != null)
-                  Container(
-                    height: 200,
-                    width: double.infinity, // Adjust width as needed
-                    child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                  GestureDetector(
+                    onTap: () {
+                      // When the user taps on the image, navigate to a new screen with the full-size image
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => FullSizeImageScreenUint8List(imageBytes: _imageBytes),
+                        ),
+                      );
+                    },
+                    child: Hero(
+                      tag: 'imageHero', // Unique tag for the Hero widget
+                      child: Container(
+                        height: 200,
+                        width: double.infinity,
+                        child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                      ),
+                    ),
                   ),
+                //  Container(
+                //    height: 200,
+                //    width: double.infinity,
+                //    child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                //  ),
+                ///////////////////////////////////////////////
                 ///////////////////////////////////////////
                 if (_image != null)
                   ElevatedButton(
