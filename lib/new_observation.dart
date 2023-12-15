@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
+import 'dart:typed_data';
 
 class NewObservationPage extends StatefulWidget {
   final Map<String, dynamic> studyDetails;
@@ -31,11 +32,14 @@ class _NewObservationPageState extends State<NewObservationPage> {
   File? _image;
   String? studyID;
   int? plotNumber;
+  Uint8List? _imageBytes;
 
   @override
   void initState() {
     super.initState();
     _extractPhenotypeDetails();
+    // Attempt to retrieve the photo when the page loads
+    _retrievePhoto();
   }
 
   Future<void> _pickImage() async {
@@ -43,6 +47,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
+        _imageBytes = null; // Reset the retrieved image
       });
     }
   }
@@ -53,17 +58,16 @@ class _NewObservationPageState extends State<NewObservationPage> {
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
+        _imageBytes = null; // Reset the retrieved image
       });
     }
   }
 
+// Function to upload the image to the server
   Future<void> _uploadImage() async {
     try {
       var uri = Uri.parse('https://grassroots.tools/photo_receiver/upload/');
       var request = http.MultipartRequest('POST', uri);
-
-      // Attach the image file
-      //request.files.add(await http.MultipartFile.fromPath('image', _image!.path));
 
       // Generate the new filename using plotNumber
       String newFileName = 'photo_plot_${plotNumber.toString()}.jpg'; // Assuming the image is a JPEG file
@@ -98,6 +102,38 @@ class _NewObservationPageState extends State<NewObservationPage> {
         SnackBar(content: Text('Error: $e')),
       );
       //print error
+      print('Error: $e');
+    }
+  }
+
+  // Function to retrieve the photo from the server
+  Future<void> _retrievePhoto() async {
+    try {
+      // Define the subfolder name and photo name based on studyID and plotNumber
+      String subfolder = studyID ?? 'defaultFolder';
+      String photoName = 'photo_plot_${plotNumber.toString()}.jpg';
+
+      // Create the API URL for retrieving the photo
+      var apiUrl = Uri.parse('https://grassroots.tools/photo_receiver/retrieve_photo/$subfolder/$photoName');
+
+      // Send a GET request to retrieve the photo
+      var response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        // Directly display the image from the response
+        setState(() {
+          _imageBytes = response.bodyBytes; // Store the image bytes
+        });
+      } else {
+        // Photo not found, show an error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('plot has no photo')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
       print('Error: $e');
     }
   }
@@ -357,6 +393,15 @@ class _NewObservationPageState extends State<NewObservationPage> {
                     width: double.infinity, // Adjust width as needed
                     child: Image.file(_image!, fit: BoxFit.cover),
                   ),
+                ///////////////////////////////////////////////
+                // Conditional rendering retrieved image
+                if (_imageBytes != null)
+                  Container(
+                    height: 200,
+                    width: double.infinity, // Adjust width as needed
+                    child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                  ),
+                ///////////////////////////////////////////
                 if (_image != null)
                   ElevatedButton(
                     onPressed: _uploadImage,
