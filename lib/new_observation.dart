@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'dart:typed_data';
 import 'full_size_image_screen.dart';
+import 'dart:convert';
+import 'grassroots_request.dart';
 
 class NewObservationPage extends StatefulWidget {
   final Map<String, dynamic> studyDetails;
@@ -29,6 +31,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
   String? selectedTraitKey;
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _textEditingController = TextEditingController();
+  final TextEditingController _notesEditingController = TextEditingController();
   DateTime? selectedDate;
   File? _image;
   String? studyID;
@@ -188,6 +191,92 @@ class _NewObservationPageState extends State<NewObservationPage> {
     }
   }
 
+  ////////// request for submitting observation //////////
+  String createGrassrootsRequest({
+    required String detectedQRCode,
+    required String? selectedTrait,
+    required String measurement,
+    required String dateString,
+    String? note,
+  }) {
+    final requestMap = {
+      "services": [
+        {
+          "so:name": "Edit Field Trial Rack",
+          "start_service": true,
+          "parameter_set": {
+            "level": "simple",
+            "parameters": [
+              {"param": "RO Id", "current_value": detectedQRCode, "group": "Plot"},
+              {"param": "RO Append Observations", "current_value": true, "group": "Plot"},
+              {
+                "param": "RO Measured Variable Name",
+                "current_value": [selectedTrait],
+                "group": "Phenotypes"
+              },
+              {
+                "param": "RO Phenotype Raw Value",
+                "current_value": [measurement],
+                "group": "Phenotypes"
+              },
+              {
+                "param": "RO Phenotype Corrected Value",
+                "current_value": [null],
+                "group": "Phenotypes"
+              },
+              {
+                "param": "RO Phenotype Start Date",
+                "current_value": [dateString],
+                "group": "Phenotypes"
+              },
+              {
+                "param": "RO Phenotype End Date",
+                "current_value": [null],
+                "group": "Phenotypes"
+              },
+              {
+                "param": "RO Observation Notes",
+                "current_value": note != null ? [note] : [null],
+                "group": "Phenotypes"
+              },
+            ]
+          }
+        }
+      ]
+    };
+
+    // Convert map to a JSON string
+    return jsonEncode(requestMap);
+  }
+
+////////// request for clearing cache //////////
+  String clearCacheRequest(String studyID) {
+    final Map<String, dynamic> request = {
+      "services": [
+        {
+          "start_service": true,
+          "so:alternateName": "field_trial-manage_study",
+          "parameter_set": {
+            "level": "simple",
+            "parameters": [
+              {"param": "ST Id", "current_value": studyID},
+              {"param": "SM uuid", "current_value": studyID},
+              {"param": "SM clear cached study", "current_value": true},
+              {"param": "SM indexer", "current_value": "<NONE>"},
+              {"param": "SM Delete study", "current_value": false},
+              {"param": "SM Remove Study Plots", "current_value": false},
+              {"param": "SM Generate FD Packages", "current_value": false},
+              {"param": "SM Generate Handbook", "current_value": false},
+              {"param": "SM Generate Phenotypes", "current_value": false},
+            ]
+          }
+        }
+      ]
+    };
+
+    return json.encode(request);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,19 +347,23 @@ class _NewObservationPageState extends State<NewObservationPage> {
                     Expanded(
                       child: TextFormField(
                         controller: _textEditingController,
-                        keyboardType: (units[selectedTraitKey] == 'day')
-                            ? TextInputType.number
-                            : TextInputType.numberWithOptions(decimal: true),
+                        readOnly: units[selectedTraitKey] == 'yyyymmdd', // Make field read-only when unit is 'yyyymmdd'
+                        keyboardType: units[selectedTraitKey] == 'day' ? TextInputType.number : TextInputType.datetime,
                         decoration: InputDecoration(
-                          labelText: 'Enter value',
-                          hintText: (units[selectedTraitKey] == 'day')
-                              ? 'Enter number of days or select a date'
-                              : 'Enter value',
+                          labelText: units[selectedTraitKey] == 'yyyymmdd' ? 'Select date' : 'Enter value',
+                          hintText: units[selectedTraitKey] == 'yyyymmdd' ? 'Select a date' : 'Enter value',
                           border: OutlineInputBorder(),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a value';
+                          }
+                          if (units[selectedTraitKey] == 'yyyymmdd') {
+                            try {
+                              DateFormat('yyyy-MM-dd').parse(value); // Check if value is in 'yyyy-MM-dd' format
+                            } catch (e) {
+                              return 'Please enter a date in the format YYYY-MM-DD';
+                            }
                           }
                           if (units[selectedTraitKey] == '%') {
                             final num? numberValue = num.tryParse(value);
@@ -281,9 +374,18 @@ class _NewObservationPageState extends State<NewObservationPage> {
                               return 'Value must be between 0 and 100';
                             }
                           }
+                          if (units[selectedTraitKey] == 'day') {
+                            final int? intValue = int.tryParse(value);
+                            if (intValue == null || intValue <= 0) {
+                              return 'Please enter a positive integer';
+                            }
+                          }
                           // Additional validation based on selected trait...
                           return null;
                         },
+                        onTap: units[selectedTraitKey] == 'yyyymmdd'
+                            ? () => _selectDate(context)
+                            : null, // Open date picker if unit is 'yyyymmdd'
                       ),
                     ),
                     // Conditionally display the unit next to the TextFormField
@@ -295,10 +397,10 @@ class _NewObservationPageState extends State<NewObservationPage> {
                           style: TextStyle(fontSize: 16), // Adjust styling as needed
                         ),
                       ),
-
-                    if (units[selectedTraitKey] == 'day')
+                    // Display the date picker icon only for 'yyyymmdd' unit
+                    if (units[selectedTraitKey] == 'yyyymmdd')
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0), // Add padding to left and right
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: IconButton(
                           icon: Icon(Icons.calendar_today),
                           onPressed: () => _selectDate(context),
@@ -307,10 +409,11 @@ class _NewObservationPageState extends State<NewObservationPage> {
                       ),
                   ],
                 ),
+
                 //////////// Date Picker  //////////////
                 SizedBox(height: 20),
                 ListTile(
-                  title: Text("Select date"),
+                  title: Text("Observation date (current date is default)"),
                   subtitle: Text(
                     selectedDate != null ? '${selectedDate!.toLocal()}'.split(' ')[0] : 'No date chosen',
                   ),
@@ -329,40 +432,104 @@ class _NewObservationPageState extends State<NewObservationPage> {
                 ),
                 //////////// Date Picker  //////////////
                 SizedBox(height: 20),
+                ///// Note field /////
+                TextFormField(
+                  controller: _notesEditingController,
+                  decoration: InputDecoration(
+                    labelText: 'Notes (Optional)',
+                    hintText: 'Enter any additional notes here',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.text,
+                  //maxLines: 1, // Allow multiline input
+                  validator: (value) {
+                    // Optional: Add validation logic if needed
+                    if (value!.length > 500) {
+                      return 'Note too long. Please limit to 500 characters.';
+                    }
+                    return null; // No validation error
+                  },
+                ),
+                //////
+                SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      // If no date is selected, set it to the current date
+                      // Extract form data
+                      String plotID = widget.plotId; // Plot ID
+                      String? trait = selectedTraitKey; // Selected trait
+                      String measurement = _textEditingController.text; // Entered measurement
+                      String dateString = DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now()); // Date
+                      String? note = _notesEditingController.text.isEmpty
+                          ? null
+                          : _notesEditingController.text; // Notes, null if empty
+                      print('Plot ID: $plotID');
+                      print('Trait: $trait');
+                      print('Measurement: $measurement');
+                      //print('Date: $dateString');
+                      print('Note: $note');
+                      //Print study ID
+                      print('Study ID: $studyID');
+                      try {
+                        // Create the JSON request
+                        String jsonString = createGrassrootsRequest(
+                          detectedQRCode: plotID,
+                          selectedTrait: trait,
+                          measurement: measurement,
+                          dateString: dateString,
+                          note: note,
+                        );
 
-                      //print selected date
-                      print('Selected Date: ${DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now())}');
-                      //print selected trait
-                      print('Selected Trait: $selectedTraitKey');
-                      //print entered value
-                      print('Entered Value: ${_textEditingController.text}');
+                        print('---JSON Request: $jsonString');
+                        // Send the request to the server and await the response
+                        var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
 
-                      // Clear the form and reset the state
-                      _formKey.currentState!.reset();
-                      _textEditingController.clear();
+                        // Handle the response data
+                        print('Response from server: $response');
 
-                      // Optionally reset other state variables if needed
-                      setState(() {
-                        selectedTraitKey = null;
-                        selectedDate = null;
-                        // Reset other state variables if necessary
-                      });
+                        // Optionally show a success dialog or snackbar message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Data successfully submitted')),
+                        );
 
-                      // Display a snackbar or message to indicate form submission
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Form submitted and cleared'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
+                        // Optionally reset other state variables if needed
+                        setState(() {
+                          selectedTraitKey = null;
+                          selectedDate = null;
+                          //clear note
+                          _notesEditingController.clear();
+                        });
+                        // After the primary request is successful, initiate the secondary request
+                        // Create the cache clear request string using the studyID
+                        String cacheClearRequestJson = clearCacheRequest(studyID ?? 'defaultStudyID');
+                        //print('CACHE Request: $cacheClearRequestJson');
+                        // Fire-and-forget the clear cache request, no await used
+                        GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend').then((cacheResponse) {
+                          // Log the cache clear response
+                          print('+++Cache clear response: $cacheResponse');
+                        }).catchError((error) {
+                          // Log any errors from the cache clear request
+                          print('Error sending cache clear request: $error');
+                        });
+                      } catch (e) {
+                        // Handle any errors that occur during the request
+                        print('Error sending request: $e');
+
+                        // Optionally show an error dialog or snackbar message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to submit data')),
+                        );
+                      } finally {
+                        // Clear the form fields after processing the request
+                        _formKey.currentState!.reset();
+                        _textEditingController.clear();
+                        _notesEditingController.clear();
+                      }
                     }
                   },
                   child: Text('Submit Observation'),
                 ),
+
                 ////////////////////////////////////////////////////////
                 SizedBox(height: 20),
                 // put take picture button and select from gallery button in the same row
