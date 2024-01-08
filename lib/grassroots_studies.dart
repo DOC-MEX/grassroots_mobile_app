@@ -30,8 +30,8 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
   String? selectedPhenotype;
   Map<String, String> traits = {};
   Map<String, String> units = {};
-  List<String> variableNames = [];
-  List<String> traitNames = [];
+
+  Map<String, String> variableToTraitMap = {};
 
   @override
   void initState() {
@@ -159,8 +159,9 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        //________ Dropdown to select a study.  1st DROPDOWN MENU______
                         DropdownButtonFormField<String>(
-                          isExpanded: true, // Ensure the dropdown is expanded
+                          isExpanded: true,
                           value: selectedStudy,
                           hint: Text("Select a study"),
                           onChanged: (newValue) async {
@@ -263,7 +264,6 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                               });
                             }
                           },
-
                           items: studies.map<DropdownMenuItem<String>>((study) {
                             return DropdownMenuItem<String>(
                               value: study['id'], // Use study ID as value
@@ -275,8 +275,9 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                             );
                           }).toList(),
                         ),
+                        // End of dropdown to select a study.   END  OF 1st DROPDOWN MENU______
                         SizedBox(height: 20),
-                        //__________Display study details______________
+                        // __________MODAL FOR DISPLAYING STUDY DETAILS______
                         if (studyTitle != null) ...[
                           // Button to open the details dialog
                           TextButton(
@@ -284,7 +285,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                             child: Text('View Study Details'),
                           ),
                           SizedBox(height: 20),
-                          // Add New Observation Button
+                          // __________BUTTON TO ADD NEW OBSERVATION__________
                           if (selectedPlotId?.isNotEmpty == true)
                             ElevatedButton(
                               onPressed: () {
@@ -303,7 +304,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                               child: Text('Add New Observation'),
                             ),
                           SizedBox(height: 20),
-
+                          // Dropdown to select a plot.  ______2nd DROPDOWN MENU______
                           if (plotDisplayValues.isNotEmpty) ...[
                             DropdownButtonFormField<String>(
                               isExpanded: true,
@@ -335,30 +336,24 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                         var count = observations.length;
                                         observationCount = count;
                                         //  **********lists for phenotypes dropdown menu********
-                                        //List<String> variableNames = []; # make it class level to use it in other places
-                                        variableNames.clear();
-                                        traitNames.clear();
+                                        variableToTraitMap.clear();
 
                                         for (var observation in observations) {
                                           if (observation.containsKey('phenotype') &&
                                               observation['phenotype'].containsKey('variable')) {
                                             String variable = observation['phenotype']['variable'];
-                                            variableNames.add(variable);
 
                                             print(
                                                 'Variable: $variable, Exists in traits: ${traits.containsKey(variable)}');
                                             // Check if the trait exists for this variable and create a DropdownMenuItem
                                             if (traits.containsKey(variable)) {
-                                              traitNames.add(traits[variable]!);
+                                              String traitName = traits[variable]!;
+                                              variableToTraitMap[variable] = traitName;
                                             }
                                           }
                                         }
 
-                                        // Remove duplicates
-                                        variableNames = variableNames.toSet().toList();
-                                        traitNames = traitNames.toSet().toList();
-                                        print('Variable Names: $variableNames');
-                                        print('TRAIT Names: $traitNames');
+                                        print('Variable to Trait Map: $variableToTraitMap');
                                       } else {
                                         observationCount = 0;
                                       }
@@ -386,7 +381,8 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                               SizedBox(height: 10),
                               Text('Number of observations: $observationCount'),
                             ],
-                          ], // enf if (plotDisplayValues is not empty) SELECTED PLOT DROPDOWN
+                          ], // end if (plotDisplayValues is not empty)
+                          // enf if (plotDisplayValues is not empty) SELECTED PLOT DROPDOWN
                           SizedBox(height: 20),
                           if (observationCount > 0) ...[
                             DropdownButtonFormField<String>(
@@ -434,17 +430,16 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                   },
                                 ); // End of showDialog
                               },
-                              items: List<DropdownMenuItem<String>>.generate(
-                                variableNames.length,
-                                (index) => DropdownMenuItem<String>(
-                                  value: variableNames[index],
+                              items: variableToTraitMap.entries.map((entry) {
+                                return DropdownMenuItem<String>(
+                                  value: entry.key, // The variable name as the value
                                   child: Text(
-                                    traitNames[index],
+                                    entry.value, // The trait name as the display text
                                     overflow: TextOverflow.ellipsis, // Use ellipsis for text overflow
                                     softWrap: false, // Prevents text wrapping onto the next line
                                   ),
-                                ),
-                              ),
+                                );
+                              }).toList(),
                             ),
                             SizedBox(height: 20),
                           ],

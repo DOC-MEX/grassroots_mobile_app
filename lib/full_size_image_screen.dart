@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'dart:typed_data'; // Import this for Uint8List
 
 class FullSizeImageScreenFile extends StatelessWidget {
