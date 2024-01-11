@@ -32,11 +32,15 @@ class _NewObservationPageState extends State<NewObservationPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _textEditingController = TextEditingController();
   final TextEditingController _notesEditingController = TextEditingController();
+  final TextEditingController _maxHeightController = TextEditingController();
+  final TextEditingController _minHeightController = TextEditingController();
   DateTime? selectedDate;
   File? _image;
   String? studyID;
   int? plotNumber;
   Uint8List? _imageBytes;
+  int? maxHeight;
+  int? minHeight;
 
   @override
   void initState() {
@@ -44,6 +48,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
     _extractPhenotypeDetails();
     // Attempt to retrieve the photo when the page loads
     _retrievePhoto();
+    // Attempt to retrieve the limits when the page loads
+    retrieveLimits();
   }
 
   Future<void> _pickImage() async {
@@ -177,6 +183,37 @@ class _NewObservationPageState extends State<NewObservationPage> {
     }
   }
 
+  //////////////////////////////////////////////////////
+  Future<void> retrieveLimits() async {
+    try {
+      String subfolder = studyID ?? 'defaultFolder'; // Use the appropriate variable to determine the subfolder
+
+      // Create the API URL for retrieving the limits file
+      var apiUrl = Uri.parse('https://grassroots.tools/photo_receiver/retrieve_limits/$subfolder');
+
+      // Send a GET request to retrieve the file
+      var response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response
+        var jsonResponse = jsonDecode(response.body);
+        setState(() {
+          minHeight = jsonResponse['Plant height']['min'];
+          maxHeight = jsonResponse['Plant height']['max'];
+        });
+
+        // Print the values to the console
+        print('Min Height: $minHeight, Max Height: $maxHeight');
+      } else {
+        // Handle the case where the file is not found or any other errors
+        print('Failed to retrieve limits.json: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error retrieving limits.json: $e');
+    }
+  }
+
+////////////////////////////////////////////////////////////////////
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -189,6 +226,73 @@ class _NewObservationPageState extends State<NewObservationPage> {
         _textEditingController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
+  }
+
+  void _showEditLimitsDialog() {
+    // Set the current values in the controllers
+    _maxHeightController.text = maxHeight?.toString() ?? '';
+    _minHeightController.text = minHeight?.toString() ?? '';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Edit Values'),
+          content: SingleChildScrollView(
+            // Make the dialog scrollable
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Row(
+                  children: [
+                    Text('Max: '),
+                    Expanded(
+                      child: TextField(
+                        controller: _maxHeightController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          hintText: 'Enter new max value',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    Text('Min: '),
+                    Expanded(
+                      child: TextField(
+                        controller: _minHeightController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          hintText: 'Enter new min value',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Update'),
+              onPressed: () {
+                // TODO: Add logic to update the values
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+            TextButton(
+              child: Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   ////////// request for submitting observation //////////
@@ -290,6 +394,14 @@ class _NewObservationPageState extends State<NewObservationPage> {
             key: _formKey,
             child: Column(
               children: <Widget>[
+                // Conditional Button for Editing Max and Min Values
+                if (selectedTraitKey == 'PH_M_cm')
+                  ElevatedButton(
+                    onPressed: _showEditLimitsDialog,
+                    child: Text('Edit max and min'),
+                  ),
+                SizedBox(height: 10), // Spacing after the button
+
                 DropdownButtonFormField<String>(
                   value: selectedTraitKey,
                   hint: Text("Select a trait"),
