@@ -52,6 +52,15 @@ class _NewObservationPageState extends State<NewObservationPage> {
     retrieveLimits();
   }
 
+  @override
+  void dispose() {
+    // Dispose of your controllers here
+    _maxHeightController.dispose();
+    _minHeightController.dispose();
+    // Call the dispose method of the superclass at the end
+    super.dispose();
+  }
+
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
@@ -278,8 +287,32 @@ class _NewObservationPageState extends State<NewObservationPage> {
           actions: <Widget>[
             TextButton(
               child: Text('Update'),
-              onPressed: () {
-                // TODO: Add logic to update the values
+              onPressed: () async {
+                // Parse and validate new max and min values
+                int? newMax = int.tryParse(_maxHeightController.text);
+                int? newMin = int.tryParse(_minHeightController.text);
+
+                if (newMax != null && newMin != null && newMin < newMax) {
+                  // Send POST request to update values
+                  bool updated = await updateLimits(newMin, newMax);
+                  if (updated) {
+                    setState(() {
+                      maxHeight = newMax;
+                      minHeight = newMin;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Limits updated successfully')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to update limits')),
+                    );
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Invalid input')),
+                  );
+                }
                 Navigator.of(context).pop(); // Close the dialog
               },
             ),
@@ -293,6 +326,29 @@ class _NewObservationPageState extends State<NewObservationPage> {
         );
       },
     );
+  }
+
+  Future<bool> updateLimits(int newMin, int newMax) async {
+    String subfolder = studyID ?? 'defaultFolder'; // Adjust as needed
+    var url = Uri.parse('https://grassroots.tools/photo_receiver/update_limits/$subfolder/');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'Plant height': {'min': newMin, 'max': newMax}
+        }),
+      );
+
+      //print('-----Response status: ${response.statusCode}');
+      //print('******8Response body: ${response.body}');
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error updating limits: $e');
+      return false;
+    }
   }
 
   ////////// request for submitting observation //////////
@@ -470,6 +526,18 @@ class _NewObservationPageState extends State<NewObservationPage> {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a value';
                           }
+                          final num? numberValue = num.tryParse(value);
+                          if (numberValue == null) {
+                            return 'Please enter a valid number';
+                          }
+
+                          // Validation for Plant Height
+                          if (selectedTraitKey == 'PH_M_cm' && minHeight != null && maxHeight != null) {
+                            double valueAsDouble = numberValue.toDouble();
+                            if (valueAsDouble < minHeight! || valueAsDouble > maxHeight!) {
+                              return 'Value must be between $minHeight and $maxHeight';
+                            }
+                          }
                           if (units[selectedTraitKey] == 'yyyymmdd') {
                             try {
                               DateFormat('yyyy-MM-dd').parse(value); // Check if value is in 'yyyy-MM-dd' format
@@ -477,6 +545,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                               return 'Please enter a date in the format YYYY-MM-DD';
                             }
                           }
+
                           if (units[selectedTraitKey] == '%') {
                             final num? numberValue = num.tryParse(value);
                             if (numberValue == null) {
