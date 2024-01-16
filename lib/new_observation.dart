@@ -241,6 +241,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
     // Set the current values in the controllers
     _maxHeightController.text = maxHeight?.toString() ?? '';
     _minHeightController.text = minHeight?.toString() ?? '';
+    //print unit
+    //print('Unit: ${units[selectedTraitKey]}');
 
     showDialog(
       context: context,
@@ -256,12 +258,20 @@ class _NewObservationPageState extends State<NewObservationPage> {
                   children: [
                     Text('Max: '),
                     Expanded(
-                      child: TextField(
-                        controller: _maxHeightController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          hintText: 'Enter new max value',
-                        ),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: TextField(
+                              controller: _maxHeightController,
+                              keyboardType: TextInputType.number,
+                              //maxLength: 4, // Limit the input to 4 digits
+                              decoration: InputDecoration(
+                                hintText: 'Enter new max value',
+                              ),
+                            ),
+                          ),
+                          Text(' ${units[selectedTraitKey]}'), // Display the unit to the right
+                        ],
                       ),
                     ),
                   ],
@@ -271,12 +281,19 @@ class _NewObservationPageState extends State<NewObservationPage> {
                   children: [
                     Text('Min: '),
                     Expanded(
-                      child: TextField(
-                        controller: _minHeightController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          hintText: 'Enter new min value',
-                        ),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: TextField(
+                              controller: _minHeightController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                hintText: 'Enter new min value',
+                              ),
+                            ),
+                          ),
+                          Text(' ${units[selectedTraitKey]}'),
+                        ],
                       ),
                     ),
                   ],
@@ -341,8 +358,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
         }),
       );
 
-      //print('-----Response status: ${response.statusCode}');
-      //print('******8Response body: ${response.body}');
+      //print('Response status: ${response.statusCode}');
+      //print('Response body: ${response.body}');
 
       return response.statusCode == 200;
     } catch (e) {
