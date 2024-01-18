@@ -1,3 +1,4 @@
+// qr_code_service.dart
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'grassroots_request.dart';
 import 'dart:convert';
@@ -158,5 +159,91 @@ class QRCodeService {
       ]
     });
     return await GrassrootsRequest.sendRequest(requestString, 'public');
+  }
+
+  ////////// request for submitting observation used in new_observation.dart //////////
+  static String createGrassrootsRequest({
+    required String detectedQRCode,
+    required String? selectedTrait,
+    required String measurement,
+    required String dateString,
+    String? note,
+  }) {
+    final requestMap = {
+      "services": [
+        {
+          "so:name": "Edit Field Trial Rack",
+          "start_service": true,
+          "parameter_set": {
+            "level": "simple",
+            "parameters": [
+              {"param": "RO Id", "current_value": detectedQRCode, "group": "Plot"},
+              {"param": "RO Append Observations", "current_value": true, "group": "Plot"},
+              {
+                "param": "RO Measured Variable Name",
+                "current_value": [selectedTrait],
+                "group": "Phenotypes"
+              },
+              {
+                "param": "RO Phenotype Raw Value",
+                "current_value": [measurement],
+                "group": "Phenotypes"
+              },
+              {
+                "param": "RO Phenotype Corrected Value",
+                "current_value": [null],
+                "group": "Phenotypes"
+              },
+              {
+                "param": "RO Phenotype Start Date",
+                "current_value": [dateString],
+                "group": "Phenotypes"
+              },
+              {
+                "param": "RO Phenotype End Date",
+                "current_value": [null],
+                "group": "Phenotypes"
+              },
+              {
+                "param": "RO Observation Notes",
+                "current_value": note != null ? [note] : [null],
+                "group": "Phenotypes"
+              },
+            ]
+          }
+        }
+      ]
+    };
+
+    // Convert map to a JSON string
+    return jsonEncode(requestMap);
+  }
+
+//-- request for clearing cache after submitting observation (Used in new_observation.dart).
+  static String clearCacheRequest(String studyID) {
+    final Map<String, dynamic> request = {
+      "services": [
+        {
+          "start_service": true,
+          "so:alternateName": "field_trial-manage_study",
+          "parameter_set": {
+            "level": "simple",
+            "parameters": [
+              {"param": "ST Id", "current_value": studyID},
+              {"param": "SM uuid", "current_value": studyID},
+              {"param": "SM clear cached study", "current_value": true},
+              {"param": "SM indexer", "current_value": "<NONE>"},
+              {"param": "SM Delete study", "current_value": false},
+              {"param": "SM Remove Study Plots", "current_value": false},
+              {"param": "SM Generate FD Packages", "current_value": false},
+              {"param": "SM Generate Handbook", "current_value": false},
+              {"param": "SM Generate Phenotypes", "current_value": false},
+            ]
+          }
+        }
+      ]
+    };
+
+    return json.encode(request);
   }
 }

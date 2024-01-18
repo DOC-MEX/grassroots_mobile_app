@@ -8,6 +8,8 @@ import 'dart:typed_data';
 import 'full_size_image_screen.dart';
 import 'dart:convert';
 import 'grassroots_request.dart';
+import 'qr_code_service.dart';
+import 'api_requests.dart';
 
 class NewObservationPage extends StatefulWidget {
   final Map<String, dynamic> studyDetails;
@@ -41,6 +43,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
   Uint8List? _imageBytes;
   int? maxHeight;
   int? minHeight;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -82,48 +85,26 @@ class _NewObservationPageState extends State<NewObservationPage> {
     }
   }
 
-// Function to upload the image to the server
-  Future<void> _uploadImage() async {
-    try {
-      var uri = Uri.parse('https://grassroots.tools/photo_receiver/upload/');
-      var request = http.MultipartRequest('POST', uri);
+  // function to handle the upload of image using an API request
+  void _handleUpload() async {
+    if (_image != null && studyID != null && plotNumber != null) {
+      setState(() {
+        _isUploading = true; // Start of upload
+      });
 
-      // Generate the new filename using plotNumber
-      String newFileName = 'photo_plot_${plotNumber.toString()}.jpg'; // Assuming the image is a JPEG file
+      bool uploadSuccess = await ApiRequests.uploadImage(_image!, studyID!, plotNumber!);
 
-      // Attach the image file with the new filename
-      request.files.add(await http.MultipartFile.fromPath(
-        'image',
-        _image!.path,
-        filename: newFileName,
-      ));
+      setState(() {
+        _isUploading = false; // End of upload
+      });
 
-      // Add the subfolder field
-      request.fields['subfolder'] = studyID ?? 'defaultFolder';
-
-      // Send the request
-      var response = await request.send();
-      // Read response
-      //final responseBody = await response.stream.bytesToString();
-      ///print('Response: $responseBody');
-
-      if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload successful')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-      //print error
-      print('Error: $e');
+      String message = uploadSuccess ? 'Upload successful' : 'Upload failed';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    } else {
+      // Handle null values error
     }
   }
+  ////////////////////////////////////////////////////////
 
   // Function to retrieve the photo from the server
   Future<void> _retrievePhoto() async {
@@ -368,91 +349,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
     }
   }
 
-  ////////// request for submitting observation //////////
-  String createGrassrootsRequest({
-    required String detectedQRCode,
-    required String? selectedTrait,
-    required String measurement,
-    required String dateString,
-    String? note,
-  }) {
-    final requestMap = {
-      "services": [
-        {
-          "so:name": "Edit Field Trial Rack",
-          "start_service": true,
-          "parameter_set": {
-            "level": "simple",
-            "parameters": [
-              {"param": "RO Id", "current_value": detectedQRCode, "group": "Plot"},
-              {"param": "RO Append Observations", "current_value": true, "group": "Plot"},
-              {
-                "param": "RO Measured Variable Name",
-                "current_value": [selectedTrait],
-                "group": "Phenotypes"
-              },
-              {
-                "param": "RO Phenotype Raw Value",
-                "current_value": [measurement],
-                "group": "Phenotypes"
-              },
-              {
-                "param": "RO Phenotype Corrected Value",
-                "current_value": [null],
-                "group": "Phenotypes"
-              },
-              {
-                "param": "RO Phenotype Start Date",
-                "current_value": [dateString],
-                "group": "Phenotypes"
-              },
-              {
-                "param": "RO Phenotype End Date",
-                "current_value": [null],
-                "group": "Phenotypes"
-              },
-              {
-                "param": "RO Observation Notes",
-                "current_value": note != null ? [note] : [null],
-                "group": "Phenotypes"
-              },
-            ]
-          }
-        }
-      ]
-    };
-
-    // Convert map to a JSON string
-    return jsonEncode(requestMap);
-  }
-
-////////// request for clearing cache //////////
-  String clearCacheRequest(String studyID) {
-    final Map<String, dynamic> request = {
-      "services": [
-        {
-          "start_service": true,
-          "so:alternateName": "field_trial-manage_study",
-          "parameter_set": {
-            "level": "simple",
-            "parameters": [
-              {"param": "ST Id", "current_value": studyID},
-              {"param": "SM uuid", "current_value": studyID},
-              {"param": "SM clear cached study", "current_value": true},
-              {"param": "SM indexer", "current_value": "<NONE>"},
-              {"param": "SM Delete study", "current_value": false},
-              {"param": "SM Remove Study Plots", "current_value": false},
-              {"param": "SM Generate FD Packages", "current_value": false},
-              {"param": "SM Generate Handbook", "current_value": false},
-              {"param": "SM Generate Phenotypes", "current_value": false},
-            ]
-          }
-        }
-      ]
-    };
-
-    return json.encode(request);
-  }
+  ////////// request for submitting observation ///
+  ////////// request for clearing cache //////////
 
   @override
   Widget build(BuildContext context) {
@@ -670,7 +568,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                       print('Study ID: $studyID');
                       try {
                         // Create the JSON request
-                        String jsonString = createGrassrootsRequest(
+                        String jsonString = QRCodeService.createGrassrootsRequest(
                           detectedQRCode: plotID,
                           selectedTrait: trait,
                           measurement: measurement,
@@ -699,7 +597,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                         });
                         // After the primary request is successful, initiate the secondary request
                         // Create the cache clear request string using the studyID
-                        String cacheClearRequestJson = clearCacheRequest(studyID ?? 'defaultStudyID');
+                        String cacheClearRequestJson = QRCodeService.clearCacheRequest(studyID ?? 'defaultStudyID');
                         //print('CACHE Request: $cacheClearRequestJson');
                         // Fire-and-forget the clear cache request, no await used
                         GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend').then((cacheResponse) {
@@ -806,8 +704,10 @@ class _NewObservationPageState extends State<NewObservationPage> {
                 ///////////////////////////////////////////
                 if (_image != null)
                   ElevatedButton(
-                    onPressed: _uploadImage,
-                    child: Text('Upload Image'),
+                    onPressed: _isUploading ? null : _handleUpload, // Disable button when uploading
+                    child: _isUploading
+                        ? CircularProgressIndicator() // Show loading indicator
+                        : Text('Upload Image'),
                   ),
               ],
             ),
