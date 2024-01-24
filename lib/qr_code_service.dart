@@ -162,13 +162,28 @@ class QRCodeService {
   }
 
   ////////// request for submitting observation used in new_observation.dart //////////
-  static String createGrassrootsRequest({
+  static String submitObservationRequest({
+    required String studyID,
     required String detectedQRCode,
     required String? selectedTrait,
     required String measurement,
     required String dateString,
     String? note,
   }) {
+// List of allowed study IDs
+    const allowedStudyIDs = [
+      '64f1e4e77c486e019b4e3017',
+      '63bfce1a86ff5b59175e1d66',
+      '65a532e1536b7214e714a97f', //Glasshouse test study
+    ];
+
+    // Check if the studyID is in the list of allowed IDs
+    if (!allowedStudyIDs.contains(studyID)) {
+      // If not allowed, handle accordingly. For example:
+      print('Modification not allowed for this study.');
+      return '{}'; // Return a dummy JSON string or handle as needed
+    }
+
     final requestMap = {
       "services": [
         {

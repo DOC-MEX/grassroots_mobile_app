@@ -568,44 +568,51 @@ class _NewObservationPageState extends State<NewObservationPage> {
                       print('Study ID: $studyID');
                       try {
                         // Create the JSON request
-                        String jsonString = QRCodeService.createGrassrootsRequest(
+                        String jsonString = QRCodeService.submitObservationRequest(
+                          studyID: studyID ?? 'defaultStudyID', // Add studyID parameter
                           detectedQRCode: plotID,
                           selectedTrait: trait,
                           measurement: measurement,
                           dateString: dateString,
                           note: note,
                         );
+                        if (jsonString != '{}') {
+                          //print('---JSON Request: $jsonString');
+                          // Send the request to the server and await the response
+                          var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
 
-                        print('---JSON Request: $jsonString');
-                        // Send the request to the server and await the response
-                        var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
+                          // Handle the response data
+                          print('Response from server: $response');
 
-                        // Handle the response data
-                        print('Response from server: $response');
-
-                        // Optionally show a success dialog or snackbar message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Data successfully submitted')),
-                        );
-
+                          // Optionally show a success dialog or snackbar message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Data successfully submitted')),
+                          );
+                          // After the primary request is successful, initiate the secondary request
+                          // Create the cache clear request string using the studyID
+                          String cacheClearRequestJson = QRCodeService.clearCacheRequest(studyID ?? 'defaultStudyID');
+                          //print('CACHE Request: $cacheClearRequestJson');
+                          // Fire-and-forget the clear cache request, no await used
+                          GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend')
+                              .then((cacheResponse) {
+                            // Log the cache clear response
+                            print('+++Cache clear response: $cacheResponse');
+                          }).catchError((error) {
+                            // Log any errors from the cache clear request
+                            print('Error sending cache clear request: $error');
+                          });
+                        } else {
+                          print('NOT ALLOWED');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Submission not allowed for this study')),
+                          );
+                        }
                         // Optionally reset other state variables if needed
                         setState(() {
                           selectedTraitKey = null;
                           selectedDate = null;
                           //clear note
                           _notesEditingController.clear();
-                        });
-                        // After the primary request is successful, initiate the secondary request
-                        // Create the cache clear request string using the studyID
-                        String cacheClearRequestJson = QRCodeService.clearCacheRequest(studyID ?? 'defaultStudyID');
-                        //print('CACHE Request: $cacheClearRequestJson');
-                        // Fire-and-forget the clear cache request, no await used
-                        GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend').then((cacheResponse) {
-                          // Log the cache clear response
-                          print('+++Cache clear response: $cacheResponse');
-                        }).catchError((error) {
-                          // Log any errors from the cache clear request
-                          print('Error sending cache clear request: $error');
                         });
                       } catch (e) {
                         // Handle any errors that occur during the request
