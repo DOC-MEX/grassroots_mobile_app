@@ -441,6 +441,17 @@ class _NewObservationPageState extends State<NewObservationPage> {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a value';
                           }
+
+                          // Handling 'yyyymmdd' as a special case
+                          if (units[selectedTraitKey] == 'yyyymmdd') {
+                            try {
+                              DateFormat('yyyy-MM-dd').parse(value); // Check if value is in 'yyyy-MM-dd' format
+                            } catch (e) {
+                              return 'Please enter a date in the format YYYY-MM-DD';
+                            }
+                            return null; // No validation error for date
+                          }
+                          // For other units, validate as number
                           final num? numberValue = num.tryParse(value);
                           if (numberValue == null) {
                             return 'Please enter a valid number';
@@ -451,13 +462,6 @@ class _NewObservationPageState extends State<NewObservationPage> {
                             double valueAsDouble = numberValue.toDouble();
                             if (valueAsDouble < minHeight! || valueAsDouble > maxHeight!) {
                               return 'Value must be between $minHeight and $maxHeight';
-                            }
-                          }
-                          if (units[selectedTraitKey] == 'yyyymmdd') {
-                            try {
-                              DateFormat('yyyy-MM-dd').parse(value); // Check if value is in 'yyyy-MM-dd' format
-                            } catch (e) {
-                              return 'Please enter a date in the format YYYY-MM-DD';
                             }
                           }
 
