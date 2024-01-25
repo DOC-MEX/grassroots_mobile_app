@@ -44,10 +44,12 @@ class _NewObservationPageState extends State<NewObservationPage> {
   int? maxHeight;
   int? minHeight;
   bool _isUploading = false;
+  bool isClearingForm = false;
 
   @override
   void initState() {
     super.initState();
+    //dropdownValue = null;
     _extractPhenotypeDetails();
     // Attempt to retrieve the photo when the page loads
     _retrievePhoto();
@@ -349,11 +351,20 @@ class _NewObservationPageState extends State<NewObservationPage> {
     }
   }
 
-  ////////// request for submitting observation ///
-  ////////// request for clearing cache //////////
-
   @override
   Widget build(BuildContext context) {
+    void clearForm() {
+      _formKey.currentState!.reset();
+      setState(() {
+        selectedTraitKey = null; // Reset the dropdown
+        selectedDate = null;
+        _textEditingController.clear();
+        _notesEditingController.clear();
+        isClearingForm = false;
+        // Any other controllers or variables should be reset here
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('New Observation'),
@@ -379,41 +390,37 @@ class _NewObservationPageState extends State<NewObservationPage> {
                   onChanged: (String? newValue) {
                     setState(() {
                       selectedTraitKey = newValue;
+                      //dropdownValue = newValue;
                       // Retrieve scale and unit for the selected trait
-                      //String? selectedScale = scales[selectedTraitKey];
+                      String? selectedScale = scales[selectedTraitKey];
                       String? selectedUnit = units[selectedTraitKey];
 
-                      // Determine the appropriate input type
-                      if (selectedUnit == 'day') {
-                        // _inputType = TextInputType.datetime;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            duration: Duration(seconds: 3),
-                            content: Row(
-                              children: [
-                                Icon(Icons.warning_amber_rounded, color: Colors.yellow),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    "Enter number of days or select a date",
-                                    style: TextStyle(fontSize: 16.0),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      } // else {
-                      //  _inputType = TextInputType.number;
-                      // }
+                      // Print scale and unit for the selected trait
+                      print('Selected Trait: $selectedTraitKey');
+                      print('Scale: $selectedScale');
+                      print('Unit: $selectedUnit');
                     });
 
-                    // Retrieve and print scale and unit for the selected trait
-                    String? selectedScale = scales[selectedTraitKey];
-                    String? selectedUnit = units[selectedTraitKey];
-                    print('Selected Trait: $selectedTraitKey');
-                    print('Scale: $selectedScale');
-                    print('Unit: $selectedUnit');
+                    // Only show snackbar if unit is 'yyyymmdd' and not clearing the form
+                    if (!isClearingForm && units[selectedTraitKey] == 'yyyymmdd') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          duration: Duration(seconds: 3),
+                          content: Row(
+                            children: [
+                              Icon(Icons.warning_amber_rounded, color: Colors.yellow),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  "Select a date",
+                                  style: TextStyle(fontSize: 16.0),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
                   },
                   items: traits.keys.map<DropdownMenuItem<String>>((String key) {
                     return DropdownMenuItem<String>(
@@ -590,7 +597,14 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
                           // Optionally show a success dialog or snackbar message
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Data successfully submitted')),
+                            SnackBar(
+                              content: Text(
+                                'Data successfully submitted',
+                                style: TextStyle(
+                                  fontSize: 16.0, // Larger font size
+                                ),
+                              ),
+                            ),
                           );
                           // After the primary request is successful, initiate the secondary request
                           // Create the cache clear request string using the studyID
@@ -612,25 +626,56 @@ class _NewObservationPageState extends State<NewObservationPage> {
                           );
                         }
                         // Optionally reset other state variables if needed
-                        setState(() {
-                          selectedTraitKey = null;
-                          selectedDate = null;
-                          //clear note
-                          _notesEditingController.clear();
-                        });
+                        // setState(() {
+                        // Set to a default value and then back to null
+                        //   dropdownValue = traits.keys.first;
+                        //   Future.delayed(Duration.zero, () {
+                        //     setState(() {
+                        //      dropdownValue = null;
+                        //      selectedTraitKey = null;
+                        //       selectedDate = null;
+                        //       _textEditingController.clear();
+                        //      _notesEditingController.clear();
+                        //     });
+                        //   });
+                        //});
+                        //setState(() {
+                        //  _formKey.currentState!.reset();
+                        //  dropdownKey = UniqueKey();
+                        //  dropdownValue = null;
+                        //  selectedTraitKey = null;
+                        //  selectedDate = null;
+                        //  _textEditingController.clear();
+                        //  _notesEditingController.clear();
+                        //});
                       } catch (e) {
                         // Handle any errors that occur during the request
                         print('Error sending request: $e');
 
                         // Optionally show an error dialog or snackbar message
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to submit data')),
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(Icons.error_outline, color: Colors.red), // Error icon
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Failed to submit data',
+                                    style: TextStyle(
+                                      fontSize: 16.0, // Larger font size
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         );
                       } finally {
-                        // Clear the form fields after processing the request
-                        _formKey.currentState!.reset();
-                        _textEditingController.clear();
-                        _notesEditingController.clear();
+                        setState(() {
+                          isClearingForm = true; // Set to true right before clearing the form
+                        });
+                        clearForm();
                       }
                     }
                   },
