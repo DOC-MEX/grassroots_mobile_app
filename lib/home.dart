@@ -186,7 +186,7 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 6), // Adjust the padding here
+                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 20), // Adjust the padding here
                   ),
                   child: Text(
                     'Browse \n all studies',

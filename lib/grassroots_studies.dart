@@ -418,19 +418,21 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                       }
 
                                       return Dialog(
-                                        child: Container(
-                                          padding: EdgeInsets.all(20.0),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(displayTrait,
-                                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                                              SizedBox(height: 20),
-                                              if (rawValues.isEmpty)
-                                                Text('No Data Found')
-                                              else
-                                                ObservationTable(rawValues: rawValues, displayUnit: displayUnit),
-                                            ],
+                                        child: SingleChildScrollView(
+                                          child: Container(
+                                            padding: EdgeInsets.all(20.0),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(displayTrait,
+                                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                                SizedBox(height: 20),
+                                                if (rawValues.isEmpty)
+                                                  Text('No Data Found')
+                                                else
+                                                  ObservationTable(rawValues: rawValues, displayUnit: displayUnit),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       );
