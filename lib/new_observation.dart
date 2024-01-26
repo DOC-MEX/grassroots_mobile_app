@@ -2,11 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
+//import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'dart:typed_data';
 import 'full_size_image_screen.dart';
-import 'dart:convert';
 import 'grassroots_request.dart';
 import 'qr_code_service.dart';
 import 'api_requests.dart';
@@ -43,18 +42,17 @@ class _NewObservationPageState extends State<NewObservationPage> {
   Uint8List? _imageBytes;
   int? maxHeight;
   int? minHeight;
-  bool _isUploading = false;
+  bool _isUploading = false; // for form clearing
   bool isClearingForm = false;
 
   @override
   void initState() {
     super.initState();
-    //dropdownValue = null;
     _extractPhenotypeDetails();
     // Attempt to retrieve the photo when the page loads
-    _retrievePhoto();
+    _initRetrievePhoto();
     // Attempt to retrieve the limits when the page loads
-    retrieveLimits();
+    _initRetrieveLimits();
   }
 
   @override
@@ -64,6 +62,21 @@ class _NewObservationPageState extends State<NewObservationPage> {
     _minHeightController.dispose();
     // Call the dispose method of the superclass at the end
     super.dispose();
+  }
+
+  Future<void> _initRetrievePhoto() async {
+    _imageBytes = await ApiRequests.retrievePhoto(studyID ?? 'defaultFolder', plotNumber!, context);
+    if (_imageBytes != null) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _initRetrieveLimits() async {
+    var limits = await ApiRequests.retrieveLimits(studyID ?? 'defaultFolder');
+    setState(() {
+      minHeight = limits?['minHeight'];
+      maxHeight = limits?['maxHeight'];
+    });
   }
 
   Future<void> _pickImage() async {
@@ -87,7 +100,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
     }
   }
 
-  // function to handle the upload of image using an API request
+  // function to handle the upload of image using an API request "uploadImage"
   void _handleUpload() async {
     if (_image != null && studyID != null && plotNumber != null) {
       setState(() {
@@ -107,38 +120,6 @@ class _NewObservationPageState extends State<NewObservationPage> {
     }
   }
   ////////////////////////////////////////////////////////
-
-  // Function to retrieve the photo from the server
-  Future<void> _retrievePhoto() async {
-    try {
-      // Define the subfolder name and photo name based on studyID and plotNumber
-      String subfolder = studyID ?? 'defaultFolder';
-      String photoName = 'photo_plot_${plotNumber.toString()}.jpg';
-
-      // Create the API URL for retrieving the photo
-      var apiUrl = Uri.parse('https://grassroots.tools/photo_receiver/retrieve_photo/$subfolder/$photoName');
-
-      // Send a GET request to retrieve the photo
-      var response = await http.get(apiUrl);
-
-      if (response.statusCode == 200) {
-        // Directly display the image from the response
-        setState(() {
-          _imageBytes = response.bodyBytes; // Store the image bytes
-        });
-      } else {
-        // Photo not found, show an error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('plot has no photo')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-      print('Error: $e');
-    }
-  }
 
   void _extractPhenotypeDetails() {
     if (widget.studyDetails['results'][0]['results'][0]['data'].containsKey('phenotypes')) {
@@ -172,36 +153,6 @@ class _NewObservationPageState extends State<NewObservationPage> {
       print('Extracted Plot Number: $plotNumber');
     } catch (e) {
       print('Error extracting Plot Number: $e');
-    }
-  }
-
-  //////////////////////////////////////////////////////
-  Future<void> retrieveLimits() async {
-    try {
-      String subfolder = studyID ?? 'defaultFolder'; // Use the appropriate variable to determine the subfolder
-
-      // Create the API URL for retrieving the limits file
-      var apiUrl = Uri.parse('https://grassroots.tools/photo_receiver/retrieve_limits/$subfolder');
-
-      // Send a GET request to retrieve the file
-      var response = await http.get(apiUrl);
-
-      if (response.statusCode == 200) {
-        // Parse the JSON response
-        var jsonResponse = jsonDecode(response.body);
-        setState(() {
-          minHeight = jsonResponse['Plant height']['min'];
-          maxHeight = jsonResponse['Plant height']['max'];
-        });
-
-        // Print the values to the console
-        print('Min Height: $minHeight, Max Height: $maxHeight');
-      } else {
-        // Handle the case where the file is not found or any other errors
-        print('Failed to retrieve limits.json: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error retrieving limits.json: $e');
     }
   }
 
@@ -293,8 +244,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
                 int? newMin = int.tryParse(_minHeightController.text);
 
                 if (newMax != null && newMin != null && newMin < newMax) {
-                  // Send POST request to update values
-                  bool updated = await updateLimits(newMin, newMax);
+                  // Send POST request to update values using ApiRequests
+                  bool updated = await ApiRequests.updateLimits(studyID ?? 'defaultFolder', newMin, newMax);
                   if (updated) {
                     setState(() {
                       maxHeight = newMax;
@@ -328,26 +279,54 @@ class _NewObservationPageState extends State<NewObservationPage> {
     );
   }
 
-  Future<bool> updateLimits(int newMin, int newMax) async {
-    String subfolder = studyID ?? 'defaultFolder'; // Adjust as needed
-    var url = Uri.parse('https://grassroots.tools/photo_receiver/update_limits/$subfolder/');
+  Widget _buildTraitDropdown() {
+    return DropdownButtonFormField<String>(
+      value: selectedTraitKey,
+      hint: Text("Select a trait"),
+      onChanged: _onTraitChanged,
+      items: traits.keys.map<DropdownMenuItem<String>>((String key) {
+        return DropdownMenuItem<String>(
+          value: key,
+          child: Text(traits[key] ?? 'Unknown'),
+        );
+      }).toList(),
+      validator: (value) => value == null ? 'Please select a trait' : null,
+    );
+  }
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'Plant height': {'min': newMin, 'max': newMax}
-        }),
+  void _onTraitChanged(String? newValue) {
+    setState(() {
+      selectedTraitKey = newValue;
+    });
+
+    // Retrieve scale and unit for the selected trait
+    String? selectedScale = scales[selectedTraitKey];
+    String? selectedUnit = units[selectedTraitKey];
+
+    // Print scale and unit for the selected trait
+    print('Selected Trait: $selectedTraitKey');
+    print('Scale: $selectedScale');
+    print('Unit: $selectedUnit');
+
+    // Only show snackbar if unit is 'yyyymmdd' and not clearing the form
+    if (!isClearingForm && units[selectedTraitKey] == 'yyyymmdd') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: 3),
+          content: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.yellow),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  "Select a date",
+                  style: TextStyle(fontSize: 16.0),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
-
-      //print('Response status: ${response.statusCode}');
-      //print('Response body: ${response.body}');
-
-      return response.statusCode == 200;
-    } catch (e) {
-      print('Error updating limits: $e');
-      return false;
     }
   }
 
@@ -383,54 +362,15 @@ class _NewObservationPageState extends State<NewObservationPage> {
                     child: Text('Edit max and min'),
                   ),
                 SizedBox(height: 10), // Spacing after the button
-
-                DropdownButtonFormField<String>(
-                  value: selectedTraitKey,
-                  hint: Text("Select a trait"),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      selectedTraitKey = newValue;
-                      //dropdownValue = newValue;
-                      // Retrieve scale and unit for the selected trait
-                      String? selectedScale = scales[selectedTraitKey];
-                      String? selectedUnit = units[selectedTraitKey];
-
-                      // Print scale and unit for the selected trait
-                      print('Selected Trait: $selectedTraitKey');
-                      print('Scale: $selectedScale');
-                      print('Unit: $selectedUnit');
-                    });
-
-                    // Only show snackbar if unit is 'yyyymmdd' and not clearing the form
-                    if (!isClearingForm && units[selectedTraitKey] == 'yyyymmdd') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          duration: Duration(seconds: 3),
-                          content: Row(
-                            children: [
-                              Icon(Icons.warning_amber_rounded, color: Colors.yellow),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  "Select a date",
-                                  style: TextStyle(fontSize: 16.0),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  items: traits.keys.map<DropdownMenuItem<String>>((String key) {
-                    return DropdownMenuItem<String>(
-                      value: key,
-                      child: Text(traits[key] ?? 'Unknown'),
-                    );
-                  }).toList(),
-                  validator: (value) => value == null ? 'Please select a trait' : null,
-                ),
+                //////////////////////////
+                // FIRST  DROPDOWN MENU
+                //////////////////////////
+                _buildTraitDropdown(),
+                //////////////////////////
+                // END OF FIRST  DROPDOWN MENU
                 SizedBox(height: 20),
+                // OBSERVATION FIELD (with validations)
+                //////////////////////////
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end, // Align the TextFormField and Text vertically
                   children: [
@@ -625,20 +565,6 @@ class _NewObservationPageState extends State<NewObservationPage> {
                             SnackBar(content: Text('Submission not allowed for this study')),
                           );
                         }
-                        // Optionally reset other state variables if needed
-                        // setState(() {
-                        // Set to a default value and then back to null
-                        //   dropdownValue = traits.keys.first;
-                        //   Future.delayed(Duration.zero, () {
-                        //     setState(() {
-                        //      dropdownValue = null;
-                        //      selectedTraitKey = null;
-                        //       selectedDate = null;
-                        //       _textEditingController.clear();
-                        //      _notesEditingController.clear();
-                        //     });
-                        //   });
-                        //});
                         //setState(() {
                         //  _formKey.currentState!.reset();
                         //  dropdownKey = UniqueKey();
