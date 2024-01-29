@@ -44,6 +44,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
   int? minHeight;
   bool _isUploading = false; // for form clearing
   bool isClearingForm = false;
+  bool _isPhotoLoading = false; // Lock for photo loading
 
   @override
   void initState() {
@@ -65,18 +66,32 @@ class _NewObservationPageState extends State<NewObservationPage> {
   }
 
   Future<void> _initRetrievePhoto() async {
+    setState(() {
+      _isPhotoLoading = true;
+    });
     _imageBytes = await ApiRequests.retrievePhoto(studyID ?? 'defaultFolder', plotNumber!, context);
-    if (_imageBytes != null) {
-      setState(() {});
+    if (_imageBytes != null && mounted) {
+      // Check if the widget is still mounted
+      setState(() {
+        _isPhotoLoading = false;
+      });
+    } else if (mounted) {
+      // If _imageBytes is null, but the widget is still mounted
+      setState(() {
+        _isPhotoLoading = false;
+      });
     }
   }
 
   Future<void> _initRetrieveLimits() async {
     var limits = await ApiRequests.retrieveLimits(studyID ?? 'defaultFolder');
-    setState(() {
-      minHeight = limits?['minHeight'];
-      maxHeight = limits?['maxHeight'];
-    });
+    if (mounted) {
+      // Check if the widget is still mounted
+      setState(() {
+        minHeight = limits?['minHeight'];
+        maxHeight = limits?['maxHeight'];
+      });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -108,6 +123,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
       });
 
       bool uploadSuccess = await ApiRequests.uploadImage(_image!, studyID!, plotNumber!);
+      if (!mounted) return; // Check if the widget is still mounted
 
       setState(() {
         _isUploading = false; // End of upload
@@ -136,10 +152,11 @@ class _NewObservationPageState extends State<NewObservationPage> {
       });
     }
     //print plotID
-    //print('Plot ID: ${widget.plotId}');
-    print('Traits: $traits');
-    print('Units: $units');
-    print('Scales: $scales');
+    print('extracted Plot ID: ${widget.plotId}');
+    //print('Traits: $traits');
+    //print('Units: $units');
+    //print('Scales: $scales');
+
     // Extract the studyID
     try {
       studyID = widget.studyDetails['results'][0]['results'][0]['data']['_id']['\$oid'];
@@ -153,6 +170,66 @@ class _NewObservationPageState extends State<NewObservationPage> {
       print('Extracted Plot Number: $plotNumber');
     } catch (e) {
       print('Error extracting Plot Number: $e');
+    }
+    ////////////////////////////////////////////////////////////////////////////
+  }
+
+  void moveToNextPlot() {
+    var plots = widget.studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
+    Map<String, dynamic>? nextPlotDetails;
+    String? nextPlotId;
+
+    if (_isPhotoLoading) {
+      print("Photo is still loading, please wait.");
+      // Optionally, show a user-friendly message here
+      return;
+    }
+
+    int currentIndex = plots.indexWhere((plot) => plot['rows']?[0]['study_index'] == plotNumber);
+
+    // Check if current plot is found and not the last plot in the list
+    if (currentIndex != -1 && currentIndex < plots.length - 1) {
+      int nextIndex = currentIndex + 1;
+      while (nextIndex < plots.length) {
+        var potentialNextPlot = plots[nextIndex];
+        // Check if the next plot is valid (not marked as discard and has 'rows' key)
+        if (potentialNextPlot.containsKey('rows') &&
+            !(potentialNextPlot['rows'][0].containsKey('discard') && potentialNextPlot['rows'][0]['discard'])) {
+          nextPlotDetails = potentialNextPlot;
+          nextPlotId = nextPlotDetails?['_id']['\$oid'];
+          break;
+        }
+        nextIndex++;
+      }
+    }
+
+    // Print variables needed for the next plot
+    //print('-------Next Plot ID: $nextPlotId');
+    //print('------Next Plot Details: $nextPlotDetails');
+
+    if (nextPlotId != null && nextPlotDetails != null) {
+      try {
+        Future.delayed(Duration(milliseconds: 500), () {
+          if (!mounted) return; // Check if the widget is still in the widget tree
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NewObservationPage(
+                  studyDetails: widget.studyDetails, plotId: nextPlotId!, plotDetails: nextPlotDetails ?? {}),
+            ),
+          ).then((_) {
+            if (!mounted) return; // Check if the widget is still in the widget tree
+          });
+        });
+      } catch (e) {
+        print('Error navigating to the next plot: $e');
+        // Optionally, you can show a snackbar or a dialog here to inform the user
+      }
+    } else {
+      // Handle the case where there's no next plot to navigate to
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No more plots available')),
+      );
     }
   }
 
@@ -346,7 +423,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('New Observation'),
+        title: Text('New Observation for plot ${plotNumber ?? 'Loading...'}'),
       ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
@@ -499,115 +576,134 @@ class _NewObservationPageState extends State<NewObservationPage> {
                 ),
                 //////
                 SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      // Extract form data
-                      String plotID = widget.plotId; // Plot ID
-                      String? trait = selectedTraitKey; // Selected trait
-                      String measurement = _textEditingController.text; // Entered measurement
-                      String dateString = DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now()); // Date
-                      String? note = _notesEditingController.text.isEmpty
-                          ? null
-                          : _notesEditingController.text; // Notes, null if empty
-                      print('Plot ID: $plotID');
-                      print('Trait: $trait');
-                      print('Measurement: $measurement');
-                      //print('Date: $dateString');
-                      print('Note: $note');
-                      //Print study ID
-                      print('Study ID: $studyID');
-                      try {
-                        // Create the JSON request
-                        String jsonString = QRCodeService.submitObservationRequest(
-                          studyID: studyID ?? 'defaultStudyID', // Add studyID parameter
-                          detectedQRCode: plotID,
-                          selectedTrait: trait,
-                          measurement: measurement,
-                          dateString: dateString,
-                          note: note,
-                        );
-                        if (jsonString != '{}') {
-                          //print('---JSON Request: $jsonString');
-                          // Send the request to the server and await the response
-                          var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
 
-                          // Handle the response data
-                          print('Response from server: $response');
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            // Extract form data
+                            String plotID = widget.plotId; // Plot ID
+                            String? trait = selectedTraitKey; // Selected trait
+                            String measurement = _textEditingController.text; // Entered measurement
+                            String dateString = DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now()); // Date
+                            String? note = _notesEditingController.text.isEmpty
+                                ? null
+                                : _notesEditingController.text; // Notes, null if empty
+                            print('Plot ID: $plotID');
+                            print('Trait: $trait');
+                            print('Measurement: $measurement');
+                            //print('Date: $dateString');
+                            print('Note: $note');
+                            //Print study ID
+                            print('Study ID: $studyID');
+                            try {
+                              // Create the JSON request
+                              String jsonString = QRCodeService.submitObservationRequest(
+                                studyID: studyID ?? 'defaultStudyID', // Add studyID parameter
+                                detectedQRCode: plotID,
+                                selectedTrait: trait,
+                                measurement: measurement,
+                                dateString: dateString,
+                                note: note,
+                              );
+                              if (jsonString != '{}') {
+                                //print('---JSON Request: $jsonString');
+                                // Send the request to the server and await the response
+                                var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
 
-                          // Optionally show a success dialog or snackbar message
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Data successfully submitted',
-                                style: TextStyle(
-                                  fontSize: 16.0, // Larger font size
-                                ),
-                              ),
-                            ),
-                          );
-                          // After the primary request is successful, initiate the secondary request
-                          // Create the cache clear request string using the studyID
-                          String cacheClearRequestJson = QRCodeService.clearCacheRequest(studyID ?? 'defaultStudyID');
-                          //print('CACHE Request: $cacheClearRequestJson');
-                          // Fire-and-forget the clear cache request, no await used
-                          GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend')
-                              .then((cacheResponse) {
-                            // Log the cache clear response
-                            print('+++Cache clear response: $cacheResponse');
-                          }).catchError((error) {
-                            // Log any errors from the cache clear request
-                            print('Error sending cache clear request: $error');
-                          });
-                        } else {
-                          print('NOT ALLOWED');
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Submission not allowed for this study')),
-                          );
-                        }
-                        //setState(() {
-                        //  _formKey.currentState!.reset();
-                        //  dropdownKey = UniqueKey();
-                        //  dropdownValue = null;
-                        //  selectedTraitKey = null;
-                        //  selectedDate = null;
-                        //  _textEditingController.clear();
-                        //  _notesEditingController.clear();
-                        //});
-                      } catch (e) {
-                        // Handle any errors that occur during the request
-                        print('Error sending request: $e');
+                                // Handle the response data
+                                print('Response from server: $response');
 
-                        // Optionally show an error dialog or snackbar message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                Icon(Icons.error_outline, color: Colors.red), // Error icon
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    'Failed to submit data',
-                                    style: TextStyle(
-                                      fontSize: 16.0, // Larger font size
+                                // Optionally show a success dialog or snackbar message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Data successfully submitted',
+                                      style: TextStyle(
+                                        fontSize: 16.0, // Larger font size
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      } finally {
-                        setState(() {
-                          isClearingForm = true; // Set to true right before clearing the form
-                        });
-                        clearForm();
-                      }
-                    }
-                  },
-                  child: Text('Submit Observation'),
-                ),
+                                );
+                                // After the primary request is successful, initiate the secondary request
+                                // Create the cache clear request string using the studyID
+                                String cacheClearRequestJson =
+                                    QRCodeService.clearCacheRequest(studyID ?? 'defaultStudyID');
+                                //print('CACHE Request: $cacheClearRequestJson');
+                                // Fire-and-forget the clear cache request, no await used
+                                GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend')
+                                    .then((cacheResponse) {
+                                  // Log the cache clear response
+                                  print('+++Cache clear response: $cacheResponse');
+                                }).catchError((error) {
+                                  // Log any errors from the cache clear request
+                                  print('Error sending cache clear request: $error');
+                                });
+                              } else {
+                                print('NOT ALLOWED');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Submission not allowed for this study')),
+                                );
+                              }
+                              //setState(() {
+                              //  _formKey.currentState!.reset();
+                              //  dropdownKey = UniqueKey();
+                              //  dropdownValue = null;
+                              //  selectedTraitKey = null;
+                              //  selectedDate = null;
+                              //  _textEditingController.clear();
+                              //  _notesEditingController.clear();
+                              //});
+                            } catch (e) {
+                              // Handle any errors that occur during the request
+                              print('Error sending request: $e');
 
+                              // Optionally show an error dialog or snackbar message
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      Icon(Icons.error_outline, color: Colors.red), // Error icon
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'Failed to submit data',
+                                          style: TextStyle(
+                                            fontSize: 16.0, // Larger font size
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            } finally {
+                              setState(() {
+                                isClearingForm = true; // Set to true right before clearing the form
+                              });
+                              clearForm();
+                            }
+                          }
+                        },
+                        child: Text('Submit Observation'),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Do nothing for now
+                          //Navigator.of(context).pop();
+                          moveToNextPlot();
+                        },
+                        child: Text('Move to Next Plot'),
+                      ),
+                    ),
+                  ],
+                ),
                 ////////////////////////////////////////////////////////
                 SizedBox(height: 20),
                 // put take picture button and select from gallery button in the same row
