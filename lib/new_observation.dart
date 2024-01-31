@@ -66,20 +66,18 @@ class _NewObservationPageState extends State<NewObservationPage> {
   }
 
   Future<void> _initRetrievePhoto() async {
-    setState(() {
-      _isPhotoLoading = true;
-    });
-    _imageBytes = await ApiRequests.retrievePhoto(studyID ?? 'defaultFolder', plotNumber!, context);
-    if (_imageBytes != null && mounted) {
-      // Check if the widget is still mounted
-      setState(() {
-        _isPhotoLoading = false;
-      });
-    } else if (mounted) {
-      // If _imageBytes is null, but the widget is still mounted
-      setState(() {
-        _isPhotoLoading = false;
-      });
+    var result = await ApiRequests.retrievePhoto(studyID ?? 'defaultFolder', plotNumber!);
+
+    if (result['status'] == 'success') {
+      if (mounted) {
+        setState(() {
+          _imageBytes = result['data'];
+        });
+      }
+    } else if (result['status'] == 'not_found') {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Plot has no photo')));
+    } else if (result['status'] == 'error') {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
     }
   }
 

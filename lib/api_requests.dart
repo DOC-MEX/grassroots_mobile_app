@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
-import 'dart:typed_data';
+//import 'package:flutter/material.dart';
+//import 'dart:typed_data';
 import 'dart:convert'; // For jsonDecode()
 
 class ApiRequests {
@@ -27,34 +27,23 @@ class ApiRequests {
     }
   }
 
-  static Future<Uint8List?> retrievePhoto(String studyID, int plotNumber, BuildContext context) async {
+  static Future<Map<String, dynamic>> retrievePhoto(String studyID, int plotNumber) async {
     try {
-      // Define the subfolder name and photo name based on studyID and plotNumber
       String subfolder = studyID;
       String photoName = 'photo_plot_${plotNumber.toString()}.jpg';
 
-      // Create the API URL for retrieving the photo
       var apiUrl = Uri.parse('https://grassroots.tools/photo_receiver/retrieve_photo/$subfolder/$photoName');
-
-      // Send a GET request to retrieve the photo
       var response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
-        // Return the image bytes
-        return response.bodyBytes;
+        return {'status': 'success', 'data': response.bodyBytes};
       } else {
-        // Photo not found, show an error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Plot has no photo')),
-        );
+        return {'status': 'not_found'};
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
       print('Error: $e');
+      return {'status': 'error', 'message': 'Error: $e'};
     }
-    return null;
   }
 
   static Future<Map<String, int>?> retrieveLimits(String studyID) async {
