@@ -293,23 +293,28 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                             ),
                             SizedBox(height: 20),
                             // __________BUTTON TO ADD NEW OBSERVATION__________
-                            if (selectedPlotId?.isNotEmpty == true)
-                              ElevatedButton(
-                                onPressed: () {
-                                  // Use Navigator to push NewObservationPage with the required details
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => NewObservationPage(
-                                        studyDetails: fetchedStudyDetails!,
-                                        plotId: selectedPlotId!,
-                                        plotDetails: selectedPlot ?? {},
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Text('Add New Observation'),
+                            //if (selectedPlotId?.isNotEmpty == true)
+                            ElevatedButton(
+                              onPressed: selectedPlotId == null
+                                  ? null
+                                  : () {
+                                      // Use Navigator to push NewObservationPage with the required details
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => NewObservationPage(
+                                            studyDetails: fetchedStudyDetails!,
+                                            plotId: selectedPlotId!,
+                                            plotDetails: selectedPlot ?? {},
+                                          ),
+                                        ),
+                                      );
+                                    },
+                              child: Text('Add New Observation'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: selectedPlotId == null ? Colors.grey : Theme.of(context).primaryColor,
                               ),
+                            ),
                             SizedBox(height: 20),
                             // Dropdown to select a plot.  ______2nd DROPDOWN MENU______
                             if (plotDisplayValues.isNotEmpty) ...[

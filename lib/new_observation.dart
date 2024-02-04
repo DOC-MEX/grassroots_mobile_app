@@ -194,7 +194,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
         if (potentialNextPlot.containsKey('rows') &&
             !(potentialNextPlot['rows'][0].containsKey('discard') && potentialNextPlot['rows'][0]['discard'])) {
           nextPlotDetails = potentialNextPlot;
-          nextPlotId = nextPlotDetails?['_id']['\$oid'];
+          //nextPlotId = nextPlotDetails?['_id']['\$oid'];
+          nextPlotId = nextPlotDetails?['rows'][0]['_id']['\$oid'];
           break;
         }
         nextIndex++;
@@ -614,32 +615,34 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
                                 // Handle the response data
                                 print('Response from server: $response');
-
-                                // Optionally show a success dialog or snackbar message
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Data successfully submitted',
-                                      style: TextStyle(
-                                        fontSize: 16.0, // Larger font size
+                                String? statusText = response['results']?[0]['status_text'];
+                                if (statusText != null && statusText == 'Succeeded') {
+                                  // Optionally show a success dialog or snackbar message
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Data successfully submitted',
+                                        style: TextStyle(
+                                          fontSize: 16.0, // Larger font size
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
-                                // After the primary request is successful, initiate the secondary request
-                                // Create the cache clear request string using the studyID
-                                String cacheClearRequestJson =
-                                    QRCodeService.clearCacheRequest(studyID ?? 'defaultStudyID');
-                                //print('CACHE Request: $cacheClearRequestJson');
-                                // Fire-and-forget the clear cache request, no await used
-                                GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend')
-                                    .then((cacheResponse) {
-                                  // Log the cache clear response
-                                  print('+++Cache clear response: $cacheResponse');
-                                }).catchError((error) {
-                                  // Log any errors from the cache clear request
-                                  print('Error sending cache clear request: $error');
-                                });
+                                  );
+                                  // After the primary request is successful, initiate the secondary request
+                                  // Create the cache clear request string using the studyID
+                                  String cacheClearRequestJson =
+                                      QRCodeService.clearCacheRequest(studyID ?? 'defaultStudyID');
+                                  //print('CACHE Request: $cacheClearRequestJson');
+                                  // Fire-and-forget the clear cache request, no await used
+                                  GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend')
+                                      .then((cacheResponse) {
+                                    // Log the cache clear response
+                                    print('+++Cache clear response: $cacheResponse');
+                                  }).catchError((error) {
+                                    // Log any errors from the cache clear request
+                                    print('Error sending cache clear request: $error');
+                                  });
+                                }
                               } else {
                                 print('NOT ALLOWED');
                                 ScaffoldMessenger.of(context).showSnackBar(
