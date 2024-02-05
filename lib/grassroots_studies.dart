@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'qr_code_service.dart';
-import 'study_details_widget.dart';
+import 'grassroots_request.dart';
+//import 'study_details_widget.dart';
 import 'new_observation.dart';
 import 'table_observations.dart';
 
@@ -146,10 +147,108 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
       },
     );
   }
-//////////////////////////////////////////////////////////
 
+  Future<void> onNewObservationReturn(Map<String, dynamic> resultData) async {
+    if (resultData.isNotEmpty) {
+      if (resultData.containsKey('submissionSuccessful') && resultData['submissionSuccessful']) {
+        print('*****REFRESHING STUDY DETAILS AFTER SUCCESSFUL OBSERVATION');
+        try {
+          String cacheClearRequestJson = QRCodeService.clearCacheRequest(selectedStudy!);
+          await GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend');
+          print('Cache cleared successfully');
+
+          var studyDetails = await QRCodeService.fetchSingleStudy(selectedStudy!);
+          if (mounted) {
+            setState(() {
+              fetchedStudyDetails = studyDetails;
+
+              if (resultData.containsKey('plotId')) {
+                selectedPlotId = resultData['plotId'];
+
+                plotIDs.clear();
+                plotDisplayValues.clear();
+                observationCount = 0;
+
+                var plots = studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
+                selectedPlot = plots.firstWhere(
+                  (plot) => plot['rows'] != null && plot['rows'][0]['_id']['\$oid'] == selectedPlotId,
+                  orElse: () => null,
+                );
+
+                if (studyDetails['results'][0]['results'][0]['data'].containsKey('plots') &&
+                    studyDetails['results'][0]['results'][0]['data']['plots'] != null) {
+                  for (var plot in plots) {
+                    if (plot.containsKey('rows') && plot['rows'] is List && plot['rows'].isNotEmpty) {
+                      var row = plot['rows'][0];
+                      if (!(row.containsKey('discard') || row.containsKey('blank'))) {
+                        String plotID = row['_id']['\$oid'];
+                        String plotIndex = row['study_index'].toString();
+                        plotIDs.add(plotID);
+                        plotDisplayValues.add(plotIndex);
+                      }
+                    }
+                  }
+
+                  // Reorganize plot IDs and display values
+                  var combinedList = List<MapEntry<String, String>>.generate(
+                    plotIDs.length,
+                    (index) => MapEntry(plotIDs[index], plotDisplayValues[index]),
+                  );
+                  combinedList.sort((a, b) => int.parse(a.value).compareTo(int.parse(b.value)));
+                  plotIDs = combinedList.map((e) => e.key).toList();
+                  plotDisplayValues = combinedList.map((e) => e.value).toList();
+
+                  // Update selected plot details
+                  int index = plotIDs.indexOf(selectedPlotId!);
+                  if (index != -1) {
+                    selectedPlotDisplayValue = plotDisplayValues[index];
+
+                    var observations = selectedPlot!['rows'][0]['observations'];
+                    var count = observations.length;
+                    observationCount = count;
+                  }
+
+                  // Update the traits dictionary (3rd dropdown menu)
+                  variableToTraitMap.clear();
+                  var observations = selectedPlot!['rows'][0]['observations'];
+                  for (var observation in observations) {
+                    if (observation.containsKey('phenotype') && observation['phenotype'].containsKey('variable')) {
+                      String variable = observation['phenotype']['variable'];
+
+                      print('Variable: $variable, Exists in traits: ${traits.containsKey(variable)}');
+                      // Check if the trait exists for this variable and create a DropdownMenuItem
+                      if (traits.containsKey(variable)) {
+                        String traitName = traits[variable]!;
+                        variableToTraitMap[variable] = traitName;
+                      }
+                    }
+                  }
+
+                  selectedPhenotype = null;
+                }
+              }
+            });
+
+            //print new observation count
+            print('New observation count: $observationCount');
+          }
+        } catch (e) {
+          print('Error in fetching study details: $e');
+          // Optionally handle the error here, e.g., showing a snackbar message
+        }
+      }
+    }
+  }
+
+////////////////////// MAIN BUILD ////////////////////////////////////
   @override
   Widget build(BuildContext context) {
+    //print("*******GrassrootsStudies build() called******");
+    //print('Selected Study: $selectedStudy');
+    //print('Selected Plot ID: $selectedPlotId');
+    //print('Selected Phenotype: $selectedPhenotype');
+    //print('Number of Plots: $numberOfPlots');
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Grassroots Studies'),
@@ -306,6 +405,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                             studyDetails: fetchedStudyDetails!,
                                             plotId: selectedPlotId!,
                                             plotDetails: selectedPlot ?? {},
+                                            onReturn: onNewObservationReturn,
                                           ),
                                         ),
                                       );

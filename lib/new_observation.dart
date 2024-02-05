@@ -14,11 +14,13 @@ class NewObservationPage extends StatefulWidget {
   final Map<String, dynamic> studyDetails;
   final String plotId;
   final Map<String, dynamic> plotDetails;
+  final Function(Map<String, dynamic>) onReturn;
 
   NewObservationPage({
     required this.studyDetails,
     required this.plotId,
     required this.plotDetails,
+    required this.onReturn,
   });
 
   @override
@@ -45,6 +47,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
   bool _isUploading = false; // for form clearing
   bool isClearingForm = false;
   bool _isPhotoLoading = false; // Lock for photo loading
+  bool submissionSuccessful = false; // Flag for successful submission
 
   @override
   void initState() {
@@ -214,7 +217,10 @@ class _NewObservationPageState extends State<NewObservationPage> {
             context,
             MaterialPageRoute(
               builder: (context) => NewObservationPage(
-                  studyDetails: widget.studyDetails, plotId: nextPlotId!, plotDetails: nextPlotDetails ?? {}),
+                  studyDetails: widget.studyDetails,
+                  plotId: nextPlotId!,
+                  plotDetails: nextPlotDetails ?? {},
+                  onReturn: widget.onReturn),
             ),
           ).then((_) {
             if (!mounted) return; // Check if the widget is still in the widget tree
@@ -609,14 +615,21 @@ class _NewObservationPageState extends State<NewObservationPage> {
                                 note: note,
                               );
                               if (jsonString != '{}') {
-                                //print('---JSON Request: $jsonString');
                                 // Send the request to the server and await the response
                                 var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
 
                                 // Handle the response data
-                                print('Response from server: $response');
+                                //print('Response from server: $response');
                                 String? statusText = response['results']?[0]['status_text'];
                                 if (statusText != null && statusText == 'Succeeded') {
+                                  submissionSuccessful = true;
+                                  print('Submission successful *****SET FLAG TO TRUE******');
+                                  // Update the flag in the parent widget
+                                  widget.onReturn({
+                                    'plotId': plotID,
+                                    'submissionSuccessful': submissionSuccessful,
+                                  });
+
                                   // Optionally show a success dialog or snackbar message
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -630,18 +643,18 @@ class _NewObservationPageState extends State<NewObservationPage> {
                                   );
                                   // After the primary request is successful, initiate the secondary request
                                   // Create the cache clear request string using the studyID
-                                  String cacheClearRequestJson =
-                                      QRCodeService.clearCacheRequest(studyID ?? 'defaultStudyID');
+                                  //String cacheClearRequestJson =
+                                  //    QRCodeService.clearCacheRequest(studyID ?? 'defaultStudyID');
                                   //print('CACHE Request: $cacheClearRequestJson');
                                   // Fire-and-forget the clear cache request, no await used
-                                  GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend')
-                                      .then((cacheResponse) {
-                                    // Log the cache clear response
-                                    print('+++Cache clear response: $cacheResponse');
-                                  }).catchError((error) {
-                                    // Log any errors from the cache clear request
-                                    print('Error sending cache clear request: $error');
-                                  });
+                                  //GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend')
+                                  //    .then((cacheResponse) {
+                                  // Log the cache clear response
+                                  //  print('+++Cache clear response: $cacheResponse');
+                                  //}).catchError((error) {
+                                  // Log any errors from the cache clear request
+                                  //  print('Error sending cache clear request: $error');
+                                  //});
                                 }
                               } else {
                                 print('NOT ALLOWED');
@@ -649,15 +662,6 @@ class _NewObservationPageState extends State<NewObservationPage> {
                                   SnackBar(content: Text('Submission not allowed for this study')),
                                 );
                               }
-                              //setState(() {
-                              //  _formKey.currentState!.reset();
-                              //  dropdownKey = UniqueKey();
-                              //  dropdownValue = null;
-                              //  selectedTraitKey = null;
-                              //  selectedDate = null;
-                              //  _textEditingController.clear();
-                              //  _notesEditingController.clear();
-                              //});
                             } catch (e) {
                               // Handle any errors that occur during the request
                               print('Error sending request: $e');
