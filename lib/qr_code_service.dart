@@ -90,12 +90,14 @@ class QRCodeService {
 
         if (phenotypeName != null && !parsedData.allPhenotypeNames.contains(phenotypeName)) {
           parsedData.allPhenotypeNames.add(phenotypeName);
+          parsedData.allTraits.add(traitName!);
         }
 
-        if (traitName != null && !parsedData.allTraits.contains(traitName)) {
-          parsedData.allTraits.add(traitName);
-        }
+        //if (traitName != null && !parsedData.allTraits.contains(traitName)) {
+        //  parsedData.allTraits.add(traitName);
+        //}
       }
+      //print allPhenotypeNames and allTraits
     } // end of if (parsedData.statusText == "Succeeded" )
 
     return parsedData;
