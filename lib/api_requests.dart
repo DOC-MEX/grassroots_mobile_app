@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 //import 'package:flutter/material.dart';
 //import 'dart:typed_data';
 import 'dart:convert'; // For jsonDecode()
+import 'package:intl/intl.dart';
 
 class ApiRequests {
   static Future<bool> uploadImage(File image, String studyID, int plotNumber) async {
@@ -27,6 +28,30 @@ class ApiRequests {
     }
   }
 
+  static Future<bool> uploadImageDate(File image, String studyID, int plotNumber) async {
+    try {
+      var uri = Uri.parse('https://grassroots.tools/photo_receiver/upload/');
+
+      // Include the current date in the file name
+      String date = DateFormat('yyyy_MM_dd').format(DateTime.now());
+      String newFileName = 'photo_plot_${plotNumber.toString()}_${date}.jpg';
+
+      var request = http.MultipartRequest('POST', uri);
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        image.path,
+        filename: newFileName,
+      ));
+
+      request.fields['subfolder'] = studyID;
+      var response = await request.send();
+
+      return response.statusCode == 201; // Return true if status code is 201
+    } catch (e) {
+      return false; // Return false in case of an error
+    }
+  }
+
   static Future<Map<String, dynamic>> retrievePhoto(String studyID, int plotNumber) async {
     try {
       String subfolder = studyID;
@@ -38,6 +63,24 @@ class ApiRequests {
       if (response.statusCode == 200) {
         return {'status': 'success', 'data': response.bodyBytes};
       } else {
+        return {'status': 'not_found'};
+      }
+    } catch (e) {
+      print('Error: $e');
+      return {'status': 'error', 'message': 'Error: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> retrieveLastestPhoto(String studyID, int plotNumber) async {
+    try {
+      // Updated API URL to match the new endpoint
+      var apiUrl = Uri.parse('https://grassroots.tools/photo_receiver/retrieve_latest_photo/$studyID/$plotNumber');
+      var response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        return {'status': 'success', 'data': response.bodyBytes};
+      } else {
+        // Handle not found or other errors
         return {'status': 'not_found'};
       }
     } catch (e) {

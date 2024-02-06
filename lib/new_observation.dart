@@ -69,7 +69,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
   }
 
   Future<void> _initRetrievePhoto() async {
-    var result = await ApiRequests.retrievePhoto(studyID ?? 'defaultFolder', plotNumber!);
+    //var result = await ApiRequests.retrievePhoto(studyID ?? 'defaultFolder', plotNumber!);
+    var result = await ApiRequests.retrieveLastestPhoto(studyID ?? 'defaultFolder', plotNumber!);
 
     if (result['status'] == 'success') {
       if (mounted) {
@@ -123,7 +124,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
         _isUploading = true; // Start of upload
       });
 
-      bool uploadSuccess = await ApiRequests.uploadImage(_image!, studyID!, plotNumber!);
+      //bool uploadSuccess = await ApiRequests.uploadImage(_image!, studyID!, plotNumber!);
+      bool uploadSuccess = await ApiRequests.uploadImageDate(_image!, studyID!, plotNumber!);
       if (!mounted) return; // Check if the widget is still mounted
 
       setState(() {

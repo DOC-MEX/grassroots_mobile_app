@@ -32,7 +32,7 @@ class ObservationTable extends StatelessWidget {
                 ),
                 columnWidths: const {
                   0: FlexColumnWidth(1.4),
-                  1: FlexColumnWidth(1.5),
+                  1: FlexColumnWidth(1.6),
                   2: FlexColumnWidth(1.5),
                   3: FlexColumnWidth(3),
                 },
@@ -49,7 +49,13 @@ class ObservationTable extends StatelessWidget {
                   ...rawValues.map((observation) => TableRow(
                         children: [
                           Padding(padding: EdgeInsets.all(8.0), child: Text('${observation['raw_value']}')),
-                          Padding(padding: EdgeInsets.all(8.0), child: Text('${observation['date']}')),
+                          Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text(
+                              '${observation['date']}',
+                              softWrap: false, // Prevents text from wrapping
+                            ),
+                          ),
                           Padding(padding: EdgeInsets.all(8.0), child: Text(displayUnit)),
                           Padding(padding: EdgeInsets.all(8.0), child: Text(observation['notes'] ?? '')),
                           //Padding(
