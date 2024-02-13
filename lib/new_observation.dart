@@ -618,6 +618,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                               );
                               if (jsonString != '{}') {
                                 // Send the request to the server and await the response
+                                //print('Request to server: $jsonString ');
                                 var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
 
                                 // Handle the response data
@@ -747,7 +748,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                       // When the user taps on the image, navigate to a new screen with the full-size image
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => FullSizeImageScreenFile(imageFile: _image),
+                          builder: (context) => FullSizeImageScreenFile(imageFile: _image, plotNumber: plotNumber),
                         ),
                       );
                     },
@@ -767,7 +768,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
                       // When the user taps on the image, navigate to a new screen with the full-size image
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => FullSizeImageScreenUint8List(imageBytes: _imageBytes),
+                          builder: (context) =>
+                              FullSizeImageScreenUint8List(imageBytes: _imageBytes, plotNumber: plotNumber),
                         ),
                       );
                     },
@@ -780,11 +782,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                       ),
                     ),
                   ),
-                //  Container(
-                //    height: 200,
-                //    width: double.infinity,
-                //    child: Image.memory(_imageBytes!, fit: BoxFit.cover),
-                //  ),
+
                 ///////////////////////////////////////////////
                 ///////////////////////////////////////////
                 if (_image != null)

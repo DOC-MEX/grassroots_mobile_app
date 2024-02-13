@@ -4,14 +4,15 @@ import 'dart:typed_data'; // Import this for Uint8List
 
 class FullSizeImageScreenFile extends StatelessWidget {
   final File? imageFile;
+  final int? plotNumber;
 
-  FullSizeImageScreenFile({this.imageFile});
+  FullSizeImageScreenFile({this.imageFile, this.plotNumber});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Full-Size Image'),
+        title: Text('Photo of Plot ${plotNumber ?? 'Loading...'}'),
       ),
       body: Center(
         child: Hero(
@@ -25,14 +26,15 @@ class FullSizeImageScreenFile extends StatelessWidget {
 
 class FullSizeImageScreenUint8List extends StatelessWidget {
   final Uint8List? imageBytes;
+  final int? plotNumber;
 
-  FullSizeImageScreenUint8List({this.imageBytes});
+  FullSizeImageScreenUint8List({this.imageBytes, this.plotNumber});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Full-Size Image'),
+        title: Text('Photo of Plot ${plotNumber ?? 'Loading...'}'),
       ),
       body: Center(
         child: Hero(
