@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'dart:typed_data'; // Import this for Uint8List
+//import 'dart:typed_data'; // Import this for Uint8List
 
 class FullSizeImageScreenFile extends StatelessWidget {
   final File? imageFile;
@@ -24,11 +24,12 @@ class FullSizeImageScreenFile extends StatelessWidget {
   }
 }
 
-class FullSizeImageScreenUint8List extends StatelessWidget {
-  final Uint8List? imageBytes;
+class FullSizeImageScreen extends StatelessWidget {
+  //final Uint8List? imageBytes;
+  final String? imageUrl;
   final int? plotNumber;
 
-  FullSizeImageScreenUint8List({this.imageBytes, this.plotNumber});
+  FullSizeImageScreen({this.imageUrl, this.plotNumber});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +40,9 @@ class FullSizeImageScreenUint8List extends StatelessWidget {
       body: Center(
         child: Hero(
           tag: 'imageHero',
-          child: imageBytes != null ? Image.memory(imageBytes!, fit: BoxFit.cover) : Container(),
+          //child: imageBytes != null ? Image.memory(imageBytes!, fit: BoxFit.cover) : Container(),
+          // Use Image.network to display the image from a URL
+          child: imageUrl != null ? Image.network(imageUrl!, fit: BoxFit.cover) : Container(),
         ),
       ),
     );

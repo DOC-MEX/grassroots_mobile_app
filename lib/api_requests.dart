@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 class ApiRequests {
   static Future<bool> uploadImage(File image, String studyID, int plotNumber) async {
     try {
-      var uri = Uri.parse('https://grassroots.tools/photo_receiver/upload/');
+      var uri = Uri.parse('https://grassroots.tools/beta/photo_receiver/upload/');
       var request = http.MultipartRequest('POST', uri);
 
       String newFileName = 'photo_plot_${plotNumber.toString()}.jpg';
@@ -30,7 +30,7 @@ class ApiRequests {
 
   static Future<bool> uploadImageDate(File image, String studyID, int plotNumber) async {
     try {
-      var uri = Uri.parse('https://grassroots.tools/photo_receiver/upload/');
+      var uri = Uri.parse('https://grassroots.tools/beta/photo_receiver/upload/');
 
       // Include the current date in the file name
       String date = DateFormat('yyyy_MM_dd').format(DateTime.now());
@@ -57,7 +57,7 @@ class ApiRequests {
       String subfolder = studyID;
       String photoName = 'photo_plot_${plotNumber.toString()}.jpg';
 
-      var apiUrl = Uri.parse('https://grassroots.tools/photo_receiver/retrieve_photo/$subfolder/$photoName');
+      var apiUrl = Uri.parse('https://grassroots.tools/beta/photo_receiver/retrieve_photo/$subfolder/$photoName');
       var response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -71,14 +71,45 @@ class ApiRequests {
     }
   }
 
+  //static Future<Map<String, dynamic>> retrieveLastestPhoto(String studyID, int plotNumber) async {
+//    try {
+//      // Updated API URL to match the new endpoint
+//      var apiUrl =
+//          Uri.parse('https://grassroots.tools/beta/photo_receiver/retrieve_latest_photo/$studyID/$plotNumber/');
+//      var response = await http.get(apiUrl);
+
+//      if (response.statusCode == 200) {
+//        return {'status': 'success', 'data': response.bodyBytes};
+//      } else {
+//        // Handle not found or other errors
+//        return {'status': 'not_found'};
+//      }
+//    } catch (e) {
+//      print('Error: $e');
+//      return {'status': 'error', 'message': 'Error: $e'};
+//    }
+//  }
+
   static Future<Map<String, dynamic>> retrieveLastestPhoto(String studyID, int plotNumber) async {
     try {
       // Updated API URL to match the new endpoint
-      var apiUrl = Uri.parse('https://grassroots.tools/photo_receiver/retrieve_latest_photo/$studyID/$plotNumber');
+      var apiUrl =
+          Uri.parse('https://grassroots.tools/beta/photo_receiver/retrieve_latest_photo/$studyID/$plotNumber/');
       var response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
-        return {'status': 'success', 'data': response.bodyBytes};
+        // Parse the JSON response
+        var jsonResponse = json.decode(response.body);
+
+        // Check if the status is success and extract URL
+        if (jsonResponse['status'] == 'success') {
+          return {
+            'status': 'success',
+            'url': jsonResponse['url'], // Extract and return the URL instead of bytes
+          };
+        } else {
+          return {'status': 'not_found'};
+        }
       } else {
         // Handle not found or other errors
         return {'status': 'not_found'};
@@ -92,7 +123,8 @@ class ApiRequests {
   static Future<Map<String, int>?> retrieveLimits(String studyID) async {
     try {
       String subfolder = studyID;
-      var apiUrl = Uri.parse('https://grassroots.tools/photo_receiver/retrieve_limits/$subfolder');
+      var apiUrl = Uri.parse('https://grassroots.tools/beta/photo_receiver/retrieve_limits/$subfolder/');
+      //print("________apiUrl = $apiUrl");
       var response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -115,7 +147,7 @@ class ApiRequests {
 
   static Future<bool> updateLimits(String studyID, int newMin, int newMax) async {
     String subfolder = studyID;
-    var url = Uri.parse('https://grassroots.tools/photo_receiver/update_limits/$subfolder/');
+    var url = Uri.parse('https://grassroots.tools/beta/photo_receiver/update_limits/$subfolder/');
 
     try {
       final response = await http.post(

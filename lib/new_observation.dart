@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 //import 'package:http/http.dart' as http;
 import 'dart:io';
-import 'dart:typed_data';
 import 'full_size_image_screen.dart';
 import 'grassroots_request.dart';
 import 'qr_code_service.dart';
@@ -41,7 +40,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
   File? _image;
   String? studyID;
   int? plotNumber;
-  Uint8List? _imageBytes;
+  //Uint8List? _imageBytes;
+  String? _imageUrl;
   int? maxHeight;
   int? minHeight;
   bool _isUploading = false; // for form clearing
@@ -69,13 +69,12 @@ class _NewObservationPageState extends State<NewObservationPage> {
   }
 
   Future<void> _initRetrievePhoto() async {
-    //var result = await ApiRequests.retrievePhoto(studyID ?? 'defaultFolder', plotNumber!);
     var result = await ApiRequests.retrieveLastestPhoto(studyID ?? 'defaultFolder', plotNumber!);
 
     if (result['status'] == 'success') {
       if (mounted) {
         setState(() {
-          _imageBytes = result['data'];
+          _imageUrl = result['url'];
         });
       }
     } else if (result['status'] == 'not_found') {
@@ -101,7 +100,9 @@ class _NewObservationPageState extends State<NewObservationPage> {
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
-        _imageBytes = null; // Reset the retrieved image
+        //_imageBytes = null; // Reset the retrieved image
+        // Reset the retrieved image URL and bytes
+        _imageUrl = null;
       });
     }
   }
@@ -112,7 +113,9 @@ class _NewObservationPageState extends State<NewObservationPage> {
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
-        _imageBytes = null; // Reset the retrieved image
+        //_imageBytes = null; // Reset the retrieved image
+        // Reset the retrieved image URL and bytes
+        _imageUrl = null;
       });
     }
   }
@@ -430,6 +433,19 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            // Reset the image state
+            setState(() {
+              _image = null;
+              _imageUrl = null;
+            });
+
+            // Pop the current route
+            Navigator.of(context).pop();
+          },
+        ),
         title: Text('New Observation for plot ${plotNumber ?? 'Loading...'}'),
       ),
       body: Padding(
@@ -762,14 +778,16 @@ class _NewObservationPageState extends State<NewObservationPage> {
                     ),
                   ),
                 // Conditional rendering retrieved image (if needed)
-                if (_imageBytes != null)
+                //if (_imageBytes != null)
+                if (_imageUrl != null)
                   GestureDetector(
                     onTap: () {
                       // When the user taps on the image, navigate to a new screen with the full-size image
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) =>
-                              FullSizeImageScreenUint8List(imageBytes: _imageBytes, plotNumber: plotNumber),
+                          //builder: (context) =>
+                          //    FullSizeImageScreenUint8List(imageBytes: _imageBytes, plotNumber: plotNumber),
+                          builder: (context) => FullSizeImageScreen(imageUrl: _imageUrl, plotNumber: plotNumber),
                         ),
                       );
                     },
@@ -778,7 +796,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
                       child: Container(
                         height: 200,
                         width: double.infinity,
-                        child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                        //child: Image.memory(_imageBytes!, fit: BoxFit.cover),
+                        child: Image.network(_imageUrl!, fit: BoxFit.cover),
                       ),
                     ),
                   ),
