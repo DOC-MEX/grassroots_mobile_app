@@ -40,8 +40,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
   File? _image;
   String? studyID;
   int? plotNumber;
-  //Uint8List? _imageBytes;
   String? _imageUrl;
+  DateTime? _photoDate;
   int? maxHeight;
   int? minHeight;
   bool _isUploading = false; // for form clearing
@@ -68,6 +68,12 @@ class _NewObservationPageState extends State<NewObservationPage> {
     super.dispose();
   }
 
+  String? extractDateFromImageUrl(String imageUrl) {
+    RegExp regExp = RegExp(r'photo_plot_\d+_(\d{4}_\d{2}_\d{2})\.jpg$');
+    final match = regExp.firstMatch(imageUrl);
+    return match?.group(1); // Returns 'YYYY_MM_DD'
+  }
+
   Future<void> _initRetrievePhoto() async {
     var result = await ApiRequests.retrieveLastestPhoto(studyID ?? 'defaultFolder', plotNumber!);
 
@@ -75,6 +81,9 @@ class _NewObservationPageState extends State<NewObservationPage> {
       if (mounted) {
         setState(() {
           _imageUrl = result['url'];
+          // Extract and format date
+          String? dateStr = extractDateFromImageUrl(_imageUrl!);
+          _photoDate = dateStr != null ? DateFormat('yyyy_MM_dd').parse(dateStr) : null;
         });
       }
     } else if (result['status'] == 'not_found') {
@@ -780,26 +789,39 @@ class _NewObservationPageState extends State<NewObservationPage> {
                 // Conditional rendering retrieved image (if needed)
                 //if (_imageBytes != null)
                 if (_imageUrl != null)
-                  GestureDetector(
-                    onTap: () {
-                      // When the user taps on the image, navigate to a new screen with the full-size image
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          //builder: (context) =>
-                          //    FullSizeImageScreenUint8List(imageBytes: _imageBytes, plotNumber: plotNumber),
-                          builder: (context) => FullSizeImageScreen(imageUrl: _imageUrl, plotNumber: plotNumber),
+                  Column(
+                    children: [
+                      if (_photoDate != null) // Check if _photoDate is not null
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0), // Add some space between the date and the photo
+                          child: Text(
+                            'Photo from ${DateFormat('MMMM d, yyyy').format(_photoDate!)}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      );
-                    },
-                    child: Hero(
-                      tag: 'imageHero', // Unique tag for the Hero widget
-                      child: Container(
-                        height: 200,
-                        width: double.infinity,
-                        //child: Image.memory(_imageBytes!, fit: BoxFit.cover),
-                        child: Image.network(_imageUrl!, fit: BoxFit.cover),
+                      GestureDetector(
+                        onTap: () {
+                          // When the user taps on the image, navigate to a new screen with the full-size image
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => FullSizeImageScreen(
+                                  imageUrl: _imageUrl, plotNumber: plotNumber, photoDate: _photoDate),
+                            ),
+                          );
+                        },
+                        child: Hero(
+                          tag: 'imageHero', // Unique tag for the Hero widget
+                          child: Container(
+                            height: 200,
+                            width: double.infinity,
+                            child: Image.network(_imageUrl!, fit: BoxFit.cover),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
 
                 ///////////////////////////////////////////////

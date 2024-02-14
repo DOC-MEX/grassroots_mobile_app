@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 //import 'dart:typed_data'; // Import this for Uint8List
 
 class FullSizeImageScreenFile extends StatelessWidget {
@@ -25,17 +26,17 @@ class FullSizeImageScreenFile extends StatelessWidget {
 }
 
 class FullSizeImageScreen extends StatelessWidget {
-  //final Uint8List? imageBytes;
   final String? imageUrl;
   final int? plotNumber;
+  final DateTime? photoDate;
 
-  FullSizeImageScreen({this.imageUrl, this.plotNumber});
+  FullSizeImageScreen({this.imageUrl, this.plotNumber, this.photoDate});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Photo of Plot ${plotNumber ?? 'Loading...'}'),
+        title: Text('Photo of Plot ${plotNumber ?? 'Loading...'} - ${DateFormat('MMM d, yyyy').format(photoDate!)}'),
       ),
       body: Center(
         child: Hero(
