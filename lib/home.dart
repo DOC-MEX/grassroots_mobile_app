@@ -137,7 +137,7 @@ class _HomePageState extends State<HomePage> {
     double width = MediaQuery.of(context).size.width * 0.8;
     return Scaffold(
       appBar: AppBar(
-        title: Text('QR Reader'),
+        title: Text('Grassroots Mobile App'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
@@ -311,11 +311,14 @@ class _HomePageState extends State<HomePage> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(displayTrait, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                                    SizedBox(height: 20),
+                                    SizedBox(height: 5),
+                                    Text('Unit: $displayUnit', style: TextStyle(fontSize: 15)),
+                                    SizedBox(height: 9),
                                     if (rawValues.isEmpty)
                                       Text('No Data Found')
                                     else
-                                      ObservationTable(rawValues: rawValues, displayUnit: displayUnit),
+                                      //ObservationTable(rawValues: rawValues, displayUnit: displayUnit),
+                                      ObservationTable(rawValues: rawValues),
                                   ],
                                 ),
                               ),

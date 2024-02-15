@@ -531,11 +531,13 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                               children: [
                                                 Text(displayTrait,
                                                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                                SizedBox(height: 10),
+                                                Text('Unit: $displayUnit', style: TextStyle(fontSize: 15)),
                                                 SizedBox(height: 20),
                                                 if (rawValues.isEmpty)
                                                   Text('No Data Found')
                                                 else
-                                                  ObservationTable(rawValues: rawValues, displayUnit: displayUnit),
+                                                  ObservationTable(rawValues: rawValues),
                                               ],
                                             ),
                                           ),
