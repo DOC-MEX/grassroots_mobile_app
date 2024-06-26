@@ -19,6 +19,7 @@ class ApiRequests {
       ));
 
       request.fields['subfolder'] = studyID;
+      request.fields['plot_number'] = plotNumber.toString(); // Add plot_number to the request
 
       var response = await request.send();
 
@@ -44,6 +45,7 @@ class ApiRequests {
       ));
 
       request.fields['subfolder'] = studyID;
+      request.fields['plot_number'] = plotNumber.toString(); // Add plot_number to the request
       var response = await request.send();
 
       return response.statusCode == 201; // Return true if status code is 201
