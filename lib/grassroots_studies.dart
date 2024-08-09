@@ -410,7 +410,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                         ),
                                       );
                                     },
-                              child: Text('Add New Observation'),
+                              child: Text('Add New Observation or image'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: selectedPlotId == null ? Colors.grey : Theme.of(context).primaryColor,
                               ),

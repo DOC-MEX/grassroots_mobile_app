@@ -48,6 +48,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
   bool isClearingForm = false;
   bool _isPhotoLoading = false; // Lock for photo loading
   bool submissionSuccessful = false; // Flag for successful submission
+  bool _isImageUploaded = false; // Tracks if the image is uploaded
+  bool _isNewImageSelected = false; // Tracks if a new image is selected
 
   @override
   void initState() {
@@ -109,8 +111,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
-        //_imageBytes = null; // Reset the retrieved image
-        // Reset the retrieved image URL and bytes
+        _isImageUploaded = false; // Reset the upload status
+        _isNewImageSelected = true; // Indicate that a new image is selected
         _imageUrl = null;
       });
     }
@@ -122,9 +124,9 @@ class _NewObservationPageState extends State<NewObservationPage> {
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
-        //_imageBytes = null; // Reset the retrieved image
-        // Reset the retrieved image URL and bytes
         _imageUrl = null;
+        _isImageUploaded = false; // Reset the upload status
+        _isNewImageSelected = true; // Indicate that a new image is selected
       });
     }
   }
@@ -142,6 +144,10 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
       setState(() {
         _isUploading = false; // End of upload
+        if (uploadSuccess) {
+          _isImageUploaded = true; // Mark as uploaded
+          _isNewImageSelected = false; // Reset new image flag
+        }
       });
 
       String message = uploadSuccess ? 'Upload successful' : 'Upload failed';
@@ -828,7 +834,9 @@ class _NewObservationPageState extends State<NewObservationPage> {
                 ///////////////////////////////////////////
                 if (_image != null)
                   ElevatedButton(
-                    onPressed: _isUploading ? null : _handleUpload, // Disable button when uploading
+                    onPressed: (_isUploading || _isImageUploaded)
+                        ? null
+                        : _handleUpload, // Disable button when uploading or after upload
                     child: _isUploading
                         ? CircularProgressIndicator() // Show loading indicator
                         : Text('Upload Image'),
