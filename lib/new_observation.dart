@@ -138,7 +138,6 @@ class _NewObservationPageState extends State<NewObservationPage> {
         _isUploading = true; // Start of upload
       });
 
-      //bool uploadSuccess = await ApiRequests.uploadImage(_image!, studyID!, plotNumber!);
       bool uploadSuccess = await ApiRequests.uploadImageDate(_image!, studyID!, plotNumber!);
       if (!mounted) return; // Check if the widget is still mounted
 
@@ -147,6 +146,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
         if (uploadSuccess) {
           _isImageUploaded = true; // Mark as uploaded
           _isNewImageSelected = false; // Reset new image flag
+          _photoDate = DateTime.now(); // Set the current date as the photo date
         }
       });
 
@@ -156,6 +156,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
       // Handle null values error
     }
   }
+
   ////////////////////////////////////////////////////////
 
   void _extractPhenotypeDetails() {
@@ -772,61 +773,61 @@ class _NewObservationPageState extends State<NewObservationPage> {
                     ),
                   ],
                 ),
-                // Conditional rendering of the image with Hero for expanding
-                if (_image != null)
-                  GestureDetector(
-                    onTap: () {
-                      // When the user taps on the image, navigate to a new screen with the full-size image
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => FullSizeImageScreenFile(imageFile: _image, plotNumber: plotNumber),
-                        ),
-                      );
-                    },
-                    child: Hero(
-                      tag: 'imageHero', // Unique tag for the Hero widget
-                      child: Container(
-                        height: 200,
-                        width: double.infinity,
-                        child: Image.file(_image!, fit: BoxFit.cover),
-                      ),
-                    ),
-                  ),
-                // Conditional rendering retrieved image (if needed)
-                //if (_imageBytes != null)
-                if (_imageUrl != null)
+                // Conditional rendering retrieved image (if needed) or newly uploaded image
+                if (_imageUrl != null || _image != null)
                   Column(
                     children: [
                       if (_photoDate != null) // Check if _photoDate is not null
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8.0), // Add some space between the date and the photo
                           child: Text(
-                            'Photo from ${DateFormat('MMMM d, yyyy').format(_photoDate!)}',
+                            'Photo from ${DateFormat('d MMMM, yyyy').format(_photoDate!)}',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                      GestureDetector(
-                        onTap: () {
-                          // When the user taps on the image, navigate to a new screen with the full-size image
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => FullSizeImageScreen(
-                                  imageUrl: _imageUrl, plotNumber: plotNumber, photoDate: _photoDate),
+                      if (_imageUrl != null)
+                        GestureDetector(
+                          onTap: () {
+                            // When the user taps on the image, navigate to a new screen with the full-size image
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => FullSizeImageScreen(
+                                    imageUrl: _imageUrl, plotNumber: plotNumber, photoDate: _photoDate),
+                              ),
+                            );
+                          },
+                          child: Hero(
+                            tag: 'imageHero', // Unique tag for the Hero widget
+                            child: Container(
+                              height: 200,
+                              width: double.infinity,
+                              child: Image.network(_imageUrl!, fit: BoxFit.cover),
                             ),
-                          );
-                        },
-                        child: Hero(
-                          tag: 'imageHero', // Unique tag for the Hero widget
-                          child: Container(
-                            height: 200,
-                            width: double.infinity,
-                            child: Image.network(_imageUrl!, fit: BoxFit.cover),
                           ),
                         ),
-                      ),
+                      if (_image != null)
+                        GestureDetector(
+                          onTap: () {
+                            // When the user taps on the image, navigate to a new screen with the full-size image
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    FullSizeImageScreenFile(imageFile: _image, plotNumber: plotNumber),
+                              ),
+                            );
+                          },
+                          child: Hero(
+                            tag: 'imageHero', // Unique tag for the Hero widget
+                            child: Container(
+                              height: 200,
+                              width: double.infinity,
+                              child: Image.file(_image!, fit: BoxFit.cover),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
 

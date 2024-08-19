@@ -13,12 +13,12 @@ if (flutterRoot == null) {
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
-    flutterVersionCode = '16'
+    flutterVersionCode = '36'
 }
 
 def flutterVersionName = localProperties.getProperty('flutter.versionName')
 if (flutterVersionName == null) {
-    flutterVersionName = '1.0.16'
+    flutterVersionName = '1.0.36'
 }
 
 apply plugin: 'com.android.application'
@@ -72,12 +72,24 @@ buildTypes {
         //minSdkVersion 21
         minSdkVersion 27
         //  minSdkVersion localProperties.getProperty('flutter.minSdkVersion').toInteger() 
-        targetSdkVersion flutter.targetSdkVersion
+        ///////targetSdkVersion flutter.targetSdkVersion
+        targetSdkVersion 34
+
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
 
           ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        }
+      manifestPlaceholders = [
+           'appAuthRedirectScheme': 'com.example.qrreader'
+       ]
+
+      manifestPlaceholders += [auth0Domain: "grassroots.uk.auth0.com", auth0Scheme: "com.example.qrreader"]
+      testOptions {
+            animationsDisabled = true
+            buildConfigField "String", "USER_EMAIL", "\"$System.env.USER_EMAIL\""
+            buildConfigField "String", "USER_PASSWORD", "\"$System.env.USER_PASSWORD\""
         }
     }
 
