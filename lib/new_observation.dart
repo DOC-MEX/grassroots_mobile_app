@@ -197,64 +197,71 @@ class _NewObservationPageState extends State<NewObservationPage> {
   }
 
   void moveToNextPlot() {
+    // Retrieve the list of plots
     var plots = widget.studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
+
+    if (plots.isEmpty) {
+      // Early exit if no plots are available
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No more plots available')),
+      );
+      return;
+    }
+
+    // Sort the plots by 'study_index' in ascending order
+    plots.sort((a, b) {
+      var indexA = a['rows']?[0]['study_index'] as int? ?? 0;
+      var indexB = b['rows']?[0]['study_index'] as int? ?? 0;
+      return indexA.compareTo(indexB);
+    });
+
     Map<String, dynamic>? nextPlotDetails;
     String? nextPlotId;
 
     if (_isPhotoLoading) {
       print("Photo is still loading, please wait.");
-      // Optionally, show a user-friendly message here
       return;
     }
 
-    int currentIndex = plots.indexWhere((plot) => plot['rows']?[0]['study_index'] == plotNumber);
+    // Get the current plot's index
+    int currentIndex = plotNumber ?? -1; // Current plot's 'study_index'
 
-    // Check if current plot is found and not the last plot in the list
-    if (currentIndex != -1 && currentIndex < plots.length - 1) {
-      int nextIndex = currentIndex + 1;
-      while (nextIndex < plots.length) {
-        var potentialNextPlot = plots[nextIndex];
-        // Check if the next plot is valid (not marked as discard and has 'rows' key)
-        if (potentialNextPlot.containsKey('rows') &&
-            !(potentialNextPlot['rows'][0].containsKey('discard') && potentialNextPlot['rows'][0]['discard'])) {
-          nextPlotDetails = potentialNextPlot;
-          //nextPlotId = nextPlotDetails?['_id']['\$oid'];
-          nextPlotId = nextPlotDetails?['rows'][0]['_id']['\$oid'];
-          break;
-        }
-        nextIndex++;
+    // Find the next plot with a 'study_index' greater than the current one
+    for (var plot in plots) {
+      var nextIndex = plot['rows']?[0]['study_index'] as int?;
+      // Check if the next plot has a valid 'study_index' and it's not discarded
+      if (nextIndex != null &&
+          nextIndex > currentIndex &&
+          !(plot['rows'][0].containsKey('discard') && plot['rows'][0]['discard'])) {
+        nextPlotDetails = plot;
+        nextPlotId = plot['rows'][0]['_id']['\$oid'];
+        break; // Stop once the next valid plot is found
       }
     }
 
-    // Print variables needed for the next plot
-    //print('-------Next Plot ID: $nextPlotId');
-    //print('------Next Plot Details: $nextPlotDetails');
-
     if (nextPlotId != null && nextPlotDetails != null) {
       try {
-        Future.delayed(Duration(milliseconds: 500), () {
-          if (!mounted) return; // Check if the widget is still in the widget tree
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => NewObservationPage(
-                  studyDetails: widget.studyDetails,
-                  plotId: nextPlotId!,
-                  plotDetails: nextPlotDetails ?? {},
-                  onReturn: widget.onReturn),
+        // Navigate to the next plot
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NewObservationPage(
+              studyDetails: widget.studyDetails,
+              plotId: nextPlotId!,
+              plotDetails: nextPlotDetails ?? {},
+              onReturn: widget.onReturn,
             ),
-          ).then((_) {
-            if (!mounted) return; // Check if the widget is still in the widget tree
-          });
+          ),
+        ).then((_) {
+          if (!mounted) return;
         });
       } catch (e) {
         print('Error navigating to the next plot: $e');
-        // Optionally, you can show a snackbar or a dialog here to inform the user
       }
     } else {
-      // Handle the case where there's no next plot to navigate to
+      // If no more valid plots are found, notify the user
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No more plots available')),
+        SnackBar(content: Text('No more valid plots available')),
       );
     }
   }
