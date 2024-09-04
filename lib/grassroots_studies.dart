@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import 'qr_code_service.dart';
 import 'grassroots_request.dart';
 //import 'study_details_widget.dart';
@@ -265,14 +266,34 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           //________ Dropdown to select a study.  1st DROPDOWN MENU______
-                          DropdownButtonFormField<String>(
-                            isExpanded: true,
-                            value: selectedStudy,
-                            hint: Text("Select a study"),
+                          DropdownSearch<String>(
+                            items: studies
+                                .map((study) => study['name'] ?? 'Unknown Study')
+                                .toList(), // List of study names
+                            popupProps: PopupProps.menu(
+                              showSearchBox: true, // Enable the search box
+                              searchFieldProps: TextFieldProps(
+                                decoration: InputDecoration(
+                                  hintText: "Search for a study...",
+                                ),
+                              ),
+                            ),
+                            dropdownDecoratorProps: DropDownDecoratorProps(
+                              dropdownSearchDecoration: InputDecoration(
+                                labelText: "Select a study", // Label for the dropdown
+                                contentPadding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                              ),
+                            ),
                             onChanged: (newValue) async {
+                              // Find the selected study by name
+                              final selectedStudyItem = studies.firstWhere((study) => study['name'] == newValue);
+
                               setState(() {
-                                selectedStudy = newValue;
-                                isSingleStudyLoading = true; // Start loading
+                                selectedStudy = selectedStudyItem['id']; // Store the selected study ID
+                                isSingleStudyLoading = true; // Start loading the study details
                                 // Reset plot lists
                                 plotIDs.clear();
                                 plotDisplayValues.clear();
@@ -282,7 +303,8 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                               });
 
                               try {
-                                var studyDetails = await QRCodeService.fetchSingleStudy(newValue!);
+                                // Fetch the study details
+                                var studyDetails = await QRCodeService.fetchSingleStudy(selectedStudy!);
 
                                 // Check if 'plots' exists and is not null
                                 if (studyDetails['results'][0]['results'][0]['data'].containsKey('plots') &&
@@ -297,7 +319,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                       if (!(row.containsKey('discard') || row.containsKey('blank'))) {
                                         String plotID = row['_id']['\$oid'];
                                         String plotIndex = row['study_index']
-                                            .toString(); // Assuming study_index is the value you want to display
+                                            .toString(); // Assuming study_index is the value to display
                                         plotIDs.add(plotID);
                                         plotDisplayValues.add(plotIndex);
                                         nPlots++;
@@ -319,8 +341,8 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                         units[variableName] = definition['unit']['so:name'];
                                       }
                                     });
-                                    print('dictionary of traits: $traits');
-                                    //print('dictionary of units: $units');
+                                    print('Dictionary of traits: $traits');
+                                    print('Dictionary of units: $units');
                                   }
 
                                   // REORGANIZE THE PLOT IDS AND PLOT DISPLAY VALUES
@@ -347,7 +369,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                   print('Plot Display Values: $plotDisplayValues');
                                 }
 
-                                // Updating the state with other study details
+                                // Update the state with other study details
                                 setState(() {
                                   studyTitle = studyDetails['results'][0]['results'][0]['title'];
                                   studyDescription = studyDetails['results'][0]['results'][0]['data']['so:description'];
@@ -358,7 +380,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                       studyDetails['results'][0]['results'][0]['data']['parent_field_trial']['so:name'];
                                 });
 
-                                print('Selected Study ID: $newValue');
+                                print('Selected Study ID: $selectedStudy');
                                 print('Study Title: $studyTitle');
                                 print('Study Description: $studyDescription');
                                 print('Study Programme: $programme');
@@ -370,17 +392,11 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                 });
                               }
                             },
-                            items: studies.map<DropdownMenuItem<String>>((study) {
-                              return DropdownMenuItem<String>(
-                                value: study['id'], // Use study ID as value
-                                child: Text(
-                                  study['name'] ?? 'Unknown Study',
-                                  overflow: TextOverflow.ellipsis, // Use ellipsis for text overflow
-                                  softWrap: false,
-                                ),
-                              );
-                            }).toList(),
+                            selectedItem: selectedStudy != null
+                                ? studies.firstWhere((study) => study['id'] == selectedStudy)['name']
+                                : null, // Display the selected study's name if already selected
                           ),
+
                           // End of dropdown to select a study.   END  OF 1st DROPDOWN MENU______
                           SizedBox(height: 20),
                           // __________MODAL FOR DISPLAYING STUDY DETAILS______
