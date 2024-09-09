@@ -42,7 +42,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
   int? plotNumber;
   String? _imageUrl;
   DateTime? _photoDate;
-  int? maxHeight;
+  //int? maxHeight;
   int? minHeight;
   bool _isUploading = false; // for form clearing
   bool isClearingForm = false;
@@ -50,6 +50,9 @@ class _NewObservationPageState extends State<NewObservationPage> {
   bool submissionSuccessful = false; // Flag for successful submission
   bool _isImageUploaded = false; // Tracks if the image is uploaded
   bool _isNewImageSelected = false; // Tracks if a new image is selected
+  // New Maps to store min and max limits for each trait
+  Map<String, int?> minLimits = {};
+  Map<String, int?> maxLimits = {};
 
   @override
   void initState() {
@@ -97,11 +100,16 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
   Future<void> _initRetrieveLimits() async {
     var limits = await ApiRequests.retrieveLimits(studyID ?? 'defaultFolder');
-    if (mounted) {
+    if (mounted && limits != null) {
       // Check if the widget is still mounted
       setState(() {
-        minHeight = limits?['minHeight'];
-        maxHeight = limits?['maxHeight'];
+        /////////minHeight = limits['minHeight'] as int?;
+        ///////maxHeight = limits['maxHeight'] as int?;
+        minLimits['PH_M_cm'] = limits['PH_M_cm']?['min'];
+        maxLimits['PH_M_cm'] = limits['PH_M_cm']?['max'];
+
+        minLimits['FLeafLLng_M_cm'] = limits['FLeafLLng_M_cm']?['min'];
+        maxLimits['FLeafLLng_M_cm'] = limits['FLeafLLng_M_cm']?['max'];
       });
     }
   }
@@ -283,18 +291,24 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
   void _showEditLimitsDialog() {
     // Set the current values in the controllers
-    _maxHeightController.text = maxHeight?.toString() ?? '';
-    _minHeightController.text = minHeight?.toString() ?? '';
+    ///////_maxHeightController.text = maxHeight?.toString() ?? '';
+    /////////_minHeightController.text = minHeight?.toString() ?? '';
+
+    _maxHeightController.text = maxLimits[selectedTraitKey]?.toString() ?? '';
+    _minHeightController.text = minLimits[selectedTraitKey]?.toString() ?? '';
     //print unit
     //print('Unit: ${units[selectedTraitKey]}');
+    // print trait
+    //print('Trait: $selectedTraitKey');
+    //print(traits[selectedTraitKey]);
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Edit Values'),
+          //title: Text('Edit Values for ${selectedTraitKey ?? ''}'),
+          title: Text('Edit Values for ${traits[selectedTraitKey] ?? ''}'),
           content: SingleChildScrollView(
-            // Make the dialog scrollable
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
@@ -308,13 +322,12 @@ class _NewObservationPageState extends State<NewObservationPage> {
                             child: TextField(
                               controller: _maxHeightController,
                               keyboardType: TextInputType.number,
-                              //maxLength: 4, // Limit the input to 4 digits
                               decoration: InputDecoration(
                                 hintText: 'Enter new max value',
                               ),
                             ),
                           ),
-                          Text(' ${units[selectedTraitKey]}'), // Display the unit to the right
+                          Text(' ${units[selectedTraitKey]}'),
                         ],
                       ),
                     ),
@@ -349,17 +362,18 @@ class _NewObservationPageState extends State<NewObservationPage> {
             TextButton(
               child: Text('Update'),
               onPressed: () async {
-                // Parse and validate new max and min values
+                // Parse and validate the new max and min values
                 int? newMax = int.tryParse(_maxHeightController.text);
                 int? newMin = int.tryParse(_minHeightController.text);
 
                 if (newMax != null && newMin != null && newMin < newMax) {
-                  // Send POST request to update values using ApiRequests
-                  bool updated = await ApiRequests.updateLimits(studyID ?? 'defaultFolder', newMin, newMax);
+                  bool updated = await ApiRequests.updateLimits(
+                      studyID ?? 'defaultFolder', newMin, newMax, selectedTraitKey ?? 'default_trait');
+
                   if (updated) {
                     setState(() {
-                      maxHeight = newMax;
-                      minHeight = newMin;
+                      maxLimits[selectedTraitKey!] = newMax;
+                      minLimits[selectedTraitKey!] = newMin;
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Limits updated successfully')),
@@ -374,13 +388,13 @@ class _NewObservationPageState extends State<NewObservationPage> {
                     SnackBar(content: Text('Invalid input')),
                   );
                 }
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: Text('Close'),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -479,7 +493,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
             child: Column(
               children: <Widget>[
                 // Conditional Button for Editing Max and Min Values
-                if (selectedTraitKey == 'PH_M_cm')
+                if (selectedTraitKey == 'PH_M_cm' || selectedTraitKey == 'FLeafLLng_M_cm')
                   ElevatedButton(
                     onPressed: _showEditLimitsDialog,
                     child: Text('Edit max and min'),
@@ -528,10 +542,27 @@ class _NewObservationPageState extends State<NewObservationPage> {
                           }
 
                           // Validation for Plant Height
-                          if (selectedTraitKey == 'PH_M_cm' && minHeight != null && maxHeight != null) {
-                            double valueAsDouble = numberValue.toDouble();
-                            if (valueAsDouble < minHeight! || valueAsDouble > maxHeight!) {
-                              return 'Value must be between $minHeight and $maxHeight';
+                          //if (selectedTraitKey == 'PH_M_cm' && minHeight != null && maxHeight != null) {
+                          //  double valueAsDouble = numberValue.toDouble();
+                          //  if (valueAsDouble < minHeight! || valueAsDouble > maxHeight!) {
+                          //    return 'Value must be between $minHeight and $maxHeight';
+                          //  }
+                          //}
+                          if (selectedTraitKey == 'PH_M_cm' &&
+                              minLimits['PH_M_cm'] != null &&
+                              maxLimits['PH_M_cm'] != null) {
+                            if (numberValue < minLimits['PH_M_cm']! || numberValue > maxLimits['PH_M_cm']!) {
+                              return 'Value must be between ${minLimits['PH_M_cm']} and ${maxLimits['PH_M_cm']}';
+                            }
+                          }
+
+                          // validation for FLeafLLng_M_cm
+                          if (selectedTraitKey == 'FLeafLLng_M_cm' &&
+                              minLimits['FLeafLLng_M_cm'] != null &&
+                              maxLimits['FLeafLLng_M_cm'] != null) {
+                            if (numberValue < minLimits['FLeafLLng_M_cm']! ||
+                                numberValue > maxLimits['FLeafLLng_M_cm']!) {
+                              return 'Value must be between ${minLimits['FLeafLLng_M_cm']} and ${maxLimits['FLeafLLng_M_cm']}';
                             }
                           }
 

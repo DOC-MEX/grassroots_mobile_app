@@ -95,6 +95,9 @@ class ApiRequests {
   static Future<Map<String, dynamic>> retrieveLastestPhoto(String studyID, int plotNumber) async {
     try {
       // Updated API URL to match the new endpoint
+      //print path used for the API
+      print('https://grassroots.tools/beta/photo_receiver/retrieve_latest_photo/$studyID/$plotNumber/');
+
       var apiUrl =
           Uri.parse('https://grassroots.tools/beta/photo_receiver/retrieve_latest_photo/$studyID/$plotNumber/');
       var response = await http.get(apiUrl);
@@ -122,32 +125,49 @@ class ApiRequests {
     }
   }
 
-  static Future<Map<String, int>?> retrieveLimits(String studyID) async {
+  static Future<Map<String, Map<String, int?>>?> retrieveLimits(String studyID) async {
     try {
       String subfolder = studyID;
       var apiUrl = Uri.parse('https://grassroots.tools/beta/photo_receiver/retrieve_limits/$subfolder/');
-      //print("________apiUrl = $apiUrl");
       var response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
-        // print max  and min to console
-        print('-----Min: ${jsonResponse['Plant height']['min']}');
-        print('-----Max: ${jsonResponse['Plant height']['max']}');
-        return {
-          'minHeight': jsonResponse['Plant height']['min'],
-          'maxHeight': jsonResponse['Plant height']['max'],
-        };
+        print('JSON Response: $jsonResponse');
+// print max  and min to console
+        print('-----Min: ${jsonResponse['PH_M_cm']['min']}');
+        print('-----Max: ${jsonResponse['PH_M_cm']['max']}');
+        // Initialize a result map
+        Map<String, Map<String, int?>> limits = {};
+
+        // Check if 'PH_M_cm' exists and add to the map
+        if (jsonResponse['PH_M_cm'] != null) {
+          limits['PH_M_cm'] = {
+            'min': jsonResponse['PH_M_cm']['min'],
+            'max': jsonResponse['PH_M_cm']['max'],
+          };
+        }
+
+        // Optionally check for other traits and add them to the map if they exist
+        if (jsonResponse['FLeafLLng_M_cm'] != null) {
+          limits['FLeafLLng_M_cm'] = {
+            'min': jsonResponse['FLeafLLng_M_cm']['min'],
+            'max': jsonResponse['FLeafLLng_M_cm']['max'],
+          };
+        }
+
+        return limits;
       } else {
         print('Failed to retrieve limits.json: ${response.statusCode}');
       }
     } catch (e) {
       print('Error retrieving limits.json: $e');
     }
-    return null;
+
+    return null; // Return null or an empty map if no limits are found or there's an error
   }
 
-  static Future<bool> updateLimits(String studyID, int newMin, int newMax) async {
+  static Future<bool> updateLimits(String studyID, int newMin, int newMax, String traitKey) async {
     String subfolder = studyID;
     var url = Uri.parse('https://grassroots.tools/beta/photo_receiver/update_limits/$subfolder/');
 
@@ -156,9 +176,13 @@ class ApiRequests {
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'Plant height': {'min': newMin, 'max': newMax}
+          traitKey: {'min': newMin, 'max': newMax}
         }),
       );
+
+      // Log the status code and response body for debugging
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
 
       return response.statusCode == 200;
     } catch (e) {
