@@ -134,27 +134,20 @@ class ApiRequests {
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
         print('JSON Response: $jsonResponse');
-// print max  and min to console
-        print('-----Min: ${jsonResponse['PH_M_cm']['min']}');
-        print('-----Max: ${jsonResponse['PH_M_cm']['max']}');
+
         // Initialize a result map
         Map<String, Map<String, int?>> limits = {};
 
-        // Check if 'PH_M_cm' exists and add to the map
-        if (jsonResponse['PH_M_cm'] != null) {
-          limits['PH_M_cm'] = {
-            'min': jsonResponse['PH_M_cm']['min'],
-            'max': jsonResponse['PH_M_cm']['max'],
-          };
-        }
-
-        // Optionally check for other traits and add them to the map if they exist
-        if (jsonResponse['FLeafLLng_M_cm'] != null) {
-          limits['FLeafLLng_M_cm'] = {
-            'min': jsonResponse['FLeafLLng_M_cm']['min'],
-            'max': jsonResponse['FLeafLLng_M_cm']['max'],
-          };
-        }
+        // Iterate over the keys in the JSON response and store limits dynamically
+        jsonResponse.forEach((traitKey, traitLimits) {
+          if (traitLimits['min'] != null && traitLimits['max'] != null) {
+            limits[traitKey] = {
+              'min': traitLimits['min'],
+              'max': traitLimits['max'],
+            };
+            print('-----Trait: $traitKey, Min: ${traitLimits['min']}, Max: ${traitLimits['max']}');
+          }
+        });
 
         return limits;
       } else {

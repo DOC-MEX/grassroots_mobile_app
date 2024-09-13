@@ -79,6 +79,12 @@ class _NewObservationPageState extends State<NewObservationPage> {
     return match?.group(1); // Returns 'YYYY_MM_DD'
   }
 
+  bool isNumericalTrait(String? traitKey) {
+    // Only allow numerical traits with units "cm", "mm", "g", "m", and "mm2"
+    final allowedUnits = ['cm', 'mm', 'g', 'm', 'mm2'];
+    return units[traitKey] != null && allowedUnits.contains(units[traitKey]);
+  }
+
   Future<void> _initRetrievePhoto() async {
     var result = await ApiRequests.retrieveLastestPhoto(studyID ?? 'defaultFolder', plotNumber!);
 
@@ -101,15 +107,16 @@ class _NewObservationPageState extends State<NewObservationPage> {
   Future<void> _initRetrieveLimits() async {
     var limits = await ApiRequests.retrieveLimits(studyID ?? 'defaultFolder');
     if (mounted && limits != null) {
-      // Check if the widget is still mounted
       setState(() {
-        /////////minHeight = limits['minHeight'] as int?;
-        ///////maxHeight = limits['maxHeight'] as int?;
-        minLimits['PH_M_cm'] = limits['PH_M_cm']?['min'];
-        maxLimits['PH_M_cm'] = limits['PH_M_cm']?['max'];
+        // Clear existing limits (optional, depending on your use case)
+        minLimits.clear();
+        maxLimits.clear();
 
-        minLimits['FLeafLLng_M_cm'] = limits['FLeafLLng_M_cm']?['min'];
-        maxLimits['FLeafLLng_M_cm'] = limits['FLeafLLng_M_cm']?['max'];
+        // Iterate through the limits map and populate minLimits and maxLimits
+        limits.forEach((traitKey, traitLimits) {
+          minLimits[traitKey] = traitLimits['min'];
+          maxLimits[traitKey] = traitLimits['max'];
+        });
       });
     }
   }
@@ -493,7 +500,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
             child: Column(
               children: <Widget>[
                 // Conditional Button for Editing Max and Min Values
-                if (selectedTraitKey == 'PH_M_cm' || selectedTraitKey == 'FLeafLLng_M_cm')
+                //if (selectedTraitKey == 'PH_M_cm' || selectedTraitKey == 'FLeafLLng_M_cm')
+                if (isNumericalTrait(selectedTraitKey))
                   ElevatedButton(
                     onPressed: _showEditLimitsDialog,
                     child: Text('Edit max and min'),
@@ -548,21 +556,11 @@ class _NewObservationPageState extends State<NewObservationPage> {
                           //    return 'Value must be between $minHeight and $maxHeight';
                           //  }
                           //}
-                          if (selectedTraitKey == 'PH_M_cm' &&
-                              minLimits['PH_M_cm'] != null &&
-                              maxLimits['PH_M_cm'] != null) {
-                            if (numberValue < minLimits['PH_M_cm']! || numberValue > maxLimits['PH_M_cm']!) {
-                              return 'Value must be between ${minLimits['PH_M_cm']} and ${maxLimits['PH_M_cm']}';
-                            }
-                          }
-
-                          // validation for FLeafLLng_M_cm
-                          if (selectedTraitKey == 'FLeafLLng_M_cm' &&
-                              minLimits['FLeafLLng_M_cm'] != null &&
-                              maxLimits['FLeafLLng_M_cm'] != null) {
-                            if (numberValue < minLimits['FLeafLLng_M_cm']! ||
-                                numberValue > maxLimits['FLeafLLng_M_cm']!) {
-                              return 'Value must be between ${minLimits['FLeafLLng_M_cm']} and ${maxLimits['FLeafLLng_M_cm']}';
+                          // Generalized min/max validation for any trait in minLimits and maxLimits
+                          if (minLimits[selectedTraitKey] != null && maxLimits[selectedTraitKey] != null) {
+                            if (numberValue < minLimits[selectedTraitKey]! ||
+                                numberValue > maxLimits[selectedTraitKey]!) {
+                              return 'Value must be between ${minLimits[selectedTraitKey]} and ${maxLimits[selectedTraitKey]}';
                             }
                           }
 
