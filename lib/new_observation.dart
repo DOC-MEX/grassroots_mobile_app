@@ -281,6 +281,76 @@ class _NewObservationPageState extends State<NewObservationPage> {
     }
   }
 
+  void moveToPreviousPlot() {
+    // Retrieve the list of plots
+    var plots = widget.studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
+
+    if (plots.isEmpty) {
+      // Early exit if no plots are available
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No more plots available')),
+      );
+      return;
+    }
+
+    // Sort the plots by 'study_index' in ascending order
+    plots.sort((a, b) {
+      var indexA = a['rows']?[0]['study_index'] as int? ?? 0;
+      var indexB = b['rows']?[0]['study_index'] as int? ?? 0;
+      return indexA.compareTo(indexB);
+    });
+
+    Map<String, dynamic>? previousPlotDetails;
+    String? previousPlotId;
+
+    if (_isPhotoLoading) {
+      print("Photo is still loading, please wait.");
+      return;
+    }
+
+    // Get the current plot's index
+    int currentIndex = plotNumber ?? -1; // Current plot's 'study_index'
+
+    // Find the previous plot with a 'study_index' smaller than the current one
+    for (var plot in plots.reversed) {
+      var prevIndex = plot['rows']?[0]['study_index'] as int?;
+      // Check if the previous plot has a valid 'study_index' and it's not discarded
+      if (prevIndex != null &&
+          prevIndex < currentIndex &&
+          !(plot['rows'][0].containsKey('discard') && plot['rows'][0]['discard'])) {
+        previousPlotDetails = plot;
+        previousPlotId = plot['rows'][0]['_id']['\$oid'];
+        break; // Stop once the previous valid plot is found
+      }
+    }
+
+    if (previousPlotId != null && previousPlotDetails != null) {
+      try {
+        // Navigate to the previous plot
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NewObservationPage(
+              studyDetails: widget.studyDetails,
+              plotId: previousPlotId!,
+              plotDetails: previousPlotDetails ?? {},
+              onReturn: widget.onReturn,
+            ),
+          ),
+        ).then((_) {
+          if (!mounted) return;
+        });
+      } catch (e) {
+        print('Error navigating to the previous plot: $e');
+      }
+    } else {
+      // If no more valid plots are found, notify the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No more valid previous plots available')),
+      );
+    }
+  }
+
 ////////////////////////////////////////////////////////////////////
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -653,9 +723,11 @@ class _NewObservationPageState extends State<NewObservationPage> {
                 SizedBox(height: 20),
 
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Submit Observation button (occupies exactly half the width)
                     Expanded(
+                      flex: 1, // Adjusted to occupy half of the width
                       child: ElevatedButton(
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
@@ -670,9 +742,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                             print('Plot ID: $plotID');
                             print('Trait: $trait');
                             print('Measurement: $measurement');
-                            //print('Date: $dateString');
                             print('Note: $note');
-                            //Print study ID
                             print('Study ID: $studyID');
                             try {
                               // Create the JSON request
@@ -688,44 +758,22 @@ class _NewObservationPageState extends State<NewObservationPage> {
                                 // Send the request to the server and await the response
                                 //print('Request to server: $jsonString ');
                                 var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
-
-                                // Handle the response data
-                                //print('Response from server: $response');
                                 String? statusText = response['results']?[0]['status_text'];
                                 if (statusText != null && statusText == 'Succeeded') {
                                   submissionSuccessful = true;
                                   print('Submission successful *****SET FLAG TO TRUE******');
-                                  // Update the flag in the parent widget
                                   widget.onReturn({
                                     'plotId': plotID,
                                     'submissionSuccessful': submissionSuccessful,
                                   });
-
-                                  // Optionally show a success dialog or snackbar message
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
                                         'Data successfully submitted',
-                                        style: TextStyle(
-                                          fontSize: 16.0, // Larger font size
-                                        ),
+                                        style: TextStyle(fontSize: 16.0), // Larger font size
                                       ),
                                     ),
                                   );
-                                  // After the primary request is successful, initiate the secondary request
-                                  // Create the cache clear request string using the studyID
-                                  //String cacheClearRequestJson =
-                                  //    QRCodeService.clearCacheRequest(studyID ?? 'defaultStudyID');
-                                  //print('CACHE Request: $cacheClearRequestJson');
-                                  // Fire-and-forget the clear cache request, no await used
-                                  //GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend')
-                                  //    .then((cacheResponse) {
-                                  // Log the cache clear response
-                                  //  print('+++Cache clear response: $cacheResponse');
-                                  //}).catchError((error) {
-                                  // Log any errors from the cache clear request
-                                  //  print('Error sending cache clear request: $error');
-                                  //});
                                 }
                               } else {
                                 print('NOT ALLOWED');
@@ -734,10 +782,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                                 );
                               }
                             } catch (e) {
-                              // Handle any errors that occur during the request
                               print('Error sending request: $e');
-
-                              // Optionally show an error dialog or snackbar message
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Row(
@@ -747,9 +792,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                                       Expanded(
                                         child: Text(
                                           'Failed to submit data',
-                                          style: TextStyle(
-                                            fontSize: 16.0, // Larger font size
-                                          ),
+                                          style: TextStyle(fontSize: 16.0), // Larger font size
                                         ),
                                       ),
                                     ],
@@ -767,19 +810,61 @@ class _NewObservationPageState extends State<NewObservationPage> {
                         child: Text('Submit Observation'),
                       ),
                     ),
-                    SizedBox(width: 10),
+
+                    SizedBox(width: 10), // Add some spacing between the submit button and the arrows
+
+// Arrow buttons container (Previous and Next)
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // Do nothing for now
-                          //Navigator.of(context).pop();
-                          moveToNextPlot();
-                        },
-                        child: Text('Move to Next Plot'),
+                      flex: 1, // The arrow buttons will occupy the remaining half of the row
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween, // Spread out the arrow buttons
+                            children: [
+                              // Left Arrow button (Previous plot)
+                              Column(
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      moveToPreviousPlot(); // Function to go to the previous plot
+                                      print('Previous Plot');
+                                    },
+                                    icon: Icon(Icons.arrow_back),
+                                    iconSize: 40.0, // Increase the size of the arrow icon
+                                    tooltip: 'Previous Plot',
+                                  ),
+                                  Text(
+                                    'Previous Plot', // Explanatory text
+                                    style: TextStyle(fontSize: 12), // Smaller font size
+                                  ),
+                                ],
+                              ),
+
+                              // Right Arrow button (Next plot)
+                              Column(
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      moveToNextPlot(); // Function to go to the next plot
+                                    },
+                                    icon: Icon(Icons.arrow_forward),
+                                    iconSize: 40.0, // Increase the size of the arrow icon
+                                    tooltip: 'Next Plot',
+                                  ),
+                                  Text(
+                                    'Next Plot', // Explanatory text
+                                    style: TextStyle(fontSize: 12), // Smaller font size
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
+
                 ////////////////////////////////////////////////////////
                 SizedBox(height: 20),
                 // put take picture button and select from gallery button in the same row
