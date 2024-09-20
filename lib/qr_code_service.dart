@@ -107,16 +107,33 @@ class QRCodeService {
   static Future<List<Map<String, String>>> fetchAllStudies() async {
     String requestString = jsonEncode({
       "services": [
+        //    {
+        //      "so:name": "Search Field Trials",
+        //      "start_service": true,
+        //      "parameter_set": {
+        //        "level": "simple",
+        //        "parameters": [
+        //          {"param": "FT Keyword Search", "current_value": ""},
+        //          {"param": "FT Study Facet", "current_value": true},
+        //          {"param": "FT Results Page Number", "current_value": 0},
+        //          {"param": "FT Results Page Size", "current_value": 500}
+        //        ]
+        //      }
+        //    }
+        //  ]
+
         {
           "so:name": "Search Field Trials",
           "start_service": true,
           "parameter_set": {
-            "level": "simple",
+            "level": "advanced",
             "parameters": [
-              {"param": "FT Keyword Search", "current_value": ""},
-              {"param": "FT Study Facet", "current_value": true},
-              {"param": "FT Results Page Number", "current_value": 0},
-              {"param": "FT Results Page Size", "current_value": 500}
+              {"param": "ST Search Studies", "current_value": true, "group": "Studies"},
+              {
+                "param": "The level of data to get for matching Studies",
+                "current_value": "Names and Ids only",
+                "group": "Studies"
+              }
             ]
           }
         }
@@ -126,7 +143,8 @@ class QRCodeService {
     try {
       var response = await GrassrootsRequest.sendRequest(requestString, 'public');
       List<Map<String, String>> studies = response['results'][0]['results'].map<Map<String, String>>((study) {
-        String name = study['title'] as String? ?? 'Unknown Study';
+        //String name = study['title'] as String? ?? 'Unknown Study';
+        String name = study['data']['so:name'] as String? ?? 'Unknown Study';
         String id = study['data']['_id']['\$oid'] as String? ?? 'Unknown ID';
         return {'name': name, 'id': id};
       }).toList();
@@ -153,7 +171,8 @@ class QRCodeService {
             "level": "advanced",
             "parameters": [
               {"param": "ST Id", "current_value": studyId},
-              {"param": "Get all Plots for Study", "current_value": true},
+              //{"param": "Get all Plots for Study", "current_value": true},
+              {"param": "The level of data to get for matching Studies", "current_value": "Full"},
               {"param": "ST Search Studies", "current_value": true}
             ]
           }

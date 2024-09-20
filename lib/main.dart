@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'QR Reader',
+      title: 'Grassroots mobile app',
       theme: ThemeData(
         primaryColor: Color(0xFF2c3e50),
         colorScheme: ColorScheme.fromSwatch(
