@@ -6,9 +6,11 @@ import 'dart:convert'; // For jsonDecode()
 import 'package:intl/intl.dart';
 
 class ApiRequests {
+  static const String baseUrl = 'https://grassroots.tools/newbeta/photo_receiver/';
+
   static Future<bool> uploadImage(File image, String studyID, int plotNumber) async {
     try {
-      var uri = Uri.parse('https://grassroots.tools/beta/photo_receiver/upload/');
+      var uri = Uri.parse('${baseUrl}upload/');
       var request = http.MultipartRequest('POST', uri);
 
       String newFileName = 'photo_plot_${plotNumber.toString()}.jpg';
@@ -31,7 +33,7 @@ class ApiRequests {
 
   static Future<bool> uploadImageDate(File image, String studyID, int plotNumber) async {
     try {
-      var uri = Uri.parse('https://grassroots.tools/beta/photo_receiver/upload/');
+      var uri = Uri.parse('${baseUrl}upload/');
 
       // Include the current date in the file name
       String date = DateFormat('yyyy_MM_dd').format(DateTime.now());
@@ -59,7 +61,7 @@ class ApiRequests {
       String subfolder = studyID;
       String photoName = 'photo_plot_${plotNumber.toString()}.jpg';
 
-      var apiUrl = Uri.parse('https://grassroots.tools/beta/photo_receiver/retrieve_photo/$subfolder/$photoName');
+      var apiUrl = Uri.parse('${baseUrl}retrieve_photo/$subfolder/$photoName');
       var response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -73,33 +75,13 @@ class ApiRequests {
     }
   }
 
-  //static Future<Map<String, dynamic>> retrieveLastestPhoto(String studyID, int plotNumber) async {
-//    try {
-//      // Updated API URL to match the new endpoint
-//      var apiUrl =
-//          Uri.parse('https://grassroots.tools/beta/photo_receiver/retrieve_latest_photo/$studyID/$plotNumber/');
-//      var response = await http.get(apiUrl);
-
-//      if (response.statusCode == 200) {
-//        return {'status': 'success', 'data': response.bodyBytes};
-//      } else {
-//        // Handle not found or other errors
-//        return {'status': 'not_found'};
-//      }
-//    } catch (e) {
-//      print('Error: $e');
-//      return {'status': 'error', 'message': 'Error: $e'};
-//    }
-//  }
-
   static Future<Map<String, dynamic>> retrieveLastestPhoto(String studyID, int plotNumber) async {
     try {
       // Updated API URL to match the new endpoint
       //print path used for the API
-      print('https://grassroots.tools/beta/photo_receiver/retrieve_latest_photo/$studyID/$plotNumber/');
+      print('${baseUrl}retrieve_latest_photo/$studyID/$plotNumber/');
 
-      var apiUrl =
-          Uri.parse('https://grassroots.tools/beta/photo_receiver/retrieve_latest_photo/$studyID/$plotNumber/');
+      var apiUrl = Uri.parse('${baseUrl}retrieve_latest_photo/$studyID/$plotNumber/');
       var response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -128,7 +110,7 @@ class ApiRequests {
   static Future<Map<String, Map<String, int?>>?> retrieveLimits(String studyID) async {
     try {
       String subfolder = studyID;
-      var apiUrl = Uri.parse('https://grassroots.tools/beta/photo_receiver/retrieve_limits/$subfolder/');
+      var apiUrl = Uri.parse('${baseUrl}retrieve_limits/$subfolder/');
       var response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -162,7 +144,7 @@ class ApiRequests {
 
   static Future<bool> updateLimits(String studyID, int newMin, int newMax, String traitKey) async {
     String subfolder = studyID;
-    var url = Uri.parse('https://grassroots.tools/beta/photo_receiver/update_limits/$subfolder/');
+    var url = Uri.parse('${baseUrl}update_limits/$subfolder/');
 
     try {
       final response = await http.post(

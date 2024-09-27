@@ -211,12 +211,11 @@ class _NewObservationPageState extends State<NewObservationPage> {
     ////////////////////////////////////////////////////////////////////////////
   }
 
-  void moveToNextPlot() {
+  void moveToNextPlot() async {
     // Retrieve the list of plots
     var plots = widget.studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
 
     if (plots.isEmpty) {
-      // Early exit if no plots are available
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No more plots available')),
       );
@@ -239,24 +238,27 @@ class _NewObservationPageState extends State<NewObservationPage> {
     }
 
     // Get the current plot's index
-    int currentIndex = plotNumber ?? -1; // Current plot's 'study_index'
+    int currentIndex = plotNumber ?? -1;
 
-    // Find the next plot with a 'study_index' greater than the current one
+    // Find the next plot
     for (var plot in plots) {
       var nextIndex = plot['rows']?[0]['study_index'] as int?;
-      // Check if the next plot has a valid 'study_index' and it's not discarded
       if (nextIndex != null &&
           nextIndex > currentIndex &&
           !(plot['rows'][0].containsKey('discard') && plot['rows'][0]['discard'])) {
         nextPlotDetails = plot;
         nextPlotId = plot['rows'][0]['_id']['\$oid'];
-        break; // Stop once the next valid plot is found
+        break;
       }
     }
 
     if (nextPlotId != null && nextPlotDetails != null) {
       try {
-        // Navigate to the next plot
+        // Introduce a small delay to prevent issues caused by rapid navigation
+        await Future.delayed(Duration(milliseconds: 300));
+
+        if (!mounted) return; // Check if widget is still mounted before navigating
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -267,26 +269,21 @@ class _NewObservationPageState extends State<NewObservationPage> {
               onReturn: widget.onReturn,
             ),
           ),
-        ).then((_) {
-          if (!mounted) return;
-        });
+        );
       } catch (e) {
         print('Error navigating to the next plot: $e');
       }
     } else {
-      // If no more valid plots are found, notify the user
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No more valid plots available')),
       );
     }
   }
 
-  void moveToPreviousPlot() {
-    // Retrieve the list of plots
+  void moveToPreviousPlot() async {
     var plots = widget.studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
 
     if (plots.isEmpty) {
-      // Early exit if no plots are available
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No more plots available')),
       );
@@ -308,25 +305,27 @@ class _NewObservationPageState extends State<NewObservationPage> {
       return;
     }
 
-    // Get the current plot's index
-    int currentIndex = plotNumber ?? -1; // Current plot's 'study_index'
+    int currentIndex = plotNumber ?? -1;
 
-    // Find the previous plot with a 'study_index' smaller than the current one
+    // Find the previous plot
     for (var plot in plots.reversed) {
       var prevIndex = plot['rows']?[0]['study_index'] as int?;
-      // Check if the previous plot has a valid 'study_index' and it's not discarded
       if (prevIndex != null &&
           prevIndex < currentIndex &&
           !(plot['rows'][0].containsKey('discard') && plot['rows'][0]['discard'])) {
         previousPlotDetails = plot;
         previousPlotId = plot['rows'][0]['_id']['\$oid'];
-        break; // Stop once the previous valid plot is found
+        break;
       }
     }
 
     if (previousPlotId != null && previousPlotDetails != null) {
       try {
-        // Navigate to the previous plot
+        // Introduce a small delay to prevent issues caused by rapid navigation
+        await Future.delayed(Duration(milliseconds: 300));
+
+        if (!mounted) return; // Check if widget is still mounted before navigating
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -337,14 +336,11 @@ class _NewObservationPageState extends State<NewObservationPage> {
               onReturn: widget.onReturn,
             ),
           ),
-        ).then((_) {
-          if (!mounted) return;
-        });
+        );
       } catch (e) {
         print('Error navigating to the previous plot: $e');
       }
     } else {
-      // If no more valid plots are found, notify the user
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No more valid previous plots available')),
       );
