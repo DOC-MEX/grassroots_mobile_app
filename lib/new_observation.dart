@@ -14,12 +14,14 @@ class NewObservationPage extends StatefulWidget {
   final String plotId;
   final Map<String, dynamic> plotDetails;
   final Function(Map<String, dynamic>) onReturn;
+  final String? selectedTraitKey;
 
   NewObservationPage({
     required this.studyDetails,
     required this.plotId,
     required this.plotDetails,
     required this.onReturn,
+    this.selectedTraitKey,
   });
 
   @override
@@ -58,6 +60,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
   @override
   void initState() {
     super.initState();
+
+    selectedTraitKey = widget.selectedTraitKey; // Initialize with passed trait key
     _extractPhenotypeDetails();
     // Attempt to retrieve the photo when the page loads
     _initRetrievePhoto();
@@ -280,7 +284,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
               plotId: nextPlotId!,
               plotDetails: nextPlotDetails ?? {},
               onReturn: widget.onReturn,
-              //selectedTraitKey: selectedTraitKey, // Keep the selected trait
+              selectedTraitKey: selectedTraitKey, // Pass the selected trait to the next plot
             ),
           ),
         ).then((_) {
@@ -372,7 +376,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
               plotId: previousPlotId!,
               plotDetails: previousPlotDetails ?? {},
               onReturn: widget.onReturn,
-              //selectedTraitKey: selectedTraitKey, // Keep the selected trait
+              selectedTraitKey: selectedTraitKey, // Pass the selected trait to the next plot
             ),
           ),
         ).then((_) {
@@ -528,7 +532,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
   Widget _buildTraitDropdown() {
     return DropdownButtonFormField<String>(
-      value: selectedTraitKey,
+      value: selectedTraitKey, // This value is now maintained between plots
       hint: Text("Select a trait"),
       onChanged: _onTraitChanged,
       items: traits.keys.map<DropdownMenuItem<String>>((String key) {
@@ -582,7 +586,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
     void clearForm() {
       _formKey.currentState!.reset();
       setState(() {
-        selectedTraitKey = null; // Reset the dropdown
+        //////////selectedTraitKey = null; // Reset the dropdown
         selectedDate = null;
         _textEditingController.clear();
         _notesEditingController.clear();
