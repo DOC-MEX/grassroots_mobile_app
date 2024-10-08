@@ -53,6 +53,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
   // New Maps to store min and max limits for each trait
   Map<String, int?> minLimits = {};
   Map<String, int?> maxLimits = {};
+  bool isNavigating = false;
 
   @override
   void initState() {
@@ -212,13 +213,20 @@ class _NewObservationPageState extends State<NewObservationPage> {
   }
 
   void moveToNextPlot() async {
-    // Retrieve the list of plots
+    if (isNavigating) return; // Prevent multiple rapid navigations
+    setState(() {
+      isNavigating = true; // Mark navigation as in progress
+    });
+
     var plots = widget.studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
 
     if (plots.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No more plots available')),
       );
+      setState(() {
+        isNavigating = false; // Reset the navigation flag
+      });
       return;
     }
 
@@ -234,13 +242,14 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
     if (_isPhotoLoading) {
       print("Photo is still loading, please wait.");
+      setState(() {
+        isNavigating = false; // Reset the navigation flag
+      });
       return;
     }
 
-    // Get the current plot's index
     int currentIndex = plotNumber ?? -1;
 
-    // Find the next plot
     for (var plot in plots) {
       var nextIndex = plot['rows']?[0]['study_index'] as int?;
       if (nextIndex != null &&
@@ -254,10 +263,14 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
     if (nextPlotId != null && nextPlotDetails != null) {
       try {
-        // Introduce a small delay to prevent issues caused by rapid navigation
-        await Future.delayed(Duration(milliseconds: 300));
+        await Future.delayed(Duration(milliseconds: 300)); // Small delay to avoid rapid navigation
 
-        if (!mounted) return; // Check if widget is still mounted before navigating
+        if (!mounted) {
+          setState(() {
+            isNavigating = false; // Reset the navigation flag
+          });
+          return;
+        }
 
         Navigator.pushReplacement(
           context,
@@ -267,30 +280,49 @@ class _NewObservationPageState extends State<NewObservationPage> {
               plotId: nextPlotId!,
               plotDetails: nextPlotDetails ?? {},
               onReturn: widget.onReturn,
+              //selectedTraitKey: selectedTraitKey, // Keep the selected trait
             ),
           ),
-        );
+        ).then((_) {
+          if (!mounted) return; // Ensure the widget is still mounted
+          setState(() {
+            isNavigating = false; // Reset the navigation flag
+          });
+        });
       } catch (e) {
         print('Error navigating to the next plot: $e');
+        setState(() {
+          isNavigating = false; // Reset the navigation flag
+        });
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No more valid plots available')),
       );
+      setState(() {
+        isNavigating = false; // Reset the navigation flag
+      });
     }
   }
 
   void moveToPreviousPlot() async {
+    if (isNavigating) return; // Prevent multiple rapid navigations
+    setState(() {
+      isNavigating = true; // Mark navigation as in progress
+    });
+
     var plots = widget.studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
 
     if (plots.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No more plots available')),
       );
+      setState(() {
+        isNavigating = false; // Reset the navigation flag
+      });
       return;
     }
 
-    // Sort the plots by 'study_index' in ascending order
     plots.sort((a, b) {
       var indexA = a['rows']?[0]['study_index'] as int? ?? 0;
       var indexB = b['rows']?[0]['study_index'] as int? ?? 0;
@@ -302,12 +334,14 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
     if (_isPhotoLoading) {
       print("Photo is still loading, please wait.");
+      setState(() {
+        isNavigating = false; // Reset the navigation flag
+      });
       return;
     }
 
     int currentIndex = plotNumber ?? -1;
 
-    // Find the previous plot
     for (var plot in plots.reversed) {
       var prevIndex = plot['rows']?[0]['study_index'] as int?;
       if (prevIndex != null &&
@@ -321,10 +355,14 @@ class _NewObservationPageState extends State<NewObservationPage> {
 
     if (previousPlotId != null && previousPlotDetails != null) {
       try {
-        // Introduce a small delay to prevent issues caused by rapid navigation
-        await Future.delayed(Duration(milliseconds: 300));
+        await Future.delayed(Duration(milliseconds: 300)); // Small delay to avoid rapid navigation
 
-        if (!mounted) return; // Check if widget is still mounted before navigating
+        if (!mounted) {
+          setState(() {
+            isNavigating = false; // Reset the navigation flag
+          });
+          return;
+        }
 
         Navigator.pushReplacement(
           context,
@@ -334,16 +372,28 @@ class _NewObservationPageState extends State<NewObservationPage> {
               plotId: previousPlotId!,
               plotDetails: previousPlotDetails ?? {},
               onReturn: widget.onReturn,
+              //selectedTraitKey: selectedTraitKey, // Keep the selected trait
             ),
           ),
-        );
+        ).then((_) {
+          if (!mounted) return; // Ensure the widget is still mounted
+          setState(() {
+            isNavigating = false; // Reset the navigation flag
+          });
+        });
       } catch (e) {
         print('Error navigating to the previous plot: $e');
+        setState(() {
+          isNavigating = false; // Reset the navigation flag
+        });
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No more valid previous plots available')),
       );
+      setState(() {
+        isNavigating = false; // Reset the navigation flag
+      });
     }
   }
 
