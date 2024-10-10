@@ -610,7 +610,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
             Navigator.of(context).pop();
           },
         ),
-        title: Text('New Observation for plot ${plotNumber ?? 'Loading...'}'),
+        //title: Text('New Observation for plot ${plotNumber ?? 'Loading...'}'),
+        title: Text('Plot ${plotNumber ?? 'Loading...'}'),
       ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
@@ -857,7 +858,10 @@ class _NewObservationPageState extends State<NewObservationPage> {
                             }
                           }
                         },
-                        child: Text('Submit Observation'),
+                        child: Text(
+                          'Submit Observation',
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
 
