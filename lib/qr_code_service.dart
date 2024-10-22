@@ -1,5 +1,5 @@
 // qr_code_service.dart
-import 'package:mobile_scanner/mobile_scanner.dart';
+//import 'package:mobile_scanner/mobile_scanner.dart';
 import 'grassroots_request.dart';
 import 'dart:convert';
 
@@ -21,13 +21,13 @@ class ParsedData {
 
 class QRCodeService {
   // This will process the capture and return the detected QR code's raw value or null
-  String? processDetectedQR(BarcodeCapture capture) {
-    final List<Barcode> barcodes = capture.barcodes;
-    if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-      return barcodes.first.rawValue!;
-    }
-    return null;
-  }
+  //String? processDetectedQR(BarcodeCapture capture) {
+  //  final List<Barcode> barcodes = capture.barcodes;
+  //  if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+  //    return barcodes.first.rawValue!;
+  //  }
+  //  return null;
+  //}
 
   // Fetch data based on the detected QR code
   Future<Map<String, dynamic>> fetchDataFromQR(String qrRawValue) async {
@@ -53,8 +53,7 @@ class QRCodeService {
     if (parsedData.statusText == "Succeeded" || parsedData.statusText == "Partially succeeded") {
       parsedData.studyIndex = responseData['results'][0]['results'][0]['data']['study_index'];
       parsedData.accession = responseData['results'][0]['results'][0]['data']['material']['accession'];
-      parsedData.observationsCount =
-          (responseData['results'][0]['results'][0]['data']['observations'] as List?)?.length ?? 0;
+      parsedData.observationsCount = (responseData['results'][0]['results'][0]['data']['observations'] as List?)?.length ?? 0;
 
       if (responseData['results'][0]['results'][0]['data'].containsKey('observations')) {
         parsedData.studyName = responseData['results'][0]['results'][0]['data']['study']['so:name'];
@@ -107,21 +106,6 @@ class QRCodeService {
   static Future<List<Map<String, String>>> fetchAllStudies() async {
     String requestString = jsonEncode({
       "services": [
-        //    {
-        //      "so:name": "Search Field Trials",
-        //      "start_service": true,
-        //      "parameter_set": {
-        //        "level": "simple",
-        //        "parameters": [
-        //          {"param": "FT Keyword Search", "current_value": ""},
-        //          {"param": "FT Study Facet", "current_value": true},
-        //          {"param": "FT Results Page Number", "current_value": 0},
-        //          {"param": "FT Results Page Size", "current_value": 500}
-        //        ]
-        //      }
-        //    }
-        //  ]
-
         {
           "so:name": "Search Field Trials",
           "start_service": true,

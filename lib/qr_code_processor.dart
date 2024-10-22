@@ -1,7 +1,7 @@
 // qr_code_processor.dart
 
 import 'qr_code_service.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+//import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QRCodeProcessor {
   final QRCodeService qrCodeService;
@@ -16,7 +16,7 @@ class QRCodeProcessor {
     return qrCodeService.parseResponseData(responseData);
   }
 
-  String? processCapture(BarcodeCapture capture) {
-    return qrCodeService.processDetectedQR(capture);
-  }
+//  String? processCapture(BarcodeCapture capture) {
+//    return qrCodeService.processDetectedQR(capture);
+//  }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+//import 'package:mobile_scanner/mobile_scanner.dart';
 import 'welcome_message.dart';
 import 'genera_details.dart';
 import 'qr_code_service.dart';
@@ -351,80 +351,80 @@ class _HomePageState extends State<HomePage> {
               ), // CENTER
 
             // Conditionally show camera when its state is open
-            if (isCameraOpen)
-              MobileScanner(
-                controller: MobileScannerController(),
-                onDetect: (capture) async {
-                  final detectedValue = qrProcessor.processCapture(capture);
-                  if (detectedValue != null) {
-                    setState(() {
-                      detectedQRString = detectedValue;
-                      isCameraOpen = false;
-                      isLoading = true;
-                      selectedRawValue = null;
-                      studyName = null;
-                      studyID = null;
-                      selectedPhenotype = null;
-                    });
+            //if (isCameraOpen)
+            //  MobileScanner(
+            //    controller: MobileScannerController(),
+            //    onDetect: (capture) async {
+            //      final detectedValue = qrProcessor.processCapture(capture);
+            //      if (detectedValue != null) {
+            //        setState(() {
+            //          detectedQRString = detectedValue;
+            //          isCameraOpen = false;
+            //          isLoading = true;
+            //          selectedRawValue = null;
+            //          studyName = null;
+            //          studyID = null;
+            //          selectedPhenotype = null;
+            //        });
 
-                    try {
-                      final Map<String, dynamic> responseData = await qrProcessor.fetchDataFromQR(detectedQRString!);
+            //        try {
+            //          final Map<String, dynamic> responseData = await qrProcessor.fetchDataFromQR(detectedQRString!);
 
-                      if (responseData.containsKey("error")) {
-                        setState(() {
-                          serverResponse = responseData["error"];
-                          isLoading = false;
-                        });
-                        return;
-                      }
+            //          if (responseData.containsKey("error")) {
+            //            setState(() {
+            //              serverResponse = responseData["error"];
+            //              isLoading = false;
+            //            });
+            //            return;
+            //          }
 
-                      final ParsedData parsedData = await qrProcessor.parseResponseData(responseData);
-                      updateUIWithParsedData(parsedData); // Call the new method to update UI with parsed data
+            //          final ParsedData parsedData = await qrProcessor.parseResponseData(responseData);
+            //          updateUIWithParsedData(parsedData); // Call the new method to update UI with parsed data
 
-                      print('** Traits List: $traits');
-                      print('PhenotypeNames List: $phenotypeNames');
+            //        print('** Traits List: $traits');
+            //        print('PhenotypeNames List: $phenotypeNames');
 
-                      if ((parsedData.observationsCount ?? 0) == 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            duration: Duration(seconds: 5),
-                            content: Row(
-                              children: [
-                                Icon(Icons.warning, color: Colors.yellow),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    "Plot has no observations yet. Please add an observation.",
-                                    style: TextStyle(fontSize: 20.0),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                        setState(() {
-                          isLoading = false; // Stop showing loading spinner
-                          phenotypeNames.clear(); // Clear the names so dropdown is not displayed
-                          currentValue = null; // Clear current value
-                        });
-                      }
-                    } catch (e) {
-                      // Handle any errors that occur during fetch or parsing
-                      print('An error occurred while processing the QR code: $e');
-                      setState(() {
-                        serverResponse = 'An error occurred while processing the QR code.';
-                        isLoading = false;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('An error occurred. Please try again.'),
-                          duration: Duration(seconds: 5),
-                        ),
-                      );
-                    }
-                  }
-                },
-              ),
+            //        if ((parsedData.observationsCount ?? 0) == 0) {
+            //          ScaffoldMessenger.of(context).showSnackBar(
+            //            SnackBar(
+            //              duration: Duration(seconds: 5),
+            //              content: Row(
+            //                children: [
+            //                  Icon(Icons.warning, color: Colors.yellow),
+            //                  SizedBox(width: 10),
+            //                  Expanded(
+            //                    child: Text(
+            //                      "Plot has no observations yet. Please add an observation.",
+            //                      style: TextStyle(fontSize: 20.0),
+            //                    ),
+            //                  ),
+            //                ],
+            //              ),
+            //            ),
+            //          );
+            //          setState(() {
+            //            isLoading = false; // Stop showing loading spinner
+            //            phenotypeNames.clear(); // Clear the names so dropdown is not displayed
+            //            currentValue = null; // Clear current value
+            //          });
+            //        }
+            //      } catch (e) {
+            //        // Handle any errors that occur during fetch or parsing
+            //        print('An error occurred while processing the QR code: $e');
+            //        setState(() {
+            //          serverResponse = 'An error occurred while processing the QR code.';
+            //          isLoading = false;
+            //        });
+            //        ScaffoldMessenger.of(context).showSnackBar(
+            //          SnackBar(
+            //            content: Text('An error occurred. Please try again.'),
+            //            duration: Duration(seconds: 5),
+            //          ),
+            //        );
+            //      }
+            //    }
+            //  },
+            //), // MOBILE SCANNER
           ],
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
