@@ -15,13 +15,15 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primaryColor: Color(0xFF2c3e50),
         colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: Colors.blueGrey, // Adjust to a swatch that matches your primary color if needed
+          primarySwatch: Colors
+              .blueGrey, // Adjust to a swatch that matches your primary color if needed
         ).copyWith(
           secondary: Color(0xFF2c3e50),
           primary: Color(0xFF2c3e50),
-          background: Colors.white, // Set the background color to white
+          surface: Colors.white, // Set the background color to white
         ),
-        scaffoldBackgroundColor: Colors.white, // Set the default background color for Scaffold widgets to white
+        scaffoldBackgroundColor: Colors
+            .white, // Set the default background color for Scaffold widgets to white
         appBarTheme: AppBarTheme(
           backgroundColor: Color(0xFF2c3e50), // Set the AppBar color
           foregroundColor: Colors.white, // Set the AppBar icon and text color
@@ -43,7 +45,9 @@ class MyApp extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(4.0),
-            borderSide: BorderSide(color: Color(0xFF2c3e50)), // Use primary color for focused border
+            borderSide: BorderSide(
+                color:
+                    Color(0xFF2c3e50)), // Use primary color for focused border
           ),
         ),
       ),
