@@ -1,22 +1,24 @@
 // qr_code_processor.dart
 
-import 'qr_code_service.dart';
+//import 'qr_code_service.dart';
 //import 'package:mobile_scanner/mobile_scanner.dart';
 
-class QRCodeProcessor {
-  final QRCodeService qrCodeService;
+//import 'package:qr_reader/backend_request.dart';
 
-  QRCodeProcessor({required this.qrCodeService});
+//class QRCodeProcessor {
+ // final backendRequests qrCodeService;
 
-  Future<Map<String, dynamic>> fetchDataFromQR(String qrCode) async {
-    return await qrCodeService.fetchDataFromQR(qrCode);
-  }
+ // QRCodeProcessor({required this.qrCodeService});
 
-  Future<ParsedData> parseResponseData(Map<String, dynamic> responseData) async {
-    return qrCodeService.parseResponseData(responseData);
-  }
+  ///Future<Map<String, dynamic>> fetchDataFromQR(String qrCode) async {
+  ///  return await qrCodeService.fetchDataFromQR(qrCode);
+  /// }
+
+  // Future<ParsedData> parseResponseData(Map<String, dynamic> responseData) async {
+  //  return qrCodeService.parseResponseData(responseData);
+  // }
 
 //  String? processCapture(BarcodeCapture capture) {
 //    return qrCodeService.processDetectedQR(capture);
 //  }
-}
+//}

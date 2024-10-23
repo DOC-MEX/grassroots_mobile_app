@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dropdown_search/dropdown_search.dart';
-import 'qr_code_service.dart';
+import 'backend_request.dart';
 import 'grassroots_request.dart';
 //import 'study_details_widget.dart';
 import 'new_observation.dart';
@@ -47,7 +47,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
     });
 
     try {
-      var studiesData = await QRCodeService.fetchAllStudies();
+      var studiesData = await backendRequests.fetchAllStudies();
       if (mounted) {
         setState(() {
           studies = studiesData;
@@ -100,8 +100,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
         if (observation['date'] != null) {
           try {
             DateTime date = DateTime.parse(observation['date']);
-            formattedDate =
-                '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+            formattedDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
           } catch (e) {
             print('Error parsing date: $e');
           }
@@ -154,11 +153,11 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
       if (resultData.containsKey('submissionSuccessful') && resultData['submissionSuccessful']) {
         print('*****REFRESHING STUDY DETAILS AFTER SUCCESSFUL OBSERVATION');
         try {
-          String cacheClearRequestJson = QRCodeService.clearCacheRequest(selectedStudy!);
+          String cacheClearRequestJson = backendRequests.clearCacheRequest(selectedStudy!);
           await GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend');
           print('Cache cleared successfully');
 
-          var studyDetails = await QRCodeService.fetchSingleStudy(selectedStudy!);
+          var studyDetails = await backendRequests.fetchSingleStudy(selectedStudy!);
           if (mounted) {
             setState(() {
               fetchedStudyDetails = studyDetails;
@@ -267,9 +266,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                         children: [
                           //________ Dropdown to select a study.  1st DROPDOWN MENU______
                           DropdownSearch<String>(
-                            items: studies
-                                .map((study) => study['name'] ?? 'Unknown Study')
-                                .toList(), // List of study names
+                            items: studies.map((study) => study['name'] ?? 'Unknown Study').toList(), // List of study names
                             popupProps: PopupProps.menu(
                               showSearchBox: true, // Enable the search box
                               searchFieldProps: TextFieldProps(
@@ -304,13 +301,12 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
 
                               try {
                                 // Fetch the study details
-                                var studyDetails = await QRCodeService.fetchSingleStudy(selectedStudy!);
+                                var studyDetails = await backendRequests.fetchSingleStudy(selectedStudy!);
 
                                 // Check if 'plots' exists and is not null
                                 if (studyDetails['results'][0]['results'][0]['data'].containsKey('plots') &&
                                     studyDetails['results'][0]['results'][0]['data']['plots'] != null) {
-                                  var plots =
-                                      studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
+                                  var plots = studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
                                   int nPlots = 0;
 
                                   for (var plot in plots) {
@@ -318,8 +314,8 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                       var row = plot['rows'][0];
                                       if (!(row.containsKey('discard') || row.containsKey('blank'))) {
                                         String plotID = row['_id']['\$oid'];
-                                        String plotIndex = row['study_index']
-                                            .toString(); // Assuming study_index is the value to display
+                                        String plotIndex =
+                                            row['study_index'].toString(); // Assuming study_index is the value to display
                                         plotIDs.add(plotID);
                                         plotDisplayValues.add(plotIndex);
                                         nPlots++;
@@ -329,8 +325,8 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
 
                                   // Create the traits dictionary
                                   if (studyDetails['results'][0]['results'][0]['data'].containsKey('phenotypes')) {
-                                    var phenotypes = studyDetails['results'][0]['results'][0]['data']['phenotypes']
-                                        as Map<String, dynamic>;
+                                    var phenotypes =
+                                        studyDetails['results'][0]['results'][0]['data']['phenotypes'] as Map<String, dynamic>;
 
                                     phenotypes.forEach((key, value) {
                                       if (value.containsKey('definition')) {
@@ -373,11 +369,9 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                 setState(() {
                                   studyTitle = studyDetails['results'][0]['results'][0]['title'];
                                   studyDescription = studyDetails['results'][0]['results'][0]['data']['so:description'];
-                                  programme =
-                                      studyDetails['results'][0]['results'][0]['data']['parent_program']['so:name'];
+                                  programme = studyDetails['results'][0]['results'][0]['data']['parent_program']['so:name'];
                                   address = studyDetails['results'][0]['results'][0]['data']['address']['name'];
-                                  FTrial =
-                                      studyDetails['results'][0]['results'][0]['data']['parent_field_trial']['so:name'];
+                                  FTrial = studyDetails['results'][0]['results'][0]['data']['parent_field_trial']['so:name'];
                                 });
 
                                 print('Selected Study ID: $selectedStudy');
@@ -447,13 +441,12 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                       selectedPhenotype = null;
                                       ///////////// Additional logic when a plot is selected /////
                                       /// Example: Count the number of observations in the selected plot
-                                      var plots = fetchedStudyDetails!['results'][0]['results'][0]['data']['plots']
-                                          as List<dynamic>;
+                                      var plots =
+                                          fetchedStudyDetails!['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
 
                                       // Find the plot that matches the selectedPlotId
                                       selectedPlot = plots.firstWhere(
-                                        (plot) =>
-                                            plot['rows'] != null && plot['rows'][0]['_id']['\$oid'] == selectedPlotId,
+                                        (plot) => plot['rows'] != null && plot['rows'][0]['_id']['\$oid'] == selectedPlotId,
                                         orElse: () => null,
                                       );
 
@@ -471,8 +464,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                                 observation['phenotype'].containsKey('variable')) {
                                               String variable = observation['phenotype']['variable'];
 
-                                              print(
-                                                  'Variable: $variable, Exists in traits: ${traits.containsKey(variable)}');
+                                              print('Variable: $variable, Exists in traits: ${traits.containsKey(variable)}');
                                               // Check if the trait exists for this variable and create a DropdownMenuItem
                                               if (traits.containsKey(variable)) {
                                                 String traitName = traits[variable]!;
@@ -545,8 +537,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
                                             child: Column(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Text(displayTrait,
-                                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                                Text(displayTrait, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                                                 SizedBox(height: 10),
                                                 Text('Unit: $displayUnit', style: TextStyle(fontSize: 15)),
                                                 SizedBox(height: 20),

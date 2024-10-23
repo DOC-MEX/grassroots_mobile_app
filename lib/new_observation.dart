@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'full_size_image_screen.dart';
 import 'grassroots_request.dart';
-import 'qr_code_service.dart';
+import 'backend_request.dart';
 import 'api_requests.dart';
 
 class NewObservationPage extends StatefulWidget {
@@ -679,8 +679,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                           //}
                           // Generalized min/max validation for any trait in minLimits and maxLimits
                           if (minLimits[selectedTraitKey] != null && maxLimits[selectedTraitKey] != null) {
-                            if (numberValue < minLimits[selectedTraitKey]! ||
-                                numberValue > maxLimits[selectedTraitKey]!) {
+                            if (numberValue < minLimits[selectedTraitKey]! || numberValue > maxLimits[selectedTraitKey]!) {
                               return 'Value must be between ${minLimits[selectedTraitKey]} and ${maxLimits[selectedTraitKey]}';
                             }
                           }
@@ -797,7 +796,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                             print('Study ID: $studyID');
                             try {
                               // Create the JSON request
-                              String jsonString = QRCodeService.submitObservationRequest(
+                              String jsonString = backendRequests.submitObservationRequest(
                                 studyID: studyID ?? 'defaultStudyID', // Add studyID parameter
                                 detectedQRCode: plotID,
                                 selectedTrait: trait,
@@ -969,8 +968,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
                             // When the user taps on the image, navigate to a new screen with the full-size image
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => FullSizeImageScreen(
-                                    imageUrl: _imageUrl, plotNumber: plotNumber, photoDate: _photoDate),
+                                builder: (context) =>
+                                    FullSizeImageScreen(imageUrl: _imageUrl, plotNumber: plotNumber, photoDate: _photoDate),
                               ),
                             );
                           },
@@ -989,8 +988,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                             // When the user taps on the image, navigate to a new screen with the full-size image
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    FullSizeImageScreenFile(imageFile: _image, plotNumber: plotNumber),
+                                builder: (context) => FullSizeImageScreenFile(imageFile: _image, plotNumber: plotNumber),
                               ),
                             );
                           },

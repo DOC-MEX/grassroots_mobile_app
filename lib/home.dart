@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 //import 'package:mobile_scanner/mobile_scanner.dart';
 import 'welcome_message.dart';
 import 'genera_details.dart';
-import 'qr_code_service.dart';
-import 'qr_code_processor.dart';
+import 'backend_request.dart';
+
+//import 'qr_code_processor.dart';
 import 'observation_page.dart';
 import 'table_observations.dart';
-import 'package:flutter/services.dart';
 import 'grassroots_studies.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,8 +16,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final QRCodeService qrCodeService = QRCodeService();
-  late QRCodeProcessor qrProcessor;
+  //final QRCodeService qrCodeService = QRCodeService();
+  final backendRequests Backend = backendRequests();
+  //late QRCodeProcessor qrProcessor;
   bool isCameraOpen = false; // State to check if camera is open or not
   String? detectedQRString; // Variable to store detected QR code string
   String? serverResponse;
@@ -36,60 +38,22 @@ class _HomePageState extends State<HomePage> {
   String? studyName;
   String? studyID;
   // Add the updateUIWithParsedData method
-  void updateUIWithParsedData(ParsedData parsedData) {
-    setState(() {
-      serverResponse =
-          'Study Index: ${parsedData.studyIndex}.\nAccession: ${parsedData.accession}\nNumber of Observations: ${parsedData.observationsCount}';
-      studyName = parsedData.studyName;
-      studyID = parsedData.studyID;
-      phenotypeNames = parsedData.parsedPhenotypeNames;
-      traits = parsedData.traits;
-      units = parsedData.units;
-      observations = parsedData.observations;
-      allPhenotypeNames = parsedData.allPhenotypeNames;
-      allTraits = parsedData.allTraits;
-      currentValue = phenotypeNames.isNotEmpty ? phenotypeNames[0] : null;
-      isLoading = false;
-    });
-
-    // Handle case with no observations
-    //if ((parsedData.observationsCount ?? 0) == 0) {
-    //  ScaffoldMessenger.of(context).showSnackBar(
-    //    SnackBar(
-    //      content: Text("Plot has no observations."),
-    //      duration: Duration(seconds: 2),
-    //    ),
-    //  );
-    // }
-  }
-
-  void showTopSnackBar(BuildContext context, String message) {
-    final overlay = Overlay.of(context);
-    final overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        top: 100.0, // Adjust this to position it lower on the screen
-        left: MediaQuery.of(context).size.width * 0.1,
-        right: MediaQuery.of(context).size.width * 0.1, // This helps constrain the width
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-            color: Colors.blue,
-            child: Text(
-              message,
-              style: TextStyle(color: Colors.white),
-              maxLines: 2, // Allows text to wrap to the next line
-              overflow: TextOverflow.ellipsis, // If there's still overflow, it'll end with "..."
-            ),
-          ),
-        ),
-      ),
-    );
-    overlay.insert(overlayEntry);
-    Future.delayed(Duration(seconds: 5), () {
-      overlayEntry.remove();
-    });
-  }
+  //void updateUIWithParsedData(ParsedData parsedData) {
+  //  setState(() {
+  //    serverResponse =
+  //        'Study Index: ${parsedData.studyIndex}.\nAccession: ${parsedData.accession}\nNumber of Observations: ${parsedData.observationsCount}';
+  //    studyName = parsedData.studyName;
+  //    studyID = parsedData.studyID;
+  //    phenotypeNames = parsedData.parsedPhenotypeNames;
+  //    traits = parsedData.traits;
+  //    units = parsedData.units;
+  //    observations = parsedData.observations;
+  //    allPhenotypeNames = parsedData.allPhenotypeNames;
+  //    allTraits = parsedData.allTraits;
+  //    currentValue = phenotypeNames.isNotEmpty ? phenotypeNames[0] : null;
+  //    isLoading = false;
+  //  });
+  //}
 
   List<Map<String, dynamic>> findRawValuesForSelectedPhenotype(String selectedPhenotype) {
     List<Map<String, dynamic>> matchingObservations = [];
@@ -107,13 +71,6 @@ class _HomePageState extends State<HomePage> {
           }
         }
 
-        // Initialize an empty string for notes
-        //String notes = '';
-        // Check if 'notes' exists and is not null, then add it to the matching observations
-        //if (observation['notes'] != null) {
-        //  notes = observation['notes'];
-        //}
-
         matchingObservations.add({
           'raw_value': observation['raw_value'],
           'date': formattedDate,
@@ -127,7 +84,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    qrProcessor = QRCodeProcessor(qrCodeService: qrCodeService); // Initialize qrProcessor
+    //qrProcessor = QRCodeProcessor(qrCodeService: qrCodeService); // Initialize qrProcessor
     // Any other
   }
 
@@ -228,26 +185,26 @@ class _HomePageState extends State<HomePage> {
                           isLoading = true;
                         });
 
-                        try {
-                          final Map<String, dynamic> responseData = await qrProcessor.fetchDataFromQR(detectedQRString!);
+                        ///try {
+                        //// final Map<String, dynamic> responseData = await qrProcessor.fetchDataFromQR(detectedQRString!);
 
-                          if (responseData.containsKey("error")) {
-                            setState(() {
-                              serverResponse = responseData["error"];
-                              isLoading = false;
-                            });
-                            return;
-                          }
+                        ///  if (responseData.containsKey("error")) {
+                        ///    setState(() {
+                        ///      serverResponse = responseData["error"];
+                        ///      isLoading = false;
+                        ///    });
+                        ///    return;
+                        ///  }
 
-                          final ParsedData updatedParsedData = await qrProcessor.parseResponseData(responseData);
-                          updateUIWithParsedData(updatedParsedData);
-                        } catch (e) {
-                          print('An error occurred while fetching updated data: $e');
-                          setState(() {
-                            serverResponse = 'An error occurred while fetching updated data.';
-                            isLoading = false;
-                          });
-                        }
+                        //////  final ParsedData updatedParsedData = await qrProcessor.parseResponseData(responseData);
+                        //////  updateUIWithParsedData(updatedParsedData);
+                        //} catch (e) {
+                        //  print('An error occurred while fetching updated data: $e');
+                        //  setState(() {
+                        //    serverResponse = 'An error occurred while fetching updated data.';
+                        //    isLoading = false;
+                        //  });
+                        //}
                       }
                     },
                     child: Text('Add Observation'),

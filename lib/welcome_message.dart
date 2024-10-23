@@ -4,7 +4,7 @@ import 'package:flutter/gestures.dart';
 
 class WelcomeMessageWidget extends StatelessWidget {
   //final String _websiteUrl = "https://grassroots.tools";
-  final Uri _websiteUrl = Uri.parse('https://grassroots.tools/mobile_app/');
+  final Uri _websiteUrl = Uri.parse('https://grassroots.tools/documentation/mobile_app/');
 
   @override
   Widget build(BuildContext context) {
@@ -21,16 +21,16 @@ class WelcomeMessageWidget extends StatelessWidget {
               text: "Welcome to the QR reader for Grassroots.\n\n",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            TextSpan(
-              text: "Open the camera to start capturing QR codes.\n\n",
-              style: TextStyle(fontSize: 18),
-            ),
+            //TextSpan(
+            //   text: "Open the camera to start capturing QR codes.\n\n",
+            //   style: TextStyle(fontSize: 18),
+            // ),
             TextSpan(
               text: "Visit ",
               style: TextStyle(fontSize: 18),
             ),
             TextSpan(
-              text: "grassroots.tools/mobile_app",
+              text: "grassroots.tools/documentation/mobile_app",
               style: TextStyle(
                 fontSize: 18,
                 decoration: TextDecoration.underline,
