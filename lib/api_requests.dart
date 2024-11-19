@@ -6,7 +6,7 @@ import 'dart:convert'; // For jsonDecode()
 import 'package:intl/intl.dart';
 
 class ApiRequests {
-  static const String baseUrl = 'https://grassroots.tools/newbeta/photo_receiver/';
+  static const String baseUrl = 'https://grassroots.tools/photo_receiver/';
 
   static Future<bool> uploadImage(File image, String studyID, int plotNumber) async {
     try {
@@ -165,4 +165,24 @@ class ApiRequests {
       return false;
     }
   }
+
+  static Future<List<String>?> fetchAllowedStudyIDs() async {
+  const String allowedStudyIDsUrl = '${baseUrl}allowed_studies/';
+
+  try {
+    final response = await http.get(Uri.parse(allowedStudyIDsUrl));
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body);
+      return List<String>.from(jsonResponse['allowed_studies']);
+    } else {
+      print('Error fetching allowed study IDs: ${response.statusCode}');
+      return null;
+    }
+  } catch (e) {
+    print('Error fetching allowed study IDs: $e');
+    return null;
+  }
+}
+
 }

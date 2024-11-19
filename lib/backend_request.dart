@@ -2,6 +2,7 @@
 //import 'package:mobile_scanner/mobile_scanner.dart';
 import 'grassroots_request.dart';
 import 'dart:convert';
+import 'global_variable.dart';
 
 class backendRequests {
   //fetch all studies from Grassroots. Used when loading grassroot_studies.dart
@@ -78,11 +79,11 @@ class backendRequests {
     String? note,
   }) {
 // List of allowed study IDs
-    const allowedStudyIDs = [
-      '64f1e4e77c486e019b4e3017',
-      '63bfce1a86ff5b59175e1d66',
-      '65a532e1536b7214e714a97f', //Glasshouse test study
-    ];
+  //  const allowedStudyIDs = [
+  //    '64f1e4e77c486e019b4e3017',
+  //    '63bfce1a86ff5b59175e1d66',
+  //    '65a532e1536b7214e714a97f', //Glasshouse test study
+  //  ];
 
     // Check if the studyID is in the list of allowed IDs
     if (!allowedStudyIDs.contains(studyID)) {

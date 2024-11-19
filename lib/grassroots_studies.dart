@@ -5,6 +5,8 @@ import 'grassroots_request.dart';
 //import 'study_details_widget.dart';
 import 'new_observation.dart';
 import 'table_observations.dart';
+import 'global_variable.dart'; // allowedStudyIDs
+import 'api_requests.dart';
 
 class GrassrootsStudies extends StatefulWidget {
   @override
@@ -39,7 +41,30 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
   void initState() {
     super.initState();
     fetchStudies(); // Updated to call the new method to fetch all studies
+     _checkAndUpdateAllowedStudyIDs(); // Add this to check for new study IDs
+}
+
+Future<void> _checkAndUpdateAllowedStudyIDs() async {
+  print('Initial Allowed Study IDs: $allowedStudyIDs');
+
+  final fetchedIDs = await ApiRequests.fetchAllowedStudyIDs();
+
+  if (fetchedIDs != null) {
+    setState(() {
+      // Add only new IDs to the allowedStudyIDs list
+      for (String id in fetchedIDs) {
+        if (!allowedStudyIDs.contains(id)) {
+          allowedStudyIDs.add(id);
+          print('Added new ID to Allowed Study IDs: $id');
+        }
+      }
+    });
+    print('Final Allowed Study IDs: $allowedStudyIDs');
+  } else {
+    print('Failed to fetch allowed study IDs.');
   }
+}
+
 
   void fetchStudies() async {
     setState(() {
