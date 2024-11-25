@@ -185,4 +185,30 @@ class ApiRequests {
   }
 }
 
+static Future<Map<String, String>> fetchHealthStatus() async {
+    try {
+      final response = await http.get(Uri.parse('${baseUrl}online_check/'));
+      if (response.statusCode == 200) {
+        // Parse the JSON response and return it
+        final jsonResponse = json.decode(response.body);
+        return {
+          'django': jsonResponse['django'] ?? 'unknown',
+          'mongo': jsonResponse['mongo'] ?? 'unknown',
+        };
+      } else {
+        // Handle non-200 responses
+        return {
+          'django': 'unreachable',
+          'mongo': 'unknown',
+        };
+      }
+    } catch (e) {
+      // Handle errors like network issues
+      return {
+        'django': 'error',
+        'mongo': 'error',
+      };
+    }
+  }
+
 }
