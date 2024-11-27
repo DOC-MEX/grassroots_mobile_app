@@ -10,24 +10,91 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  String djangoStatus = 'unknown';
+  String mongoStatus = 'unknown';
+
   @override
   void initState() {
     super.initState();
-    checkHealthStatus(); // Health check API call
+    checkHealthStatus();
   }
 
-  // Health check function
   Future<void> checkHealthStatus() async {
-    final healthStatus = await ApiRequests.fetchHealthStatus();
-    print('Django Status: ${healthStatus['django']}');
-    print('MongoDB Status: ${healthStatus['mongo']}');
+    try {
+      final healthStatus = await ApiRequests.fetchHealthStatus();
+      setState(() {
+        djangoStatus = healthStatus['django'] ?? 'unknown';
+        mongoStatus = healthStatus['mongo'] ?? 'unknown';
+      });
+
+      // Show snackbar if server is unhealthy
+      if (djangoStatus != 'running' || mongoStatus != 'available') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Warning: There is a problem with the server connection.',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        djangoStatus = 'error';
+        mongoStatus = 'error';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error checking server status. Please try again.',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 5),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    bool isServerHealthy = djangoStatus == 'running' && mongoStatus == 'available';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Grassroots Mobile App'),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Grassroots Mobile App'),
+            Row(
+              children: [
+                // LED Indicator
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isServerHealthy ? Colors.green : Colors.red,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  isServerHealthy ? 'Server OK' : 'Server Issue',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: checkHealthStatus, // Trigger health check
+            tooltip: 'Refresh Server Status',
+          ),
+        ],
       ),
       body: Stack(
         children: [
