@@ -20,13 +20,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> checkHealthStatus() async {
+     print("checkHealthStatus called");
     try {
       final healthStatus = await ApiRequests.fetchHealthStatus();
       setState(() {
         djangoStatus = healthStatus['django'] ?? 'unknown';
         mongoStatus = healthStatus['mongo'] ?? 'unknown';
       });
-
+      print('Django: $djangoStatus, Mongo: $mongoStatus');
       // Show snackbar if server is unhealthy
       if (djangoStatus != 'running' || mongoStatus != 'available') {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -96,47 +97,62 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          // Welcome message
-          WelcomeMessageWidget(),
+      body: RefreshIndicator(
+        onRefresh: checkHealthStatus, // Pull-to-refresh action
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(), // Enable pull-to-refresh
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Stack(
+                    children: [
+                      // Welcome message
+                      WelcomeMessageWidget(),
 
-          // Exit button
-          Positioned(
-            bottom: 15,
-            left: 10,
-            child: ElevatedButton(
-              onPressed: () {
-                SystemNavigator.pop();
-              },
-              child: Text('Exit'),
-            ),
-          ),
+                      // Exit button
+                      Positioned(
+                        bottom: 15,
+                        left: 10,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            SystemNavigator.pop();
+                          },
+                          child: Text('Exit'),
+                        ),
+                      ),
 
-          // Browse all studies button
-          Positioned(
-            bottom: 15,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => GrassrootsStudies()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 3, horizontal: 20),
-                ),
-                child: Text(
-                  'Browse \n all studies',
-                  textAlign: TextAlign.center,
+                      // Browse all studies button
+                      Positioned(
+                        bottom: 15,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => GrassrootsStudies()),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 3, horizontal: 20),
+                            ),
+                            child: Text(
+                              'Browse \n all studies',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
