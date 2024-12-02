@@ -8,29 +8,6 @@ import 'package:intl/intl.dart';
 class ApiRequests {
   static const String baseUrl = 'https://grassroots.tools/photo_receiver/';
 
-  static Future<bool> uploadImage(File image, String studyID, int plotNumber) async {
-    try {
-      var uri = Uri.parse('${baseUrl}upload/');
-      var request = http.MultipartRequest('POST', uri);
-
-      String newFileName = 'photo_plot_${plotNumber.toString()}.jpg';
-      request.files.add(await http.MultipartFile.fromPath(
-        'image',
-        image.path,
-        filename: newFileName,
-      ));
-
-      request.fields['subfolder'] = studyID;
-      request.fields['plot_number'] = plotNumber.toString(); // Add plot_number to the request
-
-      var response = await request.send();
-
-      return response.statusCode == 201; // Return true if status code is 201
-    } catch (e) {
-      return false; // Return false in case of an error
-    }
-  }
-
   static Future<bool> uploadImageDate(File image, String studyID, int plotNumber) async {
     try {
       var uri = Uri.parse('${baseUrl}upload/');

@@ -734,7 +734,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                 ListTile(
                   title: Text("Observation date (current date is default)"),
                   subtitle: Text(
-                    selectedDate != null ? '${selectedDate!.toLocal()}'.split(' ')[0] : 'No date chosen',
+                    selectedDate != null ? '${selectedDate!.toLocal()}'.split(' ')[0] : 'Press to choose different date',
                   ),
                   onTap: () async {
                     final DateTime? picked = await showDatePicker(

@@ -68,7 +68,7 @@ class _HomePageState extends State<HomePage> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Grassroots Mobile App'),
+            Text('Grassroots App'),
             Row(
               children: [
                 // LED Indicator
