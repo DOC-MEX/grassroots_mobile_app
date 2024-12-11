@@ -9,6 +9,8 @@ import 'grassroots_request.dart';
 import 'backend_request.dart';
 import 'api_requests.dart';
 
+import 'models/observation.dart'; // Import the Observation model
+
 class NewObservationPage extends StatefulWidget {
   final Map<String, dynamic> studyDetails;
   final String plotId;
@@ -581,19 +583,120 @@ class _NewObservationPageState extends State<NewObservationPage> {
     }
   }
 
+Future<void> _submitObservation() async {
+  if (_formKey.currentState!.validate()) {
+    String plotID = widget.plotId; // Plot ID
+    String? trait = selectedTraitKey; // Selected trait
+    String measurement = _textEditingController.text; // Entered measurement
+    String dateString = DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now()); // Date
+    String? note = _notesEditingController.text.isEmpty ? null : _notesEditingController.text; // Notes
+
+    print('Plot ID: $plotID');
+    print('Trait: $trait');
+    print('Measurement: $measurement');
+    print('Note: $note');
+    print('Study ID: $studyID');
+
+    try {
+      // Create the JSON request
+      String jsonString = backendRequests.submitObservationRequest(
+        studyID: studyID ?? 'defaultStudyID',
+        detectedQRCode: plotID,
+        selectedTrait: trait,
+        measurement: measurement,
+        dateString: dateString,
+        note: note,
+      );
+      
+      print('Request to server: $jsonString');
+
+      if (jsonString != '{}') {
+        var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
+        
+        print('Response from server: $response');
+
+        String? statusText = response['results']?[0]['status_text'];
+        submissionSuccessful = statusText != null && statusText == 'Succeeded';
+
+        if (submissionSuccessful) {
+          print('Submission successful *****SET FLAG TO TRUE******');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Data successfully submitted',
+                style: TextStyle(fontSize: 16.0),
+              ),
+            ),
+          );
+        } else {
+          print('Submission failed: $statusText');
+          throw Exception('Failed to submit observation');
+        }
+      } else {
+        print('NOT ALLOWED');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Submission not allowed for this study')),
+        );
+      }
+    } catch (e) {
+      // Original error handling print
+      print('Error sending request: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Failed to submit data',
+                  style: TextStyle(fontSize: 16.0),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } finally {
+      // Save locally
+      final observation = Observation(
+        plotId: plotID,
+        trait: trait ?? 'Unknown',
+        value: measurement,
+        notes: note,
+        photoPath: _image?.path,
+        date: dateString,
+        syncStatus: submissionSuccessful ? 'synced' : 'pending',
+      );
+
+      
+      //print('Saving locally: ${observation.toJson()}');
+      //await _saveObservationLocally(observation);
+
+      // Pass the result back to the parent
+      widget.onReturn({
+        'plotId': plotID,
+        'submissionSuccessful': submissionSuccessful,
+      });
+
+      _clearForm(); // Clears the form after saving and returning data
+    }
+  }
+}
+
+
+void _clearForm() {
+    _formKey.currentState!.reset();
+    setState(() {
+      selectedDate = null;
+      _textEditingController.clear();
+      _notesEditingController.clear();
+      _image = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    void clearForm() {
-      _formKey.currentState!.reset();
-      setState(() {
-        //////////selectedTraitKey = null; // Reset the dropdown
-        selectedDate = null;
-        _textEditingController.clear();
-        _notesEditingController.clear();
-        isClearingForm = false;
-        // Any other controllers or variables should be reset here
-      });
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -779,84 +882,7 @@ class _NewObservationPageState extends State<NewObservationPage> {
                     Expanded(
                       flex: 1, // Adjusted to occupy half of the width
                       child: ElevatedButton(
-                        onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            // Extract form data
-                            String plotID = widget.plotId; // Plot ID
-                            String? trait = selectedTraitKey; // Selected trait
-                            String measurement = _textEditingController.text; // Entered measurement
-                            String dateString = DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now()); // Date
-                            String? note = _notesEditingController.text.isEmpty
-                                ? null
-                                : _notesEditingController.text; // Notes, null if empty
-                            print('Plot ID: $plotID');
-                            print('Trait: $trait');
-                            print('Measurement: $measurement');
-                            print('Note: $note');
-                            print('Study ID: $studyID');
-                            try {
-                              // Create the JSON request
-                              String jsonString = backendRequests.submitObservationRequest(
-                                studyID: studyID ?? 'defaultStudyID', // Add studyID parameter
-                                detectedQRCode: plotID,
-                                selectedTrait: trait,
-                                measurement: measurement,
-                                dateString: dateString,
-                                note: note,
-                              );
-                              if (jsonString != '{}') {
-                                // Send the request to the server and await the response
-                                //print('Request to server: $jsonString ');
-                                var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
-                                String? statusText = response['results']?[0]['status_text'];
-                                if (statusText != null && statusText == 'Succeeded') {
-                                  submissionSuccessful = true;
-                                  print('Submission successful *****SET FLAG TO TRUE******');
-                                  widget.onReturn({
-                                    'plotId': plotID,
-                                    'submissionSuccessful': submissionSuccessful,
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Data successfully submitted',
-                                        style: TextStyle(fontSize: 16.0), // Larger font size
-                                      ),
-                                    ),
-                                  );
-                                }
-                              } else {
-                                print('NOT ALLOWED');
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Submission not allowed for this study')),
-                                );
-                              }
-                            } catch (e) {
-                              print('Error sending request: $e');
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Row(
-                                    children: [
-                                      Icon(Icons.error_outline, color: Colors.red), // Error icon
-                                      SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          'Failed to submit data',
-                                          style: TextStyle(fontSize: 16.0), // Larger font size
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            } finally {
-                              setState(() {
-                                isClearingForm = true; // Set to true right before clearing the form
-                              });
-                              clearForm();
-                            }
-                          }
-                        },
+                        onPressed: _submitObservation,
                         child: Text(
                           'Submit Observation',
                           textAlign: TextAlign.center,
