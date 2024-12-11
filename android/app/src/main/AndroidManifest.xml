@@ -7,7 +7,7 @@
     
 
    <application
-        android:label="qrreader"        
+        android:label="grassroots"        
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
