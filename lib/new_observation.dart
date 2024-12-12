@@ -9,6 +9,7 @@ import 'grassroots_request.dart';
 import 'backend_request.dart';
 import 'api_requests.dart';
 
+import 'package:hive/hive.dart'; 
 import 'models/observation.dart'; // Import the Observation model
 
 class NewObservationPage extends StatefulWidget {
@@ -670,8 +671,8 @@ Future<void> _submitObservation() async {
       );
 
       
-      //print('Saving locally: ${observation.toJson()}');
-      //await _saveObservationLocally(observation);
+      print('Saving locally: ${observation.toJson()}');
+      await _saveObservationLocally(observation);
 
       // Pass the result back to the parent
       widget.onReturn({
@@ -681,6 +682,22 @@ Future<void> _submitObservation() async {
 
       _clearForm(); // Clears the form after saving and returning data
     }
+  }
+}
+
+Future<void> _saveObservationLocally(Observation observation) async {
+  try {
+    // Open the Hive box
+    var box = await Hive.openBox<Observation>('observations');
+
+    // Save the observation to the box
+    await box.add(observation);
+
+    // Debug print to confirm the observation was saved
+    print('Observation saved locally: ${observation.toJson()}');
+  } catch (e) {
+    // Handle any errors that occur during the save process
+    print('Error saving observation locally: $e');
   }
 }
 

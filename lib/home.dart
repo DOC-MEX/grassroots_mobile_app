@@ -4,6 +4,9 @@ import 'welcome_message.dart';
 import 'grassroots_studies.dart';
 import 'api_requests.dart';
 
+import 'package:hive/hive.dart';
+import 'models/observation.dart';
+
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
@@ -17,6 +20,21 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     checkHealthStatus();
+     _printLocalObservations(); // Fetch and print local observations
+  }
+
+  // New method to fetch and print local observations
+  Future<void> _printLocalObservations() async {
+    try {
+      var box = Hive.box<Observation>('observations'); // Open the Hive box
+      List<Observation> observations = box.values.toList(); // Get all observations
+      print('Local Observations:');
+      for (var observation in observations) {
+        print(observation.toJson()); // Print each observation as JSON
+      }
+    } catch (e) {
+      print('Error reading local observations: $e');
+    }
   }
 
   Future<void> checkHealthStatus() async {

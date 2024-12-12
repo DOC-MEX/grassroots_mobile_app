@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'home.dart';
+import 'models/observation.dart'; 
 
-void main() {
+void main() async{
+   WidgetsFlutterBinding.ensureInitialized(); // Ensures that Flutter is initialised
+  await Hive.initFlutter(); 
+  Hive.registerAdapter(ObservationAdapter()); // Registers the Observation model adapter
+  await Hive.openBox<Observation>('observations');
   runApp(const MyApp());
 }
 
