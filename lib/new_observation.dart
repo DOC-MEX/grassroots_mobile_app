@@ -665,7 +665,7 @@ Future<void> _submitObservation() async {
         trait: trait ?? 'Unknown',
         value: measurement,
         notes: note,
-        photoPath: _image?.path,
+        //photoPath: _image?.path,
         date: dateString,
         syncStatus: submissionSuccessful ? 'synced' : 'pending',
       );

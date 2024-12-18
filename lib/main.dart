@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'home.dart';
-import 'models/observation.dart'; 
+import 'models/observation.dart';
+import 'package:path_provider/path_provider.dart';
+import 'models/photo_submission.dart'; 
 
 void main() async{
-   WidgetsFlutterBinding.ensureInitialized(); // Ensures that Flutter is initialised
-  await Hive.initFlutter(); 
-  Hive.registerAdapter(ObservationAdapter()); // Registers the Observation model adapter
+  WidgetsFlutterBinding.ensureInitialized(); // Ensures Flutter is ready before Hive initialization
+  await Hive.initFlutter(); // Initializes Hive for Flutter
+
+  // Register all adapters
+  Hive.registerAdapter(ObservationAdapter());
+  Hive.registerAdapter(PhotoSubmissionAdapter());
+
+  // Open boxes for models
+  ////await Hive.deleteBoxFromDisk('observations'); // This will clear all old data
   await Hive.openBox<Observation>('observations');
+  await Hive.openBox<PhotoSubmission>('photo_submissions');
   runApp(const MyApp());
 }
 
