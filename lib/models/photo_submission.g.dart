@@ -1,43 +1,43 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'observation.dart';
+part of 'photo_submission.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class ObservationAdapter extends TypeAdapter<Observation> {
+class PhotoSubmissionAdapter extends TypeAdapter<PhotoSubmission> {
   @override
-  final int typeId = 0;
+  final int typeId = 1;
 
   @override
-  Observation read(BinaryReader reader) {
+  PhotoSubmission read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Observation(
-      plotId: fields[0] as String,
-      trait: fields[1] as String,
-      value: fields[2] as String,
-      notes: fields[3] as String?,
+    return PhotoSubmission(
+      filePath: fields[0] as String,
+      plotId: fields[1] as String,
+      studyId: fields[2] as String,
+      plotNumber: fields[3] as int,
       date: fields[4] as String,
       syncStatus: fields[5] as String,
     );
   }
 
   @override
-  void write(BinaryWriter writer, Observation obj) {
+  void write(BinaryWriter writer, PhotoSubmission obj) {
     writer
       ..writeByte(6)
       ..writeByte(0)
-      ..write(obj.plotId)
+      ..write(obj.filePath)
       ..writeByte(1)
-      ..write(obj.trait)
+      ..write(obj.plotId)
       ..writeByte(2)
-      ..write(obj.value)
+      ..write(obj.studyId)
       ..writeByte(3)
-      ..write(obj.notes)
+      ..write(obj.plotNumber)
       ..writeByte(4)
       ..write(obj.date)
       ..writeByte(5)
@@ -50,7 +50,7 @@ class ObservationAdapter extends TypeAdapter<Observation> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ObservationAdapter &&
+      other is PhotoSubmissionAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

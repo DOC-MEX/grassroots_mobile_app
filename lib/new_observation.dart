@@ -11,6 +11,9 @@ import 'api_requests.dart';
 
 import 'package:hive/hive.dart'; 
 import 'models/observation.dart'; // Import the Observation model
+import 'models/photo_submission.dart'; // Import the PhotoSubmission model
+  
+import 'package:path_provider/path_provider.dart';
 
 class NewObservationPage extends StatefulWidget {
   final Map<String, dynamic> studyDetails;
@@ -155,13 +158,24 @@ class _NewObservationPageState extends State<NewObservationPage> {
   }
 
   // function to handle the upload of image using an API request "uploadImage"
-  void _handleUpload() async {
-    if (_image != null && studyID != null && plotNumber != null) {
-      setState(() {
-        _isUploading = true; // Start of upload
-      });
 
-      bool uploadSuccess = await ApiRequests.uploadImageDate(_image!, studyID!, plotNumber!);
+
+void _handleUpload() async {
+  if (_image != null && studyID != null && plotNumber != null) {
+    setState(() {
+      _isUploading = true; // Start of upload
+    });
+
+    try {
+      // Save the image to a persistent location
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = _image!.path.split('/').last;
+      final savedImagePath = '${appDir.path}/$fileName';
+      final savedImage = await File(_image!.path).copy(savedImagePath);
+
+      // Simulate photo upload logic
+      bool uploadSuccess = await ApiRequests.uploadImageDate(savedImage, studyID!, plotNumber!);
+
       if (!mounted) return; // Check if the widget is still mounted
 
       setState(() {
@@ -173,12 +187,39 @@ class _NewObservationPageState extends State<NewObservationPage> {
         }
       });
 
+      // Save photo submission locally if upload is successful
+      if (uploadSuccess) {
+        final photoSubmission = PhotoSubmission(
+          filePath: savedImage.path,
+          plotId: widget.plotId,
+          studyId: studyID!,
+          plotNumber: plotNumber!,
+          date: DateTime.now().toIso8601String(),
+          syncStatus: 'synced', // Mark as synced since the upload succeeded
+        );
+
+        var photoBox = Hive.box<PhotoSubmission>('photo_submissions');
+        await photoBox.add(photoSubmission);
+
+        print('Photo submission saved locally: ${photoSubmission.toJson()}');
+      }
+
+      // Display feedback message
       String message = uploadSuccess ? 'Upload successful' : 'Upload failed';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-    } else {
-      // Handle null values error
+    } catch (e) {
+      print('Error during upload or saving photo locally: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error during upload or saving photo')),
+      );
     }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Image, study ID, or plot number is missing')),
+    );
   }
+}
+
 
   ////////////////////////////////////////////////////////
 

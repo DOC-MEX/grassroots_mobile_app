@@ -6,6 +6,7 @@ import 'api_requests.dart';
 
 import 'package:hive/hive.dart';
 import 'models/observation.dart';
+import 'models/photo_submission.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -21,7 +22,21 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     checkHealthStatus();
      _printLocalObservations(); // Fetch and print local observations
+    _printLocalPhotoSubmissions(); 
   }
+
+Future<void> _printLocalPhotoSubmissions() async {
+    try {
+      var box = Hive.box<PhotoSubmission>('photo_submissions'); // Open the Hive box
+      List<PhotoSubmission> photoSubmissions = box.values.toList(); // Get all photo submissions
+      print('Local Photo Submissions:');
+      for (var photo in photoSubmissions) {
+        print(photo.toJson()); // Print each photo submission as JSON
+      }
+    } catch (e) {
+      print('Error reading local photo submissions: $e');
+    }
+  }  
 
   // New method to fetch and print local observations
   Future<void> _printLocalObservations() async {
