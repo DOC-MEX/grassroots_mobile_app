@@ -4,9 +4,9 @@ import 'package:http/http.dart' as http;
 class GrassrootsRequest {
   // Server names for public, private and queen services. Currently using BETA SERVER
   static const Map<String, String> _serverUrls = {
-    'public': 'https://grassroots.tools/newbeta/grassroots/public_backend',    
-    'private': 'https://grassroots.tools/newbeta/grassroots/private_backend',
-    'queen_bee_backend': 'https://grassroots.tools/newbeta/grassroots/queen_bee_backend'
+    'public': 'https://grassroots.tools/grassroots/public_backend',    
+    'private': 'https://grassroots.tools/grassroots/private_backend',
+    'queen_bee_backend': 'https://grassroots.tools/grassroots/queen_bee_backend'
   };
 
   // User name and password for requests to queen services.

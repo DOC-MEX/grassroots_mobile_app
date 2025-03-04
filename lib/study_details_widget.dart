@@ -40,7 +40,7 @@ class StudyDetailsWidget extends StatelessWidget {
         SizedBox(height: 10),
 
         Text(
-          'Description: ${studyDescription.isNotEmpty ? studyDescription : 'Not available'}',
+          'The Description: ${studyDescription.isNotEmpty ? studyDescription : 'Not available'}',
           style: TextStyle(fontSize: 16),
         ),
         SizedBox(height: 10),

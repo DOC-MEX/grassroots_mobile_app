@@ -15,7 +15,7 @@ class WelcomeMessageWidget extends StatelessWidget {
       child: RichText(
         textAlign: TextAlign.center,
         text: TextSpan(
-          style: TextStyle(fontSize: 16, color: Colors.black),
+          style: TextStyle(fontSize: 16, color: Theme.of(context).primaryColor),
           children: [
             TextSpan(
               text: "Welcome to the QR reader for Grassroots.\n\n",
