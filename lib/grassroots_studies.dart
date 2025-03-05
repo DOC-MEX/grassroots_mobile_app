@@ -147,15 +147,90 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(studyTitle!),
+          surfaceTintColor: Colors.transparent,
+          backgroundColor:Theme.of(context).colorScheme.surface, // Color(0xffff0000), //
+          title: Text(
+            studyTitle!,
+            style: TextStyle (color: Theme.of(context).colorScheme.primary),
+          ),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('Description: ${studyDescription ?? 'Not available'}'),
-                Text('Programme: ${programme ?? 'Not available'}'),
-                Text('Address: ${address ?? 'Not available'}'),
-                Text('Field Trial: ${FTrial ?? 'Not available'}'),
-                Text('Number of Plots: $numberOfPlots'),
+                Text.rich (
+                  TextSpan (
+                    children: [
+                      TextSpan(
+                        text: 'Description: ',
+                        style: TextStyle (fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                        ),
+                      TextSpan(
+                        text: '${studyDescription ?? 'Not available'}',
+                        style: TextStyle (color: Theme.of(context).colorScheme.primary)
+                      ),
+                    ],
+                  )
+                ),
+
+                Text.rich (
+                  TextSpan (
+                    children: [
+                      TextSpan(
+                        text: 'Programme: ',
+                        style: TextStyle (fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                        ),
+                      TextSpan(
+                        text: '${programme ?? 'Not available'}',
+                        style: TextStyle (color: Theme.of(context).colorScheme.primary)
+                      ),
+                    ],
+                  )
+                ),
+
+                Text.rich (
+                  TextSpan (
+                    children: [
+                      TextSpan(
+                        text: 'Address: ',
+                        style: TextStyle (fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                        ),
+                      TextSpan(
+                        text: '${address ?? 'Not available'}',
+                        style: TextStyle (color: Theme.of(context).colorScheme.primary)
+                      ),
+                    ],
+                  )
+                ),
+
+                Text.rich (
+                  TextSpan (
+                    children: [
+                      TextSpan(
+                        text: 'Field Trial: ',
+                        style: TextStyle (fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                        ),
+                      TextSpan(
+                        text: '${FTrial ?? 'Not available'}',
+                        style: TextStyle (color: Theme.of(context).colorScheme.primary)
+                      ),
+                    ],
+                  )
+                ),
+
+                Text.rich (
+                  TextSpan (
+                    children: [
+                      TextSpan(
+                        text: 'Number of Plots: ',
+                        style: TextStyle (fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                        ),
+                      TextSpan(
+                        text: '${numberOfPlots ?? 'Not available'}',
+                        style: TextStyle (color: Theme.of(context).colorScheme.primary)
+                      ),
+                    ],
+                  )
+                ),
+
                 // Other details...
               ],
             ),
@@ -296,14 +371,23 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
                               showSearchBox: true, // Enable the search box
                               searchFieldProps: TextFieldProps(
                                 decoration: InputDecoration(
+                                  labelStyle: TextStyle(fontSize: 16, color: Theme.of(context).primaryColor),
                                   hintText: "Search for a study...",
+                                  hintStyle: TextStyle(color: Theme.of(context).primaryColor),
                                 ),
                               ),
                             ),
                             dropdownDecoratorProps: DropDownDecoratorProps(
+                              baseStyle: TextStyle(
+                                color: Theme.of(context).primaryColor // Colors.green, 
+                              ),
                               dropdownSearchDecoration: InputDecoration(
+                                labelStyle: TextStyle(fontSize: 16, color:  Theme.of(context).primaryColor), // Colors.red),                                
                                 labelText: "Select a study", // Label for the dropdown
-                                contentPadding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),                                
+                                floatingLabelStyle: TextStyle(fontSize: 16, color:  Theme.of(context).primaryColor), // Colors.red),
+                                hintStyle: TextStyle(fontSize: 16, color:  Theme.of(context).primaryColor),
+                                
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12.0),
                                 ),
@@ -421,10 +505,22 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
                           // __________MODAL FOR DISPLAYING STUDY DETAILS______
                           if (studyTitle != null) ...[
                             // Button to open the details dialog
-                            TextButton(
+
+                            ElevatedButton(
                               onPressed: () => _showStudyDetailsDialog(context),
-                              child: Text('View Study Details'),
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(vertical: 3, horizontal: 20),
+                              ),
+                              child: Text(
+                                'View Study Details',
+                                textAlign: TextAlign.center,
+                              ),
                             ),
+
+                            // TextButton(
+                            //   onPressed: () => _showStudyDetailsDialog(context),
+                            //   child: Text('View Study Details'),
+                            // ),
                             SizedBox(height: 20),
                             // __________BUTTON TO ADD NEW OBSERVATION__________
                             //if (selectedPlotId?.isNotEmpty == true)

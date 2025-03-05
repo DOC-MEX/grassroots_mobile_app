@@ -29,24 +29,29 @@ class StudyDetailsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     //print('Received plot details in widget: $selectedPlotDetails');
-    return Column(
+
+
+
+    return  Container(
+      color: Theme.of(context).colorScheme.onPrimary,
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Existing code to display study details
         Text(
           '$studyTitle',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle (fontSize: 18, fontWeight: FontWeight.bold, backgroundColor: Theme.of(context).colorScheme.primary, color: Theme.of(context).colorScheme.onPrimary)
         ),
         SizedBox(height: 10),
 
         Text(
           'The Description: ${studyDescription.isNotEmpty ? studyDescription : 'Not available'}',
-          style: TextStyle(fontSize: 16),
+          style: TextStyle (fontSize: 16, fontWeight: FontWeight.bold, backgroundColor: Theme.of(context).colorScheme.primary, color: Theme.of(context).colorScheme.onPrimary)
         ),
         SizedBox(height: 10),
         Text(
           'Programme: ${programme.isNotEmpty ? programme : 'Not available'}',
-          style: TextStyle(fontSize: 16),
+          style: TextStyle(fontSize: 24),
         ),
         SizedBox(height: 10),
         Text(
@@ -72,6 +77,7 @@ class StudyDetailsWidget extends StatelessWidget {
             child: Text('Add New Observation'),
           ),
       ],
+    );
     );
   }
 }

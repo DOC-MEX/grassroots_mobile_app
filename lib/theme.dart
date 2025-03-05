@@ -14,23 +14,23 @@ final ThemeData light_theme = ThemeData(
   scaffoldBackgroundColor: Colors
       .white, // Set the default background color for Scaffold widgets to white
   appBarTheme: AppBarTheme(
-    backgroundColor: Color(0xFF2c3e50), // Set the AppBar color
-    foregroundColor: Colors.white, // Set the AppBar icon and text color
+    backgroundColor: Colors.white, // Set the AppBar color
+    foregroundColor: Color(0xFF2c3e50),  // Set the AppBar icon and text color
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: Color(0xFF2c3e50), // Button background color
-      foregroundColor: Colors.white, // Text and icon color
+      backgroundColor: Colors.grey, // Button background color
+      foregroundColor: Color(0xFF2c3e50), // Text and icon color
     ),
   ),
   inputDecorationTheme: InputDecorationTheme(
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(4.0),
-      borderSide: BorderSide(color: Colors.grey),
+      borderSide: BorderSide(color: Color(0xFF2c3e50)),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(4.0),
-      borderSide: BorderSide(color: Colors.grey),
+      borderSide: BorderSide(color: Color(0xFF2c3e50)),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(4.0),
@@ -51,18 +51,18 @@ final ThemeData dark_theme = ThemeData(
   ).copyWith(
     secondary: Colors.white,
     primary: Colors.white,
-    surface: Colors.grey, // Set the background color to white
+    surface: Color(0xFF2c3e50), // Set the background color to white
     brightness: Brightness.dark,
   ),
   scaffoldBackgroundColor: Colors.black, // Set the default background color for Scaffold widgets to white
   appBarTheme: AppBarTheme(
-    backgroundColor: Colors.white, // Set the AppBar color
-    foregroundColor: Colors.black, // Set the AppBar icon and text color
+    backgroundColor: Color(0xFF2c3e50), // Set the AppBar color
+    foregroundColor: Colors.white, // Set the AppBar icon and text color
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.lightBlue, // Button background color
-      foregroundColor: Colors.white // Text and icon color
+      backgroundColor: Color(0xFF2c3e50), // Button background color
+      foregroundColor: Colors.white, // Text and icon color
     ),
   ),
   inputDecorationTheme: InputDecorationTheme(
