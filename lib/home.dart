@@ -75,6 +75,7 @@ Future<void> _printLocalPhotoSubmissions() async {
         );
       }
     } catch (e) {
+      print ('>>>>> e: $e');
       setState(() {
         djangoStatus = 'error';
         mongoStatus = 'error';

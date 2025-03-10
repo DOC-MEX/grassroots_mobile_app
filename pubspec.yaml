@@ -1,4 +1,4 @@
-name: qr_reader
+name: grassroots_field_trials
 description: A new Flutter project.
 
 # The following line prevents the package from being accidentally published to
@@ -40,7 +40,8 @@ dependencies:
   image_picker: ^1.1.2
   ##flutter_appauth: ^6.0.4
   auth0_flutter: ^1.5.0
-  dropdown_search: ^5.0.6
+  #dropdown_search: ^5.0.6
+  #dropdown_search: ^6.0.2
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   path_provider: ^2.1.5
@@ -61,11 +62,11 @@ dev_dependencies:
   
 
 
-flutter_icons:
+flutter_launcher_icons:
   android: "launcher_icon" 
   ios: true
-  image_path: "assets/ICON1024.png"
-
+  image_path: "assets/blue_on_green_grassroots_logo.png"
+  remove_alpha_ios: true
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

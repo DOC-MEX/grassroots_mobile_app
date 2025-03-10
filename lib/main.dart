@@ -22,14 +22,17 @@ void main() async{
   await Hive.openBox<Observation>('observations');
   await Hive.openBox<PhotoSubmission>('photo_submissions');
 
-  runApp(const MyApp ()
+  try {
+    runApp(const MyApp ());
+  } catch (e) {
+    print ('>>>>>> top e $e');
+  }
 /*
     ChangeNotifierProvider(
       create: (_) => ThemeNotifier(),
       child: MyApp(),
     ),
 */
-  );
 
 }
 

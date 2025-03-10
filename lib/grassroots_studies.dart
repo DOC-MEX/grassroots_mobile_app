@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:dropdown_search/dropdown_search.dart';
+import 'package:collection/collection.dart';
 import 'backend_request.dart';
 import 'grassroots_request.dart';
 //import 'study_details_widget.dart';
@@ -13,11 +13,21 @@ class GrassrootsStudies extends StatefulWidget {
   _GrassrootsPageState createState() => _GrassrootsPageState();
 }
 
+class StringLabel {
+  String name;
+  String id;
+
+  StringLabel (this.name, this.id);
+}
+
+typedef StringEntry = DropdownMenuEntry <StringLabel>;
+
+
 class _GrassrootsPageState extends State<GrassrootsStudies> {
   bool isLoading = true;
   bool isSingleStudyLoading = false;
   List<Map<String, String>> studies = []; // Store both name and ID
-  String? selectedStudy;
+  StringLabel? selectedStudyLabel;
   String? studyTitle;
   String? studyDescription;
   String? programme;
@@ -143,6 +153,9 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
 //////////////////////////////////////////////////////////
 // Function to show the study details dialog
   void _showStudyDetailsDialog(BuildContext context) {
+
+    print ('study!');
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -237,6 +250,15 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
           ),
           actions: <Widget>[
             TextButton(
+              style: ButtonStyle(
+                shape: WidgetStateProperty.all (RoundedRectangleBorder(
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.primary, 
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(10)
+                )
+              )),
               child: Text('Close'),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -246,6 +268,8 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
         );
       },
     );
+
+    print ('end study');
   }
 
  Future<void> onNewObservationReturn(Map<String, dynamic> resultData) async {
@@ -253,11 +277,12 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
     if (resultData.containsKey('submissionSuccessful') && resultData['submissionSuccessful']) {
       print('*****REFRESHING STUDY DETAILS AFTER SUCCESSFUL OBSERVATION');
       try {
-        String cacheClearRequestJson = backendRequests.clearCacheRequest(selectedStudy!);
+        String? study_id = selectedStudyLabel?.id;
+        String cacheClearRequestJson = backendRequests.clearCacheRequest(study_id!);
         await GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend');
         print('Cache cleared successfully');
 
-        var studyDetails = await backendRequests.fetchSingleStudy(selectedStudy!);
+        var studyDetails = await backendRequests.fetchSingleStudy(study_id!);
         if (mounted) {
           setState(() {
             fetchedStudyDetails = studyDetails;
@@ -339,6 +364,48 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
 }
 
 
+List <StringEntry> GetStudiesAsList () {
+  List <StringEntry> l = [];
+  
+
+  for (final e in studies) {
+    var study = e;
+    var id = study ['id'];
+
+    if (id != null) {
+      StringLabel sl = StringLabel (study['name'] ?? 'Unknown Study', id);
+
+      StringEntry se = StringEntry(
+        label: study['name'] ?? 'Unknown Study', 
+        value: sl,
+        style: ButtonStyle (
+          foregroundColor: WidgetStateProperty.all(Theme.of(context).primaryColor),
+        ),
+      );
+      
+      l.add (se);            
+    }
+
+  }
+
+  
+  return l;
+}
+
+GetStudyDetails (selected_study_id) async {
+  Map<String, dynamic> study_details = {};
+
+  try {
+    // Fetch the study details
+      study_details = await backendRequests.fetchSingleStudy(selected_study_id!);
+  } catch (e) {
+    print (">>>>> Couldn't get study $selected_study_id");
+  }
+
+  print ("returning\n$study_details");
+  return study_details;
+}
+
 
 ////////////////////// MAIN BUILD ////////////////////////////////////
   @override
@@ -348,6 +415,8 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
     //print('Selected Plot ID: $selectedPlotId');
     //print('Selected Phenotype: $selectedPhenotype');
     //print('Number of Plots: $numberOfPlots');
+
+
 
     return Scaffold(
       appBar: AppBar(
@@ -365,128 +434,168 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           //________ Dropdown to select a study.  1st DROPDOWN MENU______
-                          DropdownSearch<String>(
-                            items: studies.map((study) => study['name'] ?? 'Unknown Study').toList(), // List of study names
-                            popupProps: PopupProps.menu(
-                              showSearchBox: true, // Enable the search box
-                              searchFieldProps: TextFieldProps(
-                                decoration: InputDecoration(
-                                  labelStyle: TextStyle(fontSize: 16, color: Theme.of(context).primaryColor),
-                                  hintText: "Search for a study...",
-                                  hintStyle: TextStyle(color: Theme.of(context).primaryColor),
-                                ),
-                              ),
+                          DropdownMenu (
+                            dropdownMenuEntries: GetStudiesAsList (),
+                            enableFilter: true,
+                            enableSearch: true,
+                            textStyle: TextStyle (color: Theme.of(context).primaryColor),
+                            label: const Text ("Search for a study..."),
+                            helperText: "Select a Study to view or edit",
+                            trailingIcon: Icon (
+                              Icons.arrow_drop_down,
+                              color: Theme.of(context).primaryColor,
                             ),
-                            dropdownDecoratorProps: DropDownDecoratorProps(
-                              baseStyle: TextStyle(
-                                color: Theme.of(context).primaryColor // Colors.green, 
-                              ),
-                              dropdownSearchDecoration: InputDecoration(
-                                labelStyle: TextStyle(fontSize: 16, color:  Theme.of(context).primaryColor), // Colors.red),                                
-                                labelText: "Select a study", // Label for the dropdown
-                                contentPadding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),                                
-                                floatingLabelStyle: TextStyle(fontSize: 16, color:  Theme.of(context).primaryColor), // Colors.red),
-                                hintStyle: TextStyle(fontSize: 16, color:  Theme.of(context).primaryColor),
-                                
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12.0),
-                                ),
-                              ),
+                            inputDecorationTheme: InputDecorationTheme (
+                              labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+                              helperStyle: TextStyle (color: Theme.of(context).primaryColor),
                             ),
-                            onChanged: (newValue) async {
-                              // Find the selected study by name
-                              final selectedStudyItem = studies.firstWhere((study) => study['name'] == newValue);
 
+                            /*
+                            inputDecorationTheme: InputDecorationTheme(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                              constraints: BoxConstraints.tight(const 
+                              Size.fromHeight(40)),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            */
+
+                            menuHeight: 500,
+                            menuStyle: MenuStyle (
+                              backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
+                            ),
+                            
+                            onSelected: (study_label) async {
+
+                              if (study_label != null) {
+                                print ("****** selected study: ${study_label.id}, ${study_label.name}");                                
+                              }
+                              
                               setState(() {
-                                selectedStudy = selectedStudyItem['id']; // Store the selected study ID
+                                selectedStudyLabel = study_label;
                                 isSingleStudyLoading = true; // Start loading the study details
-                                // Reset plot lists
+                              // Reset plot lists
                                 plotIDs.clear();
                                 plotDisplayValues.clear();
                                 selectedPlotId = null; // Also reset the selected plot ID
                                 selectedPlotDisplayValue = null;
                                 observationCount = 0;
                               });
-
+                              
                               try {
                                 // Fetch the study details
-                                var studyDetails = await backendRequests.fetchSingleStudy(selectedStudy!);
 
-                                // Check if 'plots' exists and is not null
-                                if (studyDetails['results'][0]['results'][0]['data'].containsKey('plots') &&
-                                    studyDetails['results'][0]['results'][0]['data']['plots'] != null) {
-                                  var plots = studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
-                                  int nPlots = 0;
+                                if (selectedStudyLabel != null) {
 
-                                  for (var plot in plots) {
-                                    if (plot.containsKey('rows') && plot['rows'] is List && plot['rows'].isNotEmpty) {
-                                      var row = plot['rows'][0];
-                                      if (!(row.containsKey('discard') || row.containsKey('blank'))) {
-                                        String plotID = row['_id']['\$oid'];
-                                        String plotIndex =
-                                            row['study_index'].toString(); // Assuming study_index is the value to display
-                                        plotIDs.add(plotID);
-                                        plotDisplayValues.add(plotIndex);
-                                        nPlots++;
+                                  String? id = selectedStudyLabel?.id;
+                                  String? name = selectedStudyLabel?.name;
+
+                                  print ("****** selectedStudy: ${id}, ${name}");
+
+
+                                  //id = null;
+
+                                  if (id != null) {
+                                    print ("Getting study details for $id");
+                                    var studyDetails= await backendRequests.fetchSingleStudy(id); //GetStudyDetails(selectedStudy!);
+
+                                    //studyDetails = {};
+                                    if (studyDetails.isNotEmpty) {
+                                      print ("GetStudyDetails () returned:\n$studyDetails");
+
+                                      // Check if 'plots' exists and is not null
+                                      var study_json = studyDetails['results'][0]['results'][0]['data'];
+                                      if (study_json.containsKey('plots') && study_json['plots'] != null) {
+                                        var plots = study_json['plots'] as List<dynamic>;
+                                        int nPlots = 0;
+
+                                        for (var plot in plots) {
+                                          if (plot.containsKey('rows') && plot['rows'] is List && plot['rows'].isNotEmpty) {
+                                            var row = plot['rows'][0];
+                                            if (!(row.containsKey('discard') || row.containsKey('blank'))) {
+                                              String plotID = row['_id']['\$oid'];
+                                              String plotIndex =
+                                                  row['study_index'].toString(); // Assuming study_index is the value to display
+                                              plotIDs.add(plotID);
+                                              plotDisplayValues.add(plotIndex);
+                                              nPlots++;
+                                            }
+                                          }
+                                        }
+
+                                        print ("nPlots $nPlots");
+
+                                        // Create the traits dictionary
+                                        if (study_json.containsKey('phenotypes')) {
+                                          var phenotypes = study_json['phenotypes'] as Map<String, dynamic>;
+
+                                          phenotypes.forEach((key, value) {
+                                            if (value.containsKey('definition')) {
+                                              var definition = value['definition'];
+                                              String variableName = definition['variable']['so:name'];
+                                              String traitName = definition['trait']['so:name'];
+                                              traits[variableName] = traitName;
+                                              units[variableName] = definition['unit']['so:name'];
+                                            }
+                                          });
+                                          print('Dictionary of traits: $traits');
+                                          print('Dictionary of units: $units');
+                                        }
+
+                                        // REORGANIZE THE PLOT IDS AND PLOT DISPLAY VALUES
+                                        // Step 1: Combine plotIDs and plotDisplayValues into a list of MapEntry
+                                        var combinedList = List<MapEntry<String, String>>.generate(
+                                          plotIDs.length,
+                                          (index) => MapEntry(plotIDs[index], plotDisplayValues[index]),
+                                        );
+
+                                        // Step 2: Sort based on plotDisplayValues
+                                        combinedList.sort((a, b) => int.parse(a.value).compareTo(int.parse(b.value)));
+                                        // Step 3: Extract back into separate lists
+                                        plotIDs = combinedList.map((e) => e.key).toList();
+                                        plotDisplayValues = combinedList.map((e) => e.value).toList();
+
+                                        // Update the state with the number of plots and their IDs
+                                        setState(() {
+                                          numberOfPlots = nPlots;
+                                          fetchedStudyDetails = studyDetails; // Store the fetched details
+                                        });
+
+                                        print('Number of Plots: $nPlots');
+                                        print('Plot IDs: $plotIDs');
+                                        print('Plot Display Values: $plotDisplayValues');
+                                      } else {
+                                        print (">>>>>> failed to get study info");
                                       }
+
+                                      // Update the state with other study details
+                                      setState(() {
+                                        studyTitle = studyDetails['results'][0]['results'][0]['title'];
+                                        studyDescription = study_json ['so:description'];
+                                        programme = study_json['parent_program']['so:name'];
+                                        address = study_json['address']['name'];
+                                        FTrial = study_json['parent_field_trial']['so:name'];
+                                      });
+
+                                      print('Selected Study ID: ${selectedStudyLabel?.id}');
+                                      print('Study Title: $studyTitle');
+                                      print('Study Description: $studyDescription');
+                                      print('Study Programme: $programme');
+
+                                    } else {
+                                      print ("empty study for $id");
                                     }
+
+                                  } else {
+                                      print ("study id is null");
                                   }
 
-                                  // Create the traits dictionary
-                                  if (studyDetails['results'][0]['results'][0]['data'].containsKey('phenotypes')) {
-                                    var phenotypes =
-                                        studyDetails['results'][0]['results'][0]['data']['phenotypes'] as Map<String, dynamic>;
-
-                                    phenotypes.forEach((key, value) {
-                                      if (value.containsKey('definition')) {
-                                        var definition = value['definition'];
-                                        String variableName = definition['variable']['so:name'];
-                                        String traitName = definition['trait']['so:name'];
-                                        traits[variableName] = traitName;
-                                        units[variableName] = definition['unit']['so:name'];
-                                      }
-                                    });
-                                    print('Dictionary of traits: $traits');
-                                    print('Dictionary of units: $units');
-                                  }
-
-                                  // REORGANIZE THE PLOT IDS AND PLOT DISPLAY VALUES
-                                  // Step 1: Combine plotIDs and plotDisplayValues into a list of MapEntry
-                                  var combinedList = List<MapEntry<String, String>>.generate(
-                                    plotIDs.length,
-                                    (index) => MapEntry(plotIDs[index], plotDisplayValues[index]),
-                                  );
-
-                                  // Step 2: Sort based on plotDisplayValues
-                                  combinedList.sort((a, b) => int.parse(a.value).compareTo(int.parse(b.value)));
-                                  // Step 3: Extract back into separate lists
-                                  plotIDs = combinedList.map((e) => e.key).toList();
-                                  plotDisplayValues = combinedList.map((e) => e.value).toList();
-
-                                  // Update the state with the number of plots and their IDs
-                                  setState(() {
-                                    numberOfPlots = nPlots;
-                                    fetchedStudyDetails = studyDetails; // Store the fetched details
-                                  });
-
-                                  print('Number of Plots: $nPlots');
-                                  print('Plot IDs: $plotIDs');
-                                  print('Plot Display Values: $plotDisplayValues');
+                                } else {
+                                   print ("****** selectedStudy is NULL");
                                 }
 
-                                // Update the state with other study details
-                                setState(() {
-                                  studyTitle = studyDetails['results'][0]['results'][0]['title'];
-                                  studyDescription = studyDetails['results'][0]['results'][0]['data']['so:description'];
-                                  programme = studyDetails['results'][0]['results'][0]['data']['parent_program']['so:name'];
-                                  address = studyDetails['results'][0]['results'][0]['data']['address']['name'];
-                                  FTrial = studyDetails['results'][0]['results'][0]['data']['parent_field_trial']['so:name'];
-                                });
-
-                                print('Selected Study ID: $selectedStudy');
-                                print('Study Title: $studyTitle');
-                                print('Study Description: $studyDescription');
-                                print('Study Programme: $programme');
+ 
                               } catch (e) {
                                 print('**Error fetching study details: $e');
                               } finally {
@@ -495,9 +604,6 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
                                 });
                               }
                             },
-                            selectedItem: selectedStudy != null
-                                ? studies.firstWhere((study) => study['id'] == selectedStudy)['name']
-                                : null, // Display the selected study's name if already selected
                           ),
 
                           // End of dropdown to select a study.   END  OF 1st DROPDOWN MENU______
@@ -547,7 +653,55 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
                               ),
                             ),
                             SizedBox(height: 20),
+
                             // Dropdown to select a plot.  ______2nd DROPDOWN MENU______
+
+                            if (plotDisplayValues.isNotEmpty) ...[
+                              DropdownMenu (
+                                dropdownMenuEntries:  List<DropdownMenuEntry<String>>.generate (
+                                  plotDisplayValues.length,
+                                  (index) => DropdownMenuEntry<String>(
+                                    value: plotIDs[index],
+                                    label: plotDisplayValues[index]),
+                                  ),
+                                
+                                enableFilter: true,
+                                enableSearch: true,
+                                textStyle: TextStyle (color: Theme.of(context).primaryColor),
+                                label: const Text ("Search for a plot..."),
+                                helperText: "Select a plot to view or edit",
+                                trailingIcon: Icon (
+                                  Icons.arrow_drop_down,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                                inputDecorationTheme: InputDecorationTheme (
+                                  labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+                                  helperStyle: TextStyle (color: Theme.of(context).primaryColor),
+                                ),
+
+                                /*
+                                inputDecorationTheme: InputDecorationTheme(
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                                  constraints: BoxConstraints.tight(const 
+                                  Size.fromHeight(40)),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                */
+
+                                menuHeight: 300,
+                                menuStyle: MenuStyle (
+                                  backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
+                                ),
+
+                                
+                              )
+                            
+                            ], // end if (plotDisplayValues is not empty)
+
+                            // Plots dropdown
+                            /*
                             if (plotDisplayValues.isNotEmpty) ...[
                               DropdownButtonFormField<String>(
                                 isExpanded: true,
@@ -623,7 +777,9 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
                                 Text('Number of observations: $observationCount'),
                               ],
                             ], // end if (plotDisplayValues is not empty)
+
                             // enf if (plotDisplayValues is not empty) SELECTED PLOT DROPDOWN
+                            */
                             SizedBox(height: 20),
                             if (observationCount > 0) ...[
                               DropdownButtonFormField<String>(

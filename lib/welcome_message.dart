@@ -30,7 +30,7 @@ class WelcomeMessageWidget extends StatelessWidget {
               style: TextStyle(fontSize: 18),
             ),
             TextSpan(
-              text: "grassroots.tools/documentation/mobile_app",
+              text: "https://grassroots.tools/documentation/mobile_app",
               style: TextStyle(
                 fontSize: 18,
                 decoration: TextDecoration.underline,

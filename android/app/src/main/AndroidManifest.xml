@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.qrreader">
+    package="uk.ac.earlham.grassroots.field_trials">
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET"/> <!-- Ensure this is here, as it's essential for network access -->
 
@@ -7,8 +7,8 @@
     
 
    <application
-        android:label="grassroots"        
-        android:icon="@mipmap/ic_launcher">
+        android:label="Grassroots Field Trials"        
+        android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"
