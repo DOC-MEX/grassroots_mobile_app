@@ -24,6 +24,7 @@ typedef StringEntry = DropdownMenuEntry <StringLabel>;
 
 
 class _GrassrootsPageState extends State<GrassrootsStudies> {
+  final TextEditingController studies_controller = TextEditingController();
   bool isLoading = true;
   bool isSingleStudyLoading = false;
   List<Map<String, String>> studies = []; // Store both name and ID
@@ -435,16 +436,17 @@ GetStudyDetails (selected_study_id) async {
                         children: [
                           //________ Dropdown to select a study.  1st DROPDOWN MENU______
                           DropdownMenu (
+                            requestFocusOnTap: true,
                             dropdownMenuEntries: GetStudiesAsList (),
+                            controller: studies_controller,
                             enableFilter: true,
-                            enableSearch: true,
-                            textStyle: TextStyle (color: Theme.of(context).primaryColor),
                             label: const Text ("Search for a study..."),
                             helperText: "Select a Study to view or edit",
                             trailingIcon: Icon (
                               Icons.arrow_drop_down,
                               color: Theme.of(context).primaryColor,
                             ),
+                            textStyle: TextStyle (color: Theme.of(context).primaryColor),
                             inputDecorationTheme: InputDecorationTheme (
                               labelStyle: TextStyle (color: Theme.of(context).primaryColor),
                               helperStyle: TextStyle (color: Theme.of(context).primaryColor),
@@ -466,7 +468,7 @@ GetStudyDetails (selected_study_id) async {
                               backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
                             ),
                             
-                            onSelected: (study_label) async {
+                            onSelected: (StringLabel? study_label) async {
 
                               if (study_label != null) {
                                 print ("****** selected study: ${study_label.id}, ${study_label.name}");                                
@@ -609,7 +611,7 @@ GetStudyDetails (selected_study_id) async {
                           // End of dropdown to select a study.   END  OF 1st DROPDOWN MENU______
                           SizedBox(height: 20),
                           // __________MODAL FOR DISPLAYING STUDY DETAILS______
-                          if (studyTitle != null) ...[
+                          if (selectedStudyLabel != null) ...[
                             // Button to open the details dialog
 
                             ElevatedButton(
@@ -649,7 +651,8 @@ GetStudyDetails (selected_study_id) async {
                                     },
                               child: Text('Add New Observation or image'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: selectedPlotId == null ? Colors.grey : Theme.of(context).primaryColor,
+                                backgroundColor: Theme.of(context).canvasColor,
+                                textStyle: TextStyle (color: Theme.of(context).primaryColor),
                               ),
                             ),
                             SizedBox(height: 20),
@@ -666,7 +669,6 @@ GetStudyDetails (selected_study_id) async {
                                   ),
                                 
                                 enableFilter: true,
-                                enableSearch: true,
                                 textStyle: TextStyle (color: Theme.of(context).primaryColor),
                                 label: const Text ("Search for a plot..."),
                                 helperText: "Select a plot to view or edit",
@@ -694,6 +696,59 @@ GetStudyDetails (selected_study_id) async {
                                 menuStyle: MenuStyle (
                                   backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
                                 ),
+
+                                onSelected: (String? plot_entry) async {
+                                  setState(() {
+                                    selectedPlotId = plot_entry;
+                                    int index = plotIDs.indexOf(plot_entry!);
+                                    if (index != -1) {
+                                      selectedPlotDisplayValue = plotDisplayValues[index];
+                                      selectedPhenotype = null;
+                                      ///////////// Additional logic when a plot is selected /////
+                                      /// Example: Count the number of observations in the selected plot
+                                      var plots =
+                                          fetchedStudyDetails!['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
+
+                                      // Find the plot that matches the selectedPlotId
+                                      selectedPlot = plots.firstWhere(
+                                        (plot) => plot['rows'] != null && plot['rows'][0]['_id']['\$oid'] == selectedPlotId,
+                                        orElse: () => null,
+                                      );
+
+                                      if (selectedPlot != null) {
+                                        // Since we've checked for null, it's safe to use '!'
+                                        var observations = selectedPlot!['rows'][0]['observations'];
+                                        if (observations != null) {
+                                          var count = observations.length;
+                                          observationCount = count;
+                                          //  **********lists for phenotypes dropdown menu********
+                                          variableToTraitMap.clear();
+
+                                          for (var observation in observations) {
+                                            if (observation.containsKey('phenotype') &&
+                                                observation['phenotype'].containsKey('variable')) {
+                                              String variable = observation['phenotype']['variable'];
+
+                                              print('Variable: $variable, Exists in traits: ${traits.containsKey(variable)}');
+                                              // Check if the trait exists for this variable and create a DropdownMenuItem
+                                              if (traits.containsKey(variable)) {
+                                                String traitName = traits[variable]!;
+                                                variableToTraitMap[variable] = traitName;
+                                              }
+                                            }
+                                          }
+
+                                          print('Variable to Trait Map: $variableToTraitMap');
+                                        } else {
+                                          observationCount = 0;
+                                        }
+                                      }
+                                    }
+                                  });
+                                  // Additional logic when a plot is selected, if needed
+                                  print('Selected Plot ID: $plot_entry'); // Print the actual plot ID to console
+
+                                },
 
                                 
                               )
@@ -782,6 +837,81 @@ GetStudyDetails (selected_study_id) async {
                             */
                             SizedBox(height: 20),
                             if (observationCount > 0) ...[
+                              DropdownMenu (
+                                dropdownMenuEntries: variableToTraitMap.entries.map((entry) {
+                                  return DropdownMenuEntry <String>(
+                                    value: entry.key, // The variable name as the value
+                                    label: entry.value, // The trait name as the display text
+                                  );
+                                }).toList(),
+                                
+                                initialSelection: selectedPhenotype,
+                                enableFilter: true,
+                                textStyle: TextStyle (color: Theme.of(context).primaryColor),
+                                label: const Text ("Select Phenotype..."),
+                                helperText: "Select a Phenotype to view or edit",
+                                trailingIcon: Icon (
+                                  Icons.arrow_drop_down,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                                inputDecorationTheme: InputDecorationTheme (
+                                  labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+                                  helperStyle: TextStyle (color: Theme.of(context).primaryColor),
+                                ),
+
+                                onSelected: (String? newValue) {
+                                  setState(() {
+                                    selectedPhenotype = newValue;
+                                  });
+                                  //processSelectedPhenotype();
+                                  List<Map<String, dynamic>> rawValues = findRawValuesForSelectedPhenotype();
+                                  // Display the dialog with the ObservationTable
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      // find selectedphenotype in units and assign it to displayUnit
+                                      String displayUnit = 'Some Unit'; //
+                                      if (units.containsKey(selectedPhenotype)) {
+                                        displayUnit = units[selectedPhenotype]!;
+                                      }
+                                      // find selectedphenotype in traits and assign it to displayTrait
+                                      String displayTrait = 'Some trait';
+                                      if (traits.containsKey(selectedPhenotype)) {
+                                        displayTrait = traits[selectedPhenotype]!;
+                                      }
+
+                                      return Dialog(
+                                        child: SingleChildScrollView(
+                                          child: Container(
+                                            padding: EdgeInsets.all(20.0),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(displayTrait, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                                SizedBox(height: 10),
+                                                Text('Unit: $displayUnit', style: TextStyle(fontSize: 15)),
+                                                SizedBox(height: 20),
+                                                if (rawValues.isEmpty)
+                                                  Text('No Data Found')
+                                                else
+                                                  ObservationTable(rawValues: rawValues),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ); // End of showDialog
+                                },
+
+                                menuHeight: 300,
+                                menuStyle: MenuStyle (
+                                  backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
+                                ),
+                              
+                              ),
+
+/*
                               DropdownButtonFormField<String>(
                                 isExpanded: true,
                                 value: selectedPhenotype,
@@ -841,6 +971,7 @@ GetStudyDetails (selected_study_id) async {
                                   );
                                 }).toList(),
                               ),
+*/
                               SizedBox(height: 20),
                             ],
                           ], // IF studyTitle is not null

@@ -575,17 +575,37 @@ void _handleUpload() async {
   }
 
   Widget _buildTraitDropdown() {
-    return DropdownButtonFormField<String>(
-      value: selectedTraitKey, // This value is now maintained between plots
-      hint: Text("Select a trait"),
-      onChanged: _onTraitChanged,
-      items: traits.keys.map<DropdownMenuItem<String>>((String key) {
-        return DropdownMenuItem<String>(
-          value: key,
-          child: Text(traits[key] ?? 'Unknown'),
+    return DropdownMenu <String>(
+      initialSelection: selectedTraitKey, // This value is now maintained between plots
+      helperText: "Select a trait...",
+      textStyle: TextStyle (color: Theme.of(context).primaryColor),
+      label: const Text ("Select a trait..."),
+
+      
+      onSelected: _onTraitChanged,
+      trailingIcon: Icon (
+        Icons.arrow_drop_down,
+        color: Theme.of(context).primaryColor,
+      ),
+      inputDecorationTheme: InputDecorationTheme (
+        labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+        helperStyle: TextStyle (color: Theme.of(context).primaryColor),
+      ),
+
+      dropdownMenuEntries: traits.keys.map((entry) {
+        return DropdownMenuEntry <String>(
+          value: entry, // The variable name as the value
+          label: traits [entry] ?? 'Unknown', // The trait name as the display text
         );
       }).toList(),
-      validator: (value) => value == null ? 'Please select a trait' : null,
+
+      enableFilter: true,
+
+      menuHeight: 500,
+      menuStyle: MenuStyle (
+        backgroundColor: WidgetStateProperty.all (Theme.of(context).canvasColor),
+      ),
+      //validator: (value) => value == null ? 'Please select a trait' : null,
     );
   }
 
@@ -810,7 +830,12 @@ void _clearForm() {
                           labelText: units[selectedTraitKey] == 'yyyymmdd' ? 'Select date' : 'Enter value',
                           hintText: units[selectedTraitKey] == 'yyyymmdd' ? 'Select a date' : 'Enter value',
                           border: OutlineInputBorder(),
+                          labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+                          hintStyle: TextStyle (color: Theme.of(context).primaryColor),
                         ),
+
+                        style: TextStyle (color: Theme.of(context).primaryColor),
+
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a value';
@@ -919,8 +944,14 @@ void _clearForm() {
                     labelText: 'Notes (Optional)',
                     hintText: 'Enter any additional notes here',
                     border: OutlineInputBorder(),
+                    labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+                    hintStyle: TextStyle (color: Theme.of(context).primaryColor),
+
                   ),
                   keyboardType: TextInputType.text,
+
+                  style: TextStyle (color: Theme.of(context).primaryColor),
+
                   //maxLines: 1, // Allow multiline input
                   validator: (value) {
                     // Optional: Add validation logic if needed
