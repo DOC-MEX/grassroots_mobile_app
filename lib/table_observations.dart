@@ -24,7 +24,7 @@ class ObservationTable extends StatelessWidget {
             child: SingleChildScrollView(
               child: Table(
                 border: TableBorder.all(
-                  color: Colors.black38,
+                  color: Theme.of(context).primaryColor,
                   width: 1,
                 ),
                 columnWidths: const {
@@ -34,24 +34,65 @@ class ObservationTable extends StatelessWidget {
                 },
                 children: [
                   TableRow(
-                    decoration: BoxDecoration(color: Colors.grey[300]),
+                    decoration: BoxDecoration (
+                      color: Theme.of(context).canvasColor,
+                      
+                    ),
                     children: [
-                      const Padding(padding: EdgeInsets.all(8.0), child: Text('Value')),
-                      const Padding(padding: EdgeInsets.all(8.0), child: Text('Date')),
-                      const Padding(padding: EdgeInsets.all(8.0), child: Text('Notes')),
+                      Padding(padding: EdgeInsets.all(8.0), child: Text ('Value', 
+                        style: TextStyle (
+                          backgroundColor: Theme.of (context).canvasColor, 
+                          color: Theme.of(context).primaryColor)
+                        )
+                      ),
+                      
+                      Padding(padding: EdgeInsets.all(8.0), child: Text ('Date', 
+                        style: TextStyle (
+                          backgroundColor: Theme.of (context).canvasColor, 
+                          color: Theme.of(context).primaryColor)
+                        )
+                      ),
+                      
+                      Padding(padding: EdgeInsets.all(8.0), child: Text ('Notes', 
+                        style: TextStyle (
+                          backgroundColor: Theme.of (context).canvasColor, 
+                          color: Theme.of(context).primaryColor)
+                        )
+                      ),
                     ],
                   ),
                   ...rawValues.map((observation) => TableRow(
                         children: [
-                          Padding(padding: EdgeInsets.all(8.0), child: Text('${observation['raw_value']}')),
+                          Padding (
+                            padding: EdgeInsets.all(8.0), 
+                            child: Text( '${observation['raw_value']}', 
+                              style: TextStyle(
+                                backgroundColor: Theme.of (context).canvasColor, 
+                                color: Theme.of (context).primaryColor)
+                            )
+                          ),
+
+                          Padding (
+                            padding: EdgeInsets.all(8.0), 
+                            child: Text( '${observation['date']}', 
+                              style: TextStyle(
+                                backgroundColor: Theme.of (context).canvasColor, 
+                                color: Theme.of (context).primaryColor)
+                            )
+                          ),
+
                           Padding(
                             padding: EdgeInsets.all(8.0),
                             child: Text(
-                              '${observation['date']}',
+                              observation['notes'] ?? '',
                               softWrap: false, // Prevents text from wrapping
+                              style: TextStyle(
+                                backgroundColor: Theme.of (context).canvasColor, 
+                                color: Theme.of (context).primaryColor
+                              )
                             ),
                           ),
-                          Padding(padding: EdgeInsets.all(8.0), child: Text(observation['notes'] ?? '')),
+
                         ],
                       )),
                 ],
@@ -63,14 +104,14 @@ class ObservationTable extends StatelessWidget {
           right: 4, // Slightly away from the right edge of the screen
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
+              color: Theme.of (context).highlightColor,
               borderRadius: BorderRadius.circular(20),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Icon(
               Icons.arrow_forward_ios,
               size: 24,
-              color: Colors.blue[900],
+              color: Theme.of (context).indicatorColor, // Colors.green,
             ),
           ),
         ),

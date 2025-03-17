@@ -11,8 +11,8 @@ final ThemeData light_theme = ThemeData(
     primary: Color(0xFF2c3e50),
     surface: Colors.white, // Set the background color to white
   ),
-  scaffoldBackgroundColor: Colors
-      .white, // Set the default background color for Scaffold widgets to white
+  scaffoldBackgroundColor: Colors.white, // Set the default background color for Scaffold widgets to white
+  indicatorColor: Color(0xFF2c3e50),
   appBarTheme: AppBarTheme(
     backgroundColor: Colors.white, // Set the AppBar color
     foregroundColor: Color(0xFF2c3e50),  // Set the AppBar icon and text color
@@ -55,6 +55,7 @@ final ThemeData dark_theme = ThemeData(
     brightness: Brightness.dark,
   ),
   scaffoldBackgroundColor: Colors.black, // Set the default background color for Scaffold widgets to white
+  indicatorColor: Colors.white,
   appBarTheme: AppBarTheme(
     backgroundColor: Color(0xFF2c3e50), // Set the AppBar color
     foregroundColor: Colors.white, // Set the AppBar icon and text color

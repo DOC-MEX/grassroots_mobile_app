@@ -665,7 +665,8 @@ GetStudyDetails (selected_study_id) async {
                                   plotDisplayValues.length,
                                   (index) => DropdownMenuEntry<String>(
                                     value: plotIDs[index],
-                                    label: plotDisplayValues[index]),
+                                    label: plotDisplayValues[index],
+                                    style: MenuItemButton.styleFrom (foregroundColor: Theme.of(context).primaryColor)),
                                   ),
                                 
                                 enableFilter: true,
@@ -680,17 +681,6 @@ GetStudyDetails (selected_study_id) async {
                                   labelStyle: TextStyle (color: Theme.of(context).primaryColor),
                                   helperStyle: TextStyle (color: Theme.of(context).primaryColor),
                                 ),
-
-                                /*
-                                inputDecorationTheme: InputDecorationTheme(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                                  constraints: BoxConstraints.tight(const 
-                                  Size.fromHeight(40)),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                */
 
                                 menuHeight: 300,
                                 menuStyle: MenuStyle (
@@ -842,6 +832,7 @@ GetStudyDetails (selected_study_id) async {
                                   return DropdownMenuEntry <String>(
                                     value: entry.key, // The variable name as the value
                                     label: entry.value, // The trait name as the display text
+                                    style: MenuItemButton.styleFrom (foregroundColor: Theme.of(context).primaryColor),
                                   );
                                 }).toList(),
                                 
@@ -883,16 +874,21 @@ GetStudyDetails (selected_study_id) async {
                                       return Dialog(
                                         child: SingleChildScrollView(
                                           child: Container(
+                                            decoration: new BoxDecoration(
+                                              borderRadius: new BorderRadius.circular(16.0),
+                                              color: Theme.of(context).canvasColor,
+                                            ),
                                             padding: EdgeInsets.all(20.0),
                                             child: Column(
+
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Text(displayTrait, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                                                Text(displayTrait, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)),
                                                 SizedBox(height: 10),
-                                                Text('Unit: $displayUnit', style: TextStyle(fontSize: 15)),
+                                                Text('Unit: $displayUnit', style: TextStyle(fontSize: 15, color: Theme.of(context).primaryColor)),
                                                 SizedBox(height: 20),
-                                                if (rawValues.isEmpty)
-                                                  Text('No Data Found')
+                                                if (rawValues.isEmpty) 
+                                                  Text('No Data Found', style: TextStyle(color: Theme.of(context).primaryColor))
                                                 else
                                                   ObservationTable(rawValues: rawValues),
                                               ],

@@ -596,6 +596,7 @@ void _handleUpload() async {
         return DropdownMenuEntry <String>(
           value: entry, // The variable name as the value
           label: traits [entry] ?? 'Unknown', // The trait name as the display text
+          style: MenuItemButton.styleFrom (foregroundColor: Theme.of(context).primaryColor),
         );
       }).toList(),
 
