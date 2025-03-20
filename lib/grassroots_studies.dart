@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
+import 'package:grassroots_field_trials/caching.dart';
 import 'backend_request.dart';
 import 'grassroots_request.dart';
 //import 'study_details_widget.dart';
@@ -7,6 +8,8 @@ import 'new_observation.dart';
 import 'table_observations.dart';
 import 'global_variable.dart'; // allowedStudyIDs
 import 'api_requests.dart';
+import 'package:hive/hive.dart';
+
 
 class GrassrootsStudies extends StatefulWidget {
   @override
@@ -27,7 +30,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
   final TextEditingController studies_controller = TextEditingController();
   bool isLoading = true;
   bool isSingleStudyLoading = false;
-  List<Map<String, String>> studies = []; // Store both name and ID
+  List<Map<String, String>> gps_studies = []; // Store both name and ID
   StringLabel? selectedStudyLabel;
   String? studyTitle;
   String? studyDescription;
@@ -53,21 +56,57 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
     super.initState();
     fetchStudies(); // Updated to call the new method to fetch all studies
      _checkAndUpdateAllowedStudyIDs(); // Add this to check for new study IDs
+    print ("_GrassrootsPageState :: initState () finished");
 }
 
 Future<void> _checkAndUpdateAllowedStudyIDs() async {
   print('Initial Allowed Study IDs: $allowedStudyIDs');
+  bool healthy_flag = await ApiRequests.isServerHealthy ();  
+  List <String> ?fetchedIDs;
 
-  final fetchedIDs = await ApiRequests.fetchAllowedStudyIDs();
+  print ("healthy_flag $healthy_flag}");
+
+  if (healthy_flag) {
+    fetchedIDs = await ApiRequests.fetchAllowedStudyIDs();
+  } else {
+    /* Use any cached data */
+    var box = await Hive.openBox <IdsList> (IdsCache.ic_name);
+
+    final int num_entries = box.length;
+
+    print ("num cached id lists ${num_entries}");
+
+    if (num_entries > 0) {
+      IdsList? ids = box.getAt (num_entries - 1);
+
+      print ("ids at ${num_entries - 1}");
+
+      if (ids != null) {
+        print ("using cached ids from ${ids.date.toString ()}");
+        fetchedIDs = ids.ids;
+      } else {
+        print ("ids are null!!");
+      }
+
+    }
+  }
+  
+
 
   if (fetchedIDs != null) {
     setState(() {
-      // Add only new IDs to the allowedStudyIDs list
-      for (String id in fetchedIDs) {
-        if (!allowedStudyIDs.contains(id)) {
-          allowedStudyIDs.add(id);
-          print('Added new ID to Allowed Study IDs: $id');
-        }
+      if (fetchedIDs != null) {
+        // Add only new IDs to the allowedStudyIDs list
+        final int num_fetched_ids = fetchedIDs.length;
+
+        for (int i = 0; i < num_fetched_ids; i ++) {
+          final String id = fetchedIDs [i];
+
+          if (!allowedStudyIDs.contains(id)) {
+            allowedStudyIDs.add(id);
+            print('Added new ID to Allowed Study IDs: $id');
+          }
+        }      
       }
     });
     print('Final Allowed Study IDs: $allowedStudyIDs');
@@ -78,26 +117,71 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
 
 
   void fetchStudies() async {
-    setState(() {
-      isLoading = true;
-    });
+    bool healthy_flag = await ApiRequests.isServerHealthy ();  
 
-    try {
-      var studiesData = await backendRequests.fetchAllStudies();
-      if (mounted) {
-        setState(() {
-          studies = studiesData;
-          isLoading = false;
-        });
+    /*
+     * If the server are online then get the live data
+     */
+    if (healthy_flag) {
+      setState(() {
+        isLoading = true;
+      });
+
+      try {
+        var studiesData = await backendRequests.fetchAllStudies ();
+        if (mounted) {
+          setState(() {
+            gps_studies = studiesData;
+
+            print ("got ${gps_studies.length} studies");
+            isLoading = false;
+          });
+        }
+      } catch (e) {
+        print('Error fetching studies: $e');
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
       }
-    } catch (e) {
-      print('Error fetching studies: $e');
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
+
+    } else {
+      /* Use any cached data */
+      var box = await Hive.openBox <StudyDetails> (StudiesCache.sc_name);
+
+      final int num_entries = box.length;
+      List <Map <String, String>> studies_data = [];
+
+      for (int i = 0; i < num_entries; i ++) {
+        Map <String, String> entry = Map <String, String> ();
+        StudyDetails? study = box.getAt (i);
+
+        if (study != null) {
+          entry ["name"] = study.sd_name;
+          entry ["id"] = study.sd_id;
+
+          String date_str = "";
+          if (study.sd_date != null) {
+            date_str = study.sd_date.toString ();
+          }
+ 
+          //print ("using cached study ${entry ["name"]}, ${entry ["id"]} from ${date_str}");
+
+          studies_data.add (entry);        
+  
+        }
       }
+
+      isLoading = true;
+      gps_studies = studies_data;
+      print ("Got ${gps_studies.length} cached studies");
+      print ("BEGIN gps_studies");
+      print ("${gps_studies}");
+      print ("END gps_studies");
+      isLoading = false;
     }
+
   }
 
 //////////////////////////////////////////////////////////
@@ -367,10 +451,14 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
 
 List <StringEntry> GetStudiesAsList () {
   List <StringEntry> l = [];
-  
 
-  for (final e in studies) {
+  print ("in GetStudiesAsList ()"); 
+  print ("Num studies ${gps_studies}"); 
+ 
+  for (final e in gps_studies) {
     var study = e;
+
+    print ("STUDY: ${study}");
     var id = study ['id'];
 
     if (id != null) {
@@ -385,11 +473,13 @@ List <StringEntry> GetStudiesAsList () {
       );
       
       l.add (se);            
+    } else {
+      print ("no id in ${study}");
     }
 
   }
 
-  
+  print ("num StringEntries for Studies ${l.length}");
   return l;
 }
 

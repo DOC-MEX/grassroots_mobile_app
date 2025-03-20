@@ -1,5 +1,7 @@
 // qr_code_service.dart
 //import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:grassroots_field_trials/caching.dart';
+
 import 'grassroots_request.dart';
 import 'dart:convert';
 import 'global_variable.dart';
@@ -38,6 +40,8 @@ class backendRequests {
 
       // Sort studies alphabetically by name
       studies.sort((a, b) => a['name']!.compareTo(b['name']!));
+
+      StudiesCache.cacheStudies (studies);
 
       return studies;
     } catch (e) {

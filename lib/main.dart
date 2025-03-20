@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:grassroots_field_trials/caching.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'home.dart';
 import 'models/observation.dart';
@@ -13,6 +14,9 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized(); // Ensures Flutter is ready before Hive initialization
   await Hive.initFlutter(); // Initializes Hive for Flutter
 
+  final directory = await getApplicationDocumentsDirectory ();
+  Hive.init (directory.path);
+
   // Register all adapters
   Hive.registerAdapter(ObservationAdapter());
   Hive.registerAdapter(PhotoSubmissionAdapter());
@@ -21,6 +25,14 @@ void main() async{
   ////await Hive.deleteBoxFromDisk('observations'); // This will clear all old data
   await Hive.openBox<Observation>('observations');
   await Hive.openBox<PhotoSubmission>('photo_submissions');
+
+  Hive.registerAdapter (StudyAdapter ());
+  await Hive.openBox <StudyDetails> (StudiesCache.sc_name);
+
+
+  Hive.registerAdapter(IdsAdapter ());
+  await Hive.openBox <IdsList> (IdsCache.ic_name);
+
 
   try {
     runApp(const MyApp ());

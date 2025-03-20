@@ -14,8 +14,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String djangoStatus = 'unknown';
-  String mongoStatus = 'unknown';
+  String hps_djangoStatus = 'unknown';
+  String hps_mongoStatus = 'unknown';
 
   @override
   void initState() {
@@ -57,12 +57,12 @@ Future<void> _printLocalPhotoSubmissions() async {
     try {
       final healthStatus = await ApiRequests.fetchHealthStatus();
       setState(() {
-        djangoStatus = healthStatus['django'] ?? 'unknown';
-        mongoStatus = healthStatus['mongo'] ?? 'unknown';
+        hps_djangoStatus = healthStatus['django'] ?? 'unknown';
+        hps_mongoStatus = healthStatus['mongo'] ?? 'unknown';
       });
-      print('Django: $djangoStatus, Mongo: $mongoStatus');
+      print('Django: $hps_djangoStatus, Mongo: $hps_mongoStatus');
       // Show snackbar if server is unhealthy
-      if (djangoStatus != 'running' || mongoStatus != 'available') {
+      if (hps_djangoStatus != 'running' || hps_mongoStatus != 'available') {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -77,8 +77,8 @@ Future<void> _printLocalPhotoSubmissions() async {
     } catch (e) {
       print ('>>>>> e: $e');
       setState(() {
-        djangoStatus = 'error';
-        mongoStatus = 'error';
+        hps_djangoStatus = 'error';
+        hps_mongoStatus = 'error';
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -93,9 +93,10 @@ Future<void> _printLocalPhotoSubmissions() async {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
-    bool isServerHealthy = djangoStatus == 'running' && mongoStatus == 'available';
+       bool isServerHealthy = (hps_djangoStatus == 'running') && (hps_mongoStatus == 'available');
 
     return Scaffold(
       appBar: AppBar(

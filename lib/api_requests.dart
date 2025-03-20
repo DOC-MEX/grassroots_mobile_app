@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:grassroots_field_trials/caching.dart';
 import 'package:http/http.dart' as http;
 //import 'package:flutter/material.dart';
 //import 'dart:typed_data';
@@ -151,7 +152,13 @@ class ApiRequests {
 
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(response.body);
-      return List<String>.from(jsonResponse['allowed_studies']);
+
+      List <String> allowed_studies = List<String>.from(jsonResponse['allowed_studies']);
+
+      IdsCache.cacheIds (allowed_studies);
+      
+      return allowed_studies;
+
     } else {
       print('Error fetching allowed study IDs: ${response.statusCode}');
       return null;
@@ -187,5 +194,16 @@ static Future<Map<String, String>> fetchHealthStatus() async {
       };
     }
   }
+
+
+  static Future <bool> isServerHealthy () async {
+    final Map <String, String> healthStatus = await fetchHealthStatus ();
+
+    String djangoStatus = healthStatus['django'] ?? 'unknown';
+    String mongoStatus = healthStatus['mongo'] ?? 'unknown';
+    
+    return ((djangoStatus == 'running') && (mongoStatus == 'available'));
+  }
+
 
 }
