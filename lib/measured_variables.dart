@@ -39,19 +39,32 @@ class MeasuredVariable {
   MeasuredVariable (this.id, this.unit_name, this.trait_name, this.trait_descrption, this.measurement_name, this.measurement_description, this.variable_name);
 
   factory MeasuredVariable.fromJson (Map <String, dynamic> json) {
+
+    print (">>> json ${json}");
+
     String mv_id = json ["id"];
+
+    print ("id ${mv_id}");
 
     if (mv_id != "") {
       var child = json ["unit"];
 
+      print ("unit ${child}");
+
       if (child != null) {
         String mv_unit_name = child ["so:name"];
       
+        print ("mv_unit_name ${mv_unit_name}");
+
         if (mv_unit_name != "") {
           child = json ["trait"];
 
+           print ("trait ${child}"); 
+
           if (child != null) {
             String mv_trait_name = child ["so:name"];
+
+            print ("mv_trait_name ${mv_trait_name}");
 
             if (mv_trait_name != "") {
               String? mv_trait_descrption = child ["so:description"];
@@ -60,11 +73,17 @@ class MeasuredVariable {
                 mv_trait_descrption = null;
               }
 
+              print ("mv_trait_descrption ${mv_trait_descrption}");
+
               child = json ["measurement"];
+
+              print ("measurement ${child}"); 
 
               if (child != null) {
                 String mv_measurement_name = child ["so:name"];
                 
+                print ("mv_measurement_name ${mv_measurement_name}");
+
                 if (mv_measurement_name != "") {
                   String? mv_measurement_description = child ["so:description"];
 
@@ -72,10 +91,16 @@ class MeasuredVariable {
                     mv_measurement_description = null;
                   }
 
+                  print ("mv_measurement_description ${mv_measurement_description}");
+
                   child = json ["variable"];
+
+                  print ("variable ${child}"); 
 
                   if (child != null) {
                     String mv_variable_name = child ["so:name"];
+
+                    print ("mv_variable_name ${mv_variable_name}");
 
                     if (mv_variable_name != "") {
                       return MeasuredVariable (mv_id, mv_unit_name, mv_trait_name, mv_trait_descrption, mv_measurement_name, mv_measurement_description, mv_variable_name);
@@ -100,8 +125,7 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
   
   @override
   List <Widget>? buildActions (BuildContext context) {
-    // TODO: implement buildActions
-    throw UnimplementedError();
+    return <Widget>[];
   }
 
   /*A widget to display before the current query in the AppBar. */
@@ -122,41 +146,53 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
       future: _search (),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
-          return ListView.builder (
-            itemCount: results.length,
-            itemBuilder: (context, index) {
-              final result = results[index];
 
-              return Container(
-                padding: const EdgeInsets.all(5),
-                margin: const EdgeInsets.all(5),
-                color: Colors.black12,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          "Submit result",
-                          style: TextStyle(color: Colors.black54),
-                        ),
-                        Text(
-                          "${result.unit_name!}-${result.measurement_name!}-${result.trait_name!}",
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        )
-                      ],
-                      
-                    ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(result),
-                        icon: const Icon(Icons.arrow_forward_ios))
-                  ],
-                ),
-              );
-            },
-          );
+          List <MeasuredVariable>? results = snapshot.data;
+
+          if (results != null) {
+            
+            print ("measured variables search found ${results.length} hits");
+            print ("results: ${results}");
+
+            return ListView.builder (
+              itemCount: results.length,
+              itemBuilder: (context, index) {
+                final result = results[index];
+
+                return Container(
+                  padding: const EdgeInsets.all(5),
+                  margin: const EdgeInsets.all(5),
+                  color: Colors.black12,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            "Submit result",
+                            style: TextStyle(color: Colors.black54),
+                          ),
+                          Text(
+                            "${result.unit_name!}-${result.measurement_name!}-${result.trait_name!}",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          )
+                        ],
+                        
+                      ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(result),
+                          icon: const Icon(Icons.arrow_forward_ios))
+                    ],
+                  ),
+                );
+              },
+            );
+          
+          } else {
+            return Text ("Error searching");
+          }
         } else {
           return Center(
             child: CircularProgressIndicator(),
@@ -176,20 +212,13 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
    */
   @override
   Widget buildSuggestions (BuildContext context) {
-    // TODO: implement buildSuggestions
-    throw UnimplementedError();
+    return Container ();
   }
 
 
 
  Future <List <MeasuredVariable>> _search() async {
-    Future <List <MeasuredVariable>> results;
-    
-    if (query.isEmpty) {
-      results = [];
-    } else {
-      results = backendRequests.searchMeasuredVariables (query);
-    }
+    Future <List <MeasuredVariable>> results = backendRequests.searchMeasuredVariables (query);
     
     return results;
   }

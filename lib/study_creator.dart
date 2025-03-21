@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:grassroots_field_trials/caching.dart';
+import 'package:grassroots_field_trials/measured_variables.dart';
 import 'package:hive/hive.dart';
 
 import 'package:grassroots_field_trials/api_requests.dart';
@@ -182,6 +183,18 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
                 ),
 
+                SizedBox (height: 10),
+
+
+                IconButton(
+                  icon: Icon (Icons.search),
+                  onPressed: () async {
+                    final toDo = await showSearch <MeasuredVariable> (
+                      context: context,
+                      delegate: MeasuredVariableSearchDelegate (),
+                    );
+                  },
+                ),
 
               ]
             )

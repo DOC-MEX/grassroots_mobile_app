@@ -242,19 +242,41 @@ class backendRequests {
         }
       ]
     });
-    
+  
 
     try {
-      var response = await GrassrootsRequest.sendRequest (request, 'public');
+      Map <String, dynamic> response = await GrassrootsRequest.sendRequest (request, 'public');
       
-      List <MeasuredVariable> measured_variables = response ['results'][0]['results'].map<Map <String, String>> ((mv) {
-        return MeasuredVariable.fromJson (mv);
-      }).toList ();
+      List <dynamic> results_data = response ['results'][0]['results'];
+      //print ("RESPONSE RESULT: ${results_data}");
+
+
+      List <MeasuredVariable> measured_variables = []; //results_data.map<Map <String, dynamic>> ((mv) {
+
+      print ("num hits ${results_data.length}");
+
+      results_data.forEach ((entry) {
+        print ("entry: ${entry}");
+              
+        MeasuredVariable mv = MeasuredVariable.fromJson (entry ["data"]);
+
+        print ("mv: ${mv}");
+
+        measured_variables.add (mv);
+      });
+
+//        print ("mv: ${mv}");
+//        //return MeasuredVariable.fromJson (mv);
+//        return MeasuredVariable("id", "unit_name", "trait_name", "trait_descrption", "measurement_name", "measurement_description", "variable_name");
+//      }).toList ();
+      
 
       // Sort studies alphabetically by name
       //measured_variables.sort((a, b) => a['name']!.compareTo(b['name']!));
 
       //IdNamesCache.cache (measured_variables, CACHE_MEASURED_VARIABLES);
+
+      print ("RETURNING: ${measured_variables}");
 
       return measured_variables;
     } catch (e) {
