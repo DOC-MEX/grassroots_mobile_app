@@ -1,6 +1,7 @@
 // qr_code_service.dart
 //import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:grassroots_field_trials/caching.dart';
+import 'package:grassroots_field_trials/measured_variables.dart';
 
 import 'grassroots_request.dart';
 import 'dart:convert';
@@ -41,7 +42,7 @@ class backendRequests {
       // Sort studies alphabetically by name
       studies.sort((a, b) => a['name']!.compareTo(b['name']!));
 
-      StudiesCache.cacheStudies (studies);
+      IdNamesCache.cache (studies, CACHE_STUDIES);
 
       return studies;
     } catch (e) {
@@ -50,6 +51,46 @@ class backendRequests {
       throw e;
     }
   }
+
+ //fetch all studies from Grassroots. Used when loading grassroot_studies.dart
+  static Future <List <Map <String, String>>> fetchAllTrials () async {
+    String requestString = jsonEncode({
+      "services": [
+        {
+          "so:name": "Search Field Trials",
+          "start_service": true,
+          "parameter_set": {
+            "level": "advanced",
+            "parameters": [
+              {"param": "FT Search", "current_value": true, "group": "Field Trials"}
+            ]
+          }
+        }
+      ]
+    });
+
+    try {
+      var response = await GrassrootsRequest.sendRequest(requestString, 'public');
+      List<Map<String, String>> trials = response['results'][0]['results'].map<Map<String, String>>((trial) {
+        //String name = study['title'] as String? ?? 'Unknown Study';
+        String name = trial['data']['so:name'] as String? ?? 'Unknown Trials';
+        String id = trial['data']['_id']['\$oid'] as String? ?? 'Unknown ID';
+        return {'name': name, 'id': id};
+      }).toList();
+
+      // Sort studies alphabetically by name
+      trials.sort((a, b) => a['name']!.compareTo(b['name']!));
+
+      IdNamesCache.cache (trials, CACHE_TRIALS);
+
+      return trials;
+    } catch (e) {
+      print('Error fetching trials: $e');
+      // Optionally, handle the error in a specific way or rethrow it
+      throw e;
+    }
+  }
+
 
   //fetch single study from Grassroots. Used after a study is selected in grassroot_studies.dart
   static Future<Map<String, dynamic>> fetchSingleStudy(String studyId) async {
@@ -172,6 +213,55 @@ class backendRequests {
     };
 
     return json.encode(request);
+  }
+
+  static Future <List <MeasuredVariable>>  searchMeasuredVariables (String? query) async {
+    if (query != null) {
+      /* Enable pattern matching */
+      query = query + "*";
+    }
+
+    final String request = jsonEncode({
+      "services": [
+        {
+          "start_service": true,
+          "so:name": "Search Grassroots",
+          "parameter_set": {
+            "level": "simple",
+            "parameters": [
+              {
+                "param": "SS Keyword Search",
+                "current_value": query
+              },
+              {
+                "param": "SS Facet",
+                "current_value": "Measured Variable"
+              }
+            ]
+          }
+        }
+      ]
+    });
+    
+
+    try {
+      var response = await GrassrootsRequest.sendRequest (request, 'public');
+      
+      List <MeasuredVariable> measured_variables = response ['results'][0]['results'].map<Map <String, String>> ((mv) {
+        return MeasuredVariable.fromJson (mv);
+      }).toList ();
+
+      // Sort studies alphabetically by name
+      //measured_variables.sort((a, b) => a['name']!.compareTo(b['name']!));
+
+      //IdNamesCache.cache (measured_variables, CACHE_MEASURED_VARIABLES);
+
+      return measured_variables;
+    } catch (e) {
+      print('Error fetching measured variables: $e');
+      // Optionally, handle the error in a specific way or rethrow it
+      throw e;
+    }    
   }
 
 // This will process the capture and return the detected QR code's raw value or null

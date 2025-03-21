@@ -9,6 +9,7 @@ import 'table_observations.dart';
 import 'global_variable.dart'; // allowedStudyIDs
 import 'api_requests.dart';
 import 'package:hive/hive.dart';
+import 'server.dart';
 
 
 class GrassrootsStudies extends StatefulWidget {
@@ -16,14 +17,6 @@ class GrassrootsStudies extends StatefulWidget {
   _GrassrootsPageState createState() => _GrassrootsPageState();
 }
 
-class StringLabel {
-  String name;
-  String id;
-
-  StringLabel (this.name, this.id);
-}
-
-typedef StringEntry = DropdownMenuEntry <StringLabel>;
 
 
 class _GrassrootsPageState extends State<GrassrootsStudies> {
@@ -148,22 +141,22 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
 
     } else {
       /* Use any cached data */
-      var box = await Hive.openBox <StudyDetails> (StudiesCache.sc_name);
+      var box = await Hive.openBox <IdName> (CACHE_STUDIES);
 
       final int num_entries = box.length;
       List <Map <String, String>> studies_data = [];
 
       for (int i = 0; i < num_entries; i ++) {
         Map <String, String> entry = Map <String, String> ();
-        StudyDetails? study = box.getAt (i);
+        IdName? study = box.getAt (i);
 
         if (study != null) {
-          entry ["name"] = study.sd_name;
-          entry ["id"] = study.sd_id;
+          entry ["name"] = study.name;
+          entry ["id"] = study.id;
 
           String date_str = "";
-          if (study.sd_date != null) {
-            date_str = study.sd_date.toString ();
+          if (study.date != null) {
+            date_str = study.date.toString ();
           }
  
           //print ("using cached study ${entry ["name"]}, ${entry ["id"]} from ${date_str}");

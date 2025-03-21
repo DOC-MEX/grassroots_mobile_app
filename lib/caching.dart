@@ -3,12 +3,12 @@ import 'package:grassroots_field_trials/global_variable.dart';
 import 'package:hive/hive.dart';
 
 
-class StudyDetails
+class IdName
 {
-  StudyDetails ({required this.sd_name, required this.sd_id, required this.sd_date});
+  IdName ({required this.name, required this.id, required this.date});
 
-  factory StudyDetails.fromJson (Map <String, dynamic> json) {
-    StudyDetails study;
+  factory IdName.fromJson (Map <String, dynamic> json) {
+    IdName entry;
     DateTime? d;
 
     if (json ["date"] != null) {
@@ -23,63 +23,64 @@ class StudyDetails
       d = DateTime.now ();
     }
 
-    study = StudyDetails (sd_name: json ["name"], sd_id: json['id'], sd_date: d);
+    entry = IdName (name: json ["name"], id: json['id'], date: d);
 
-    return study;
+    return entry;
   }
-    
-  String sd_name;
-  String sd_id;
-  DateTime sd_date;
 
+  // The name of this object e.g. Study, Progamme, Trial, etc.  
+  String name;
+  
+  // The MongoDB Id
+  String id;
 
+  // The datestamp for when this IdName was retrieved from the server
+  DateTime date;
 }
 
-class StudyAdapter extends TypeAdapter <StudyDetails> {
+class IdNameAdapter extends TypeAdapter <IdName> {
   @override
   int get typeId => 2;
 
   @override
-  StudyDetails read (BinaryReader reader) {
-    final name = reader.readString ();
-    final id = reader.readString ();
+  IdName read (BinaryReader reader) {
+    final obj_name = reader.readString ();
+    final obj_id = reader.readString ();
     String date_str = reader.readString ();
 
     DateTime d = DateTime.parse (date_str);
 
-    return StudyDetails (sd_name: name, sd_id: id, sd_date: d);
+    return IdName (name: obj_name, id: obj_id, date: d);
   }
 
   @override
-  void write (BinaryWriter writer, StudyDetails obj) {
-    writer.writeString (obj.sd_name);
-    writer.writeString (obj.sd_id);
+  void write (BinaryWriter writer, IdName obj) {
+    writer.writeString (obj.name);
+    writer.writeString (obj.id);
     
-    String date_str = obj.sd_date.toString ();
+    String date_str = obj.date.toString ();
     writer.writeString (date_str); 
   }
 }
 
 
-class StudiesCache {
+ class IdNamesCache {
 
-  static final String sc_name = "studies_cache";
-
-  static Future <void> cacheStudies (List<Map<String, String>> studies) async {
+  static Future <void> cache (List<Map<String, String>> studies, String cache_name) async {
     DateTime d = DateTime.now ();
     
     for (final entry in studies) {
-      String? name = entry ['name'];
+      String? entry_name = entry ['name'];
 
-      if (name != null) {
-        String? id = entry ['id'];
+      if (entry_name != null) {
+        String? entry_id = entry ['id'];
 
-        if (id != null) {     
-          final study = StudyDetails (sd_name: name, sd_id: id, sd_date: d);
-          var box = await Hive.openBox <StudyDetails> (sc_name);
+        if (entry_id != null) {     
+          final entry = IdName (name: entry_name, id: entry_id, date: d);
+          var box = await Hive.openBox <IdName> (cache_name);
 
-          //print ("caching ${study.sd_name} ${study.sd_id}");
-          box.put (study.sd_name, study);
+          //print ("caching ${entry.name} ${entry.id}");
+          box.put (entry.name, entry);
         }
 
       }
@@ -150,4 +151,7 @@ class IdsCache {
 
   }
 }
+
+
+
 

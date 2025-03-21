@@ -7,6 +7,8 @@ import 'api_requests.dart';
 import 'package:hive/hive.dart';
 import 'models/observation.dart';
 import 'models/photo_submission.dart';
+import 'study_creator.dart';
+
 
 class HomePage extends StatefulWidget {
   @override
@@ -181,6 +183,30 @@ Future<void> _printLocalPhotoSubmissions() async {
                           ),
                         ),
                       ),
+
+                      // Create Study button
+                      Positioned(
+                        bottom: 15,
+                        right: 0,
+                        child: Center(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => NewStudyPage ()),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 3, horizontal: 20),
+                            ),
+                            child: Text(
+                              'Create Study',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ),
+
                     ],
                   ),
                 ),

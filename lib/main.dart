@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:grassroots_field_trials/caching.dart';
+import 'package:grassroots_field_trials/global_variable.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'home.dart';
 import 'models/observation.dart';
@@ -26,11 +27,16 @@ void main() async{
   await Hive.openBox<Observation>('observations');
   await Hive.openBox<PhotoSubmission>('photo_submissions');
 
-  Hive.registerAdapter (StudyAdapter ());
-  await Hive.openBox <StudyDetails> (StudiesCache.sc_name);
+  /* Cache studies for offline use */
+  Hive.registerAdapter (IdNameAdapter ());
+  await Hive.openBox <IdName> (CACHE_STUDIES);
 
 
-  Hive.registerAdapter(IdsAdapter ());
+  await Hive.openBox <IdName> (CACHE_TRIALS);
+
+
+  /* Cache allowed study ids for offline use */
+  Hive.registerAdapter (IdsAdapter ());
   await Hive.openBox <IdsList> (IdsCache.ic_name);
 
 

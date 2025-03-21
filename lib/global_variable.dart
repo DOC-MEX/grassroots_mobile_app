@@ -10,5 +10,9 @@ final int HI_PHOTOS = 2;
 final int HI_STUDIES = 3;
 final int HI_ALLOWED_IDS = 4;
 
-
+final String CACHE_STUDIES = "studies_cache";
+final String CACHE_TRIALS = "trials_cache";
+final String CACHE_LOCATIONS = "locations_cache";
+final String CACHE_PROGRAMMES = "programmes_cache";
+final String CACHE_MEASURED_VARIABLES = "measured_variables_cache";
 
