@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:grassroots_field_trials/backend_request.dart';
 
+import 'package:flutter_html/flutter_html.dart';
+
 /*
   "unit": {
     "so:name": "cm",
@@ -156,38 +158,25 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
 
             return ListView.builder (
               itemCount: results.length,
+
               itemBuilder: (context, index) {
                 final result = results[index];
 
-                return Container(
-                  padding: const EdgeInsets.all(5),
-                  margin: const EdgeInsets.all(5),
-                  color: Colors.black12,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            "Submit result",
-                            style: TextStyle(color: Colors.black54),
-                          ),
-                          Text(
-                            "${result.unit_name!}-${result.measurement_name!}-${result.trait_name!}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          )
-                        ],
-                        
-                      ),
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(result),
-                          icon: const Icon(Icons.arrow_forward_ios))
-                    ],
-                  ),
+                String item_title = result.trait_name + " - " + result.measurement_name + "-" +result.unit_name;
+
+                return ListTile (
+                  
+                  title: Html (data: item_title),
+                  subtitle: Text (result.variable_name),
+                  leading: Icon (Icons.list),
+                  onTap: () {
+                    print ("clicked on ${item_title}");
+                  },
+                    
                 );
+                
               },
+
             );
           
           } else {
