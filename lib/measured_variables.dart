@@ -124,7 +124,11 @@ class MeasuredVariable {
 
 
 class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
-  
+  Map <String, String> _selected_entries = {};
+
+  MeasuredVariableSearchDelegate (
+  );
+
   @override
   List <Widget>? buildActions (BuildContext context) {
     return <Widget>[];
@@ -160,17 +164,36 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
               itemCount: results.length,
 
               itemBuilder: (context, index) {
-                final result = results[index];
+                final result = results [index];
+                Color c;
+                String item_subtitle = result.trait_name + " - " + result.measurement_name + " - " +result.unit_name;
 
-                String item_title = result.trait_name + " - " + result.measurement_name + "-" +result.unit_name;
+                if (_selected_entries.containsKey (result.variable_name)) {
+                  c = Colors.red;
+                } else {
+                  c = Theme.of(context).colorScheme.primary;
+                }
 
-                return ListTile (
-                  
-                  title: Html (data: item_title),
-                  subtitle: Text (result.variable_name),
+
+                return ListTile (                 
+                  title: Text (result.variable_name),
+                  subtitle: Html (data: item_subtitle),
                   leading: Icon (Icons.list),
+                  tileColor: _selected_entries.containsKey (result.variable_name) ? Colors.red : Theme.of(context).colorScheme.surface,
+                  textColor: _selected_entries.containsKey (result.variable_name) ? Colors.green : Theme.of(context).colorScheme.primary,
                   onTap: () {
-                    print ("clicked on ${item_title}");
+                   // setState () {
+                      print ("clicked on ${result.variable_name} - ${result.id}");
+                    
+                      if (_selected_entries.containsKey (result.variable_name)) {
+                        print ("removing ${result.variable_name}");
+                        _selected_entries.remove (result.variable_name);
+                      } else {
+                        print ("adding ${result.variable_name}");
+                        _selected_entries [result.variable_name] = result.id;
+                        
+                      }
+                  //  }                    
                   },
                     
                 );
