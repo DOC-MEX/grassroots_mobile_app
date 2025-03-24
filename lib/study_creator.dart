@@ -33,6 +33,8 @@ class _NewStudyPageState extends State <NewStudyPage> {
   bool _is_loading = true;
   List <Map <String, String>> _trials = []; // Store both name and ID
 
+  MeasuredVariableSearchDelegate _measured_variables_search = MeasuredVariableSearchDelegate();
+
   String? _name;
   int _num_rows = 1;
   int _num_columns = 1;
@@ -191,10 +193,13 @@ class _NewStudyPageState extends State <NewStudyPage> {
                   onPressed: () async {
                     final toDo = await showSearch <MeasuredVariable> (
                       context: context,
-                      delegate: MeasuredVariableSearchDelegate (),
+                      delegate: MeasuredVariableSearchDelegate,
                     );
                   },
                 ),
+
+                SizedBox (height: 10),
+
 
               ]
             )

@@ -124,8 +124,13 @@ class MeasuredVariable {
 
 
 class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
-  Map <String, String> _selected_entries = {};
+  Map <String, MeasuredVariable> _selected_entries = {};
+ 
+  
+  void OnTap () {
 
+  }
+  
   MeasuredVariableSearchDelegate (
   );
 
@@ -163,8 +168,8 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
             return ListView.builder (
               itemCount: results.length,
 
-              itemBuilder: (context, index) {
-                final result = results [index];
+              itemBuilder: (BuildContext context, int index) {
+                final MeasuredVariable result = results [index];
                 Color c;
                 String item_subtitle = result.trait_name + " - " + result.measurement_name + " - " +result.unit_name;
 
@@ -174,30 +179,27 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
                   c = Theme.of(context).colorScheme.primary;
                 }
 
-
-                return ListTile (                 
+                ListTile l = ListTile (                 
                   title: Text (result.variable_name),
                   subtitle: Html (data: item_subtitle),
                   leading: Icon (Icons.list),
-                  tileColor: _selected_entries.containsKey (result.variable_name) ? Colors.red : Theme.of(context).colorScheme.surface,
-                  textColor: _selected_entries.containsKey (result.variable_name) ? Colors.green : Theme.of(context).colorScheme.primary,
+                  selected:  _selected_entries.containsKey (result.variable_name),
+                  //tileColor: _selected_entries.containsKey (result.variable_name) ? Theme.of (context).colorScheme.onSurface : Theme.of(context).colorScheme.primary,
+                  textColor: Theme.of (context).colorScheme.primary,
                   onTap: () {
-                   // setState () {
-                      print ("clicked on ${result.variable_name} - ${result.id}");
                     
-                      if (_selected_entries.containsKey (result.variable_name)) {
-                        print ("removing ${result.variable_name}");
-                        _selected_entries.remove (result.variable_name);
-                      } else {
-                        print ("adding ${result.variable_name}");
-                        _selected_entries [result.variable_name] = result.id;
-                        
-                      }
-                  //  }                    
+                    if (_selected_entries.containsKey (result.variable_name)) {
+                      _selected_entries.remove (result.variable_name);
+                      print ("removing ${result.variable_name}");
+                    } else {
+                      _selected_entries [result.variable_name] = result;
+                      print ("adding ${result.variable_name}");
+                    }
                   },
-                    
+                  
                 );
                 
+                return l;
               },
 
             );
@@ -234,6 +236,9 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
     
     return results;
   }
+
+
+
 
 }
 
