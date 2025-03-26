@@ -23,6 +23,7 @@ class NewStudyPage extends StatefulWidget {
   });
 
 
+
   @override
   _NewStudyPageState createState () => _NewStudyPageState ();
 }
@@ -32,6 +33,9 @@ class _NewStudyPageState extends State <NewStudyPage> {
   final TextEditingController _trials_controller = TextEditingController();
   bool _is_loading = true;
   List <Map <String, String>> _trials = []; // Store both name and ID
+
+  Widget? _mvs_widget;
+
 
   MeasuredVariableSearchDelegate _measured_variables_search = MeasuredVariableSearchDelegate();
 
@@ -52,6 +56,12 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
     // Call the dispose method of the superclass at the end
     super.dispose();
+  }
+
+  void updateMeasuredVariablesList () {
+    setState(() {
+      
+    });
   }
 
   @override
@@ -98,6 +108,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
                 // Trials menu
                 DropdownMenu (
+                  expandedInsets: EdgeInsets.zero,  // full width
                   requestFocusOnTap: true,
                   dropdownMenuEntries: GetTrialsAsList (),
                   controller: _trials_controller,
@@ -193,13 +204,14 @@ class _NewStudyPageState extends State <NewStudyPage> {
                   onPressed: () async {
                     final toDo = await showSearch <MeasuredVariable> (
                       context: context,
-                      delegate: MeasuredVariableSearchDelegate,
+                      delegate: _measured_variables_search,
                     );
                   },
                 ),
 
                 SizedBox (height: 10),
 
+               // _mvs_widget = _getSelectedMeasuredVariablesListWidget (false),
 
               ]
             )
@@ -278,6 +290,19 @@ class _NewStudyPageState extends State <NewStudyPage> {
     }
 
   }
+
+
+  Widget _getSelectedMeasuredVariablesListWidget (bool selectable) {
+    List <MeasuredVariable>? l = _measured_variables_search.getSelectedVariables ();
+
+    if (l != null) {
+      return MeasuredVariablesListWidget (measured_variables: l, isSelectionMode: selectable);
+    } else {
+      return Text ("");
+    }
+  
+  }
+
 
 
   List <StringEntry> GetTrialsAsList () {

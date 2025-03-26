@@ -37,8 +37,9 @@ class MeasuredVariable {
   String measurement_name;
   String? measurement_description;
   String variable_name;
-  
-  MeasuredVariable (this.id, this.unit_name, this.trait_name, this.trait_descrption, this.measurement_name, this.measurement_description, this.variable_name);
+  bool selected; 
+
+  MeasuredVariable (this.id, this.unit_name, this.trait_name, this.trait_descrption, this.measurement_name, this.measurement_description, this.variable_name, this.selected);
 
   factory MeasuredVariable.fromJson (Map <String, dynamic> json) {
 
@@ -105,7 +106,7 @@ class MeasuredVariable {
                     print ("mv_variable_name ${mv_variable_name}");
 
                     if (mv_variable_name != "") {
-                      return MeasuredVariable (mv_id, mv_unit_name, mv_trait_name, mv_trait_descrption, mv_measurement_name, mv_measurement_description, mv_variable_name);
+                      return MeasuredVariable (mv_id, mv_unit_name, mv_trait_name, mv_trait_descrption, mv_measurement_name, mv_measurement_description, mv_variable_name, false);
 
                     }
                   }
@@ -125,7 +126,8 @@ class MeasuredVariable {
 
 class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
   Map <String, MeasuredVariable> _selected_entries = {};
- 
+
+  late MeasuredVariablesListWidget? _list_widget;
   
   void OnTap () {
 
@@ -133,6 +135,8 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
   
   MeasuredVariableSearchDelegate (
   );
+
+
 
   @override
   List <Widget>? buildActions (BuildContext context) {
@@ -151,74 +155,41 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
   /* The results shown after the user submits a search from the search page. */
   @override
   Widget buildResults (BuildContext context) {
-    
   
     return FutureBuilder <List <MeasuredVariable>> (
       future: _search (),
-      builder: (context, snapshot) {
+      builder: (BuildContext context, AsyncSnapshot <List <MeasuredVariable>> snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
 
           List <MeasuredVariable>? results = snapshot.data;
 
           if (results != null) {
-            
-            print ("measured variables search found ${results.length} hits");
-            print ("results: ${results}");
-
-            return ListView.builder (
-              itemCount: results.length,
-
-              itemBuilder: (BuildContext context, int index) {
-                final MeasuredVariable result = results [index];
-                Color c;
-                String item_subtitle = result.trait_name + " - " + result.measurement_name + " - " +result.unit_name;
-
-                if (_selected_entries.containsKey (result.variable_name)) {
-                  c = Colors.red;
-                } else {
-                  c = Theme.of(context).colorScheme.primary;
-                }
-
-                ListTile l = ListTile (                 
-                  title: Text (result.variable_name),
-                  subtitle: Html (data: item_subtitle),
-                  leading: Icon (Icons.list),
-                  selected:  _selected_entries.containsKey (result.variable_name),
-                  //tileColor: _selected_entries.containsKey (result.variable_name) ? Theme.of (context).colorScheme.onSurface : Theme.of(context).colorScheme.primary,
-                  textColor: Theme.of (context).colorScheme.primary,
-                  onTap: () {
-                    
-                    if (_selected_entries.containsKey (result.variable_name)) {
-                      _selected_entries.remove (result.variable_name);
-                      print ("removing ${result.variable_name}");
-                    } else {
-                      _selected_entries [result.variable_name] = result;
-                      print ("adding ${result.variable_name}");
-                    }
-                  },
-                  
-                );
-                
-                return l;
-              },
-
+            _list_widget =  MeasuredVariablesListWidget (
+              measured_variables: results, 
+              isSelectionMode: true, 
             );
-          
+
+            final Widget? w = _list_widget;
+
+            if (w != null) {
+              return w;
+            } else {
+              return Text ("Error searching, please try again");
+            }
           } else {
-            return Text ("Error searching");
+            return Text ("No hits found");
           }
-        } else {
+        } else if ((snapshot.connectionState == ConnectionState.active) || (snapshot.connectionState == ConnectionState.waiting)) {
           return Center(
-            child: CircularProgressIndicator(),
+            child: CircularProgressIndicator (),
           );
+        } else {
+          return Text ("Idle");
         }
-      },
+      }
     );
     
-    
-
-
-    }
+  }
 
   /* 
    * Suggestions shown in the body of the search page while 
@@ -237,12 +208,267 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
     return results;
   }
 
+  List <MeasuredVariable>? getSelectedVariables () {
+/*
+    List <MeasuredVariable> results =
+    _selected_entries.entries.map ((entry) => entry.value).toList();
+*/
+    final MeasuredVariablesListWidget? m = _list_widget;
+
+    List <MeasuredVariable>? results;
+
+    if (m != null) {
+      results = m.getSelectedVariables ();
+    }
+
+    if (results != null) {
+      print ("getSelectedVariables () has ${results.length} entries");
+    } else {
+      print ("getSelectedVariables () has no entries");
+    }
+
+    return results;
+  }
+
 
 
 
 }
 
-class _SearchMeasuredVariables {
+
+
+
+
+class MeasuredVariablesListWidget extends StatefulWidget {
+
+  MeasuredVariablesListWidget({
+      super.key,
+      required this.measured_variables,
+      required this.isSelectionMode,
+  });
   
-   
+  final bool isSelectionMode;
+  List <MeasuredVariable> measured_variables;
+
+  late _MeasuredVariablesListWidgetState _state;
+
+  @override
+  _MeasuredVariablesListWidgetState createState() {
+    _state = _MeasuredVariablesListWidgetState ();
+    return _state;
+  } 
+
+  void updateValues (List <MeasuredVariable> vars) {
+     measured_variables = vars;
+  }
+
+  List <MeasuredVariable> getSelectedVariables () {
+    List <MeasuredVariable> selected_vars = [];
+
+    for (int i = 0; i < measured_variables.length; ++ i) {
+      if (measured_variables [i].selected) {
+        selected_vars.add (measured_variables [i]);
+      }    
+    }
+
+    return selected_vars;
+  }
+
 }
+
+
+class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidget> {
+  @override
+  void initState () {
+    super.initState ();
+  }
+
+  void _toggle (int index) {
+    if (widget.isSelectionMode) {
+      setState(() {
+        final MeasuredVariable? mv = widget.measured_variables [index];
+
+        if (mv != null) {
+          mv.selected  = !mv.selected;
+        }
+      });
+    }
+  }
+
+/*
+  void setValues (List <MeasuredVariable> mvs) {
+    setState(() {
+      _selected_vars.clear ();
+
+      for (int i = 0; i < mvs.length; ++ i) {
+        MeasuredVariable mv = mvs [i];
+
+        _selected_vars [i] = mv;
+      }
+    });
+  }
+ */
+
+  @override
+  Widget build(BuildContext context) {
+
+    return ListView.builder(
+      itemCount: widget.measured_variables.length,
+      itemBuilder: (BuildContext context, int index) {
+        MeasuredVariable mv = widget.measured_variables [index];
+        String item_subtitle = mv.trait_name + " - " + mv.measurement_name + " - " + mv.unit_name;
+
+        Widget trailing_widget;
+
+        if (widget.isSelectionMode) {
+          trailing_widget = Checkbox(
+            value: mv.selected,
+            onChanged: (bool? x) => _toggle(index),
+          );
+        } else {
+          trailing_widget = const SizedBox.shrink ();
+        }
+
+        return ListTile (
+          onTap: () => _toggle(index),
+          trailing: trailing_widget,
+          title: Text (mv.variable_name),
+          subtitle: Html (data: item_subtitle),
+        );
+      },
+    );
+
+/*
+    return ListView.builder (
+      itemCount: widget.measured_variables.length,
+      itemBuilder: (BuildContext context, int index) {
+        final MeasuredVariable mv = widget.measured_variables [index];
+        String item_subtitle = mv.trait_name + " - " + mv.measurement_name + " - " + mv.unit_name;
+
+        return ListTile (
+          onTap: () => _toggle(index),
+          onLongPress: () {
+            if (!widget.isSelectionMode) {
+              setState(() {
+                widget.selectedList[index] = true;
+              });
+              widget.onSelectionChange!(true);
+            }
+          },
+          trailing:
+              widget.isSelectionMode
+                  ? Checkbox(
+                    value: widget.selectedList[index],
+                    onChanged: (bool? x) => _toggle(index),
+                  )
+                  : const SizedBox.shrink(),
+          title: Text('item $index'),
+        );
+
+          title: Text (mv.variable_name),
+          subtitle: Html (data: item_subtitle),
+          secondary: Icon (Icons.list),
+          value:  _selected_vars.containsKey (index),
+          controlAffinity: ListTileControlAffinity.platform,
+          onChanged: (bool? value) {
+            setState () {
+              if (value != null) {
+                mv.selected = value;
+              }
+            }
+          },                
+        );
+  
+      },
+
+    );
+    */
+  }
+
+}
+
+
+/*
+class ListBuilder extends StatefulWidget {
+  const ListBuilder({
+    super.key,
+    required this.selectedList,
+    required this.isSelectionMode,
+    required this.onSelectionChange,
+  });
+
+  final bool isSelectionMode;
+  final List <MeasuredVariable> selectedList;
+  final ValueChanged <MeasuredVariable>? onSelectionChange;
+
+  @override
+  State <ListBuilder> createState() => _ListBuilderState();
+}
+
+class _ListBuilderState extends State <ListBuilder> {
+  void _toggle(int index) {
+    if (widget.isSelectionMode) {
+      setState(() {
+        widget.selectedList [index] = !widget.selectedList[index];
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+ 
+    return ListView.builder (
+      itemCount: widget.measured_variables.length,
+      itemBuilder: (BuildContext context, int index) {
+        final MeasuredVariable mv = widget.measured_variables [index];
+        String item_subtitle = mv.trait_name + " - " + mv.measurement_name + " - " + mv.unit_name;
+
+        return CheckboxListTile (                 
+          title: Text (mv.variable_name),
+          subtitle: Html (data: item_subtitle),
+          secondary: Icon (Icons.list),
+          value:  _selected_vars.containsKey (mv.variable_name),
+          controlAffinity: ListTileControlAffinity.platform,
+          onChanged: (bool? value) {
+            setState () {
+              if (value != null) {
+                mv.selected = value;
+              }
+            }
+          },                
+        );
+  
+      },
+
+    );
+
+
+ /*
+    return ListView.builder(
+      itemCount: widget.selectedList.length,
+      itemBuilder: (_, int index) {
+        return ListTile(
+          onTap: () => _toggle(index),
+          onLongPress: () {
+            if (!widget.isSelectionMode) {
+              setState(() {
+                widget.selectedList[index] = true;
+              });
+              widget.onSelectionChange!(true);
+            }
+          },
+          trailing:
+              widget.isSelectionMode
+                  ? Checkbox(
+                    value: widget.selectedList[index],
+                    onChanged: (bool? x) => _toggle(index),
+                  )
+                  : const SizedBox.shrink(),
+          title: Text('item $index'),
+        );
+      },
+    );
+  */
+  }
+}
+*/
