@@ -260,7 +260,7 @@ class backendRequests {
               
         MeasuredVariable mv = MeasuredVariable.fromJson (entry ["data"]);
 
-        print ("mv: ${mv}");
+        print ("mv: ${mv.variable_name}");
 
         measured_variables.add (mv);
       });
@@ -276,7 +276,7 @@ class backendRequests {
 
       //IdNamesCache.cache (measured_variables, CACHE_MEASURED_VARIABLES);
 
-      print ("RETURNING: ${measured_variables}");
+      print ("RETURNING: ${measured_variables.length} Measured Variables");
 
       return measured_variables;
     } catch (e) {
