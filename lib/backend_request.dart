@@ -256,11 +256,11 @@ class backendRequests {
       print ("num hits ${results_data.length}");
 
       results_data.forEach ((entry) {
-        print ("entry: ${entry}");
+       // print ("entry: ${entry}");
               
         MeasuredVariable mv = MeasuredVariable.fromJson (entry ["data"]);
 
-        print ("mv: ${mv.variable_name}");
+      //  print ("mv: ${mv.variable_name}");
 
         measured_variables.add (mv);
       });
