@@ -199,13 +199,19 @@ class _NewStudyPageState extends State <NewStudyPage> {
                 SizedBox (height: 10),
 
 
-                IconButton(
+                IconButton (
                   icon: Icon (Icons.search),
                   onPressed: () async {
-                    final toDo = await showSearch <MeasuredVariable> (
+                    final List <MeasuredVariable>? selected_mvs = await showSearch <List <MeasuredVariable>> (
                       context: context,
                       delegate: _measured_variables_search,
                     );
+
+                    if (selected_mvs != null) {
+                      for (int i = 0; i < selected_mvs.length; ++ i) {
+                        print ("${i}: ${selected_mvs [i].variable_name}");
+                      }
+                    }
                   },
                 ),
 

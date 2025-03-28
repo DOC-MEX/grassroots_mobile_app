@@ -148,65 +148,67 @@ Future<void> _printLocalPhotoSubmissions() async {
                       // Welcome message
                       WelcomeMessageWidget(),
 
-                      // Exit button
-                      Positioned(
-                        bottom: 15,
-                        left: 10,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            SystemNavigator.pop();
-                          },
-                          child: Text('Exit'),
-                        ),
-                      ),
+                      Expanded (
+                        child: Align (
+                          alignment: FractionalOffset.bottomCenter,
 
-                      // Browse all studies button
-                      Positioned(
-                        bottom: 15,
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => GrassrootsStudies()),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 3, horizontal: 20),
-                            ),
-                            child: Text(
-                              'Browse \n all studies',
-                              textAlign: TextAlign.center,
-                            ),
+                          child: new Container(
+                            padding: new EdgeInsets.all (16.0),
+                            child: OverflowBar ( 
+                              spacing: 8,
+
+                              overflowSpacing: 4,
+
+                              overflowAlignment: OverflowBarAlignment.end,
+
+                              children: <Widget> [
+                                ElevatedButton (
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => GrassrootsStudies()),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 20),
+                                  ),
+                                  child: Text(
+                                    'Browse \n all studies',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => NewStudyPage ()),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 20),
+                                  ),
+                                  child: Text(
+                                    'Create Study',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+
+                                ElevatedButton(
+                                  onPressed: () {
+                                    SystemNavigator.pop();
+                                  },
+                                  child: Text('Exit'),
+                                ),
+
+                              ],
+
+                            )
                           ),
-                        ),
-                      ),
 
-                      // Create Study button
-                      Positioned(
-                        bottom: 15,
-                        right: 0,
-                        child: Center(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => NewStudyPage ()),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 3, horizontal: 20),
-                            ),
-                            child: Text(
-                              'Create Study',
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
+                        )
                       ),
-
+    
                     ],
                   ),
                 ),

@@ -124,10 +124,9 @@ class MeasuredVariable {
 }
 
 
-class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
-  Map <String, MeasuredVariable> _selected_entries = {};
+class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVariable>> {
 
-  late MeasuredVariablesListWidget? _list_widget;
+  MeasuredVariablesListWidget? _list_widget;
   
   void OnTap () {
 
@@ -148,7 +147,18 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
   Widget? buildLeading (BuildContext context) {
     return IconButton(
       icon: const Icon (Icons.arrow_back),
-      onPressed: () => Navigator.of(context).pop(),
+      onPressed: () {
+        List <MeasuredVariable> mvs = [];
+        
+        MeasuredVariablesListWidget? w = _list_widget;
+
+        if (w != null) {
+         mvs = w.getSelectedVariables ();
+        }
+          
+      //MeasuredVariable mv = _selected_entries.entries.first.value;
+        close (context, mvs);
+      },
     );
   }
 
@@ -163,7 +173,7 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <MeasuredVariable> {
 
           List <MeasuredVariable>? results = snapshot.data;
 
-          if (results != null) {
+          if ((results != null) && (results.length > 0)) {
             _list_widget =  MeasuredVariablesListWidget (
               measured_variables: results, 
               isSelectionMode: true, 
