@@ -67,6 +67,10 @@ class _NewStudyPageState extends State <NewStudyPage> {
   @override
   Widget build(BuildContext context) {
 
+    MeasuredVariablesListWidget phenotypes_widget = MeasuredVariablesListWidget ();
+
+    MeasuredVariablesModel model = phenotypes_widget.getModel ();
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -83,149 +87,155 @@ class _NewStudyPageState extends State <NewStudyPage> {
         ),
         title: Text('Create a Study'),
       ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Form(
-            child: Column(
-              children: <Widget>[
+      body: ListenableBuilder (
+        listenable: model, 
+        builder: (BuildContext context, Widget? child) { 
+          return Padding (
+              padding: EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                child: Form(
+                  child: Column(
+                    children: <Widget>[
 
-                TextField (
-                  decoration: InputDecoration (
-                    border: OutlineInputBorder (), 
-                    labelText: 'Study name'
-                  ),
-                
-                  onChanged: (String? new_value) {
-                    setState (() {
-                      _name = new_value;
-                      print ("set _name to ${_name}");
-                    });
-                  }
-                ),
+                      TextField (
+                        decoration: InputDecoration (
+                          border: OutlineInputBorder (), 
+                          labelText: 'Study name'
+                        ),
+                      
+                        onChanged: (String? new_value) {
+                          setState (() {
+                            _name = new_value;
+                            print ("set _name to ${_name}");
+                          });
+                        }
+                      ),
 
-                SizedBox (height: 10),
+                      SizedBox (height: 10),
 
-                // Trials menu
-                DropdownMenu (
-                  expandedInsets: EdgeInsets.zero,  // full width
-                  requestFocusOnTap: true,
-                  dropdownMenuEntries: GetTrialsAsList (),
-                  controller: _trials_controller,
-                  enableFilter: true,
-                  label: const Text ("Choose the Field Trial that this study is a part of..."),
-                  helperText: "Select a Trial",
-                  trailingIcon: Icon (
-                    Icons.arrow_drop_down,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  textStyle: TextStyle (color: Theme.of(context).primaryColor),
-                  inputDecorationTheme: InputDecorationTheme (
-                    labelStyle: TextStyle (color: Theme.of(context).primaryColor),
-                    helperStyle: TextStyle (color: Theme.of(context).primaryColor),
-                  ),
+                      // Trials menu
+                      DropdownMenu (
+                        expandedInsets: EdgeInsets.zero,  // full width
+                        requestFocusOnTap: true,
+                        dropdownMenuEntries: GetTrialsAsList (),
+                        controller: _trials_controller,
+                        enableFilter: true,
+                        label: const Text ("Choose the Field Trial that this study is a part of..."),
+                        helperText: "Select a Trial",
+                        trailingIcon: Icon (
+                          Icons.arrow_drop_down,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        textStyle: TextStyle (color: Theme.of(context).primaryColor),
+                        inputDecorationTheme: InputDecorationTheme (
+                          labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+                          helperStyle: TextStyle (color: Theme.of(context).primaryColor),
+                        ),
 
-                  /*
-                  inputDecorationTheme: InputDecorationTheme(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    constraints: BoxConstraints.tight(const 
-                    Size.fromHeight(40)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  */
+                        /*
+                        inputDecorationTheme: InputDecorationTheme(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          constraints: BoxConstraints.tight(const 
+                          Size.fromHeight(40)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        */
 
-                  menuHeight: 500,
-                  menuStyle: MenuStyle (
-                    backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
-                  ),
-                  
-                ),
+                        menuHeight: 500,
+                        menuStyle: MenuStyle (
+                          backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
+                        ),
+                        
+                      ),
 
-                SizedBox (height: 10),
+                      SizedBox (height: 10),
 
-                // Number of plot rows
-                TextField (
-                  decoration: new InputDecoration (
-                    labelText: "Number of rows of plots"
-                  ),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly
-                  ], // Only numbers can be entered
-                
-                  onChanged: (String? new_value) {
-                    if (new_value != null) {
-                      int? c = int.tryParse (new_value);
-    
-                      if (c != null) {
-                        setState (() {
-                          _num_rows = c;
-                          print ("set rows to ${_num_rows}");
-                        });
-                      }
-                    }
-                  },                
-                ),
+                      // Number of plot rows
+                      TextField (
+                        decoration: new InputDecoration (
+                          labelText: "Number of rows of plots"
+                        ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.digitsOnly
+                        ], // Only numbers can be entered
+                      
+                        onChanged: (String? new_value) {
+                          if (new_value != null) {
+                            int? c = int.tryParse (new_value);
+          
+                            if (c != null) {
+                              setState (() {
+                                _num_rows = c;
+                                print ("set rows to ${_num_rows}");
+                              });
+                            }
+                          }
+                        },                
+                      ),
 
-                SizedBox (height: 10),
+                      SizedBox (height: 10),
 
-                // Number of plot columns
-                TextField (
-                  decoration: new InputDecoration (
-                    labelText: "Number of columns of plots"
-                  ),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: <TextInputFormatter>[
-                    FilteringTextInputFormatter.digitsOnly
-                  ], // Only numbers can be entered
+                      // Number of plot columns
+                      TextField (
+                        decoration: new InputDecoration (
+                          labelText: "Number of columns of plots"
+                        ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.digitsOnly
+                        ], // Only numbers can be entered
 
-                  onChanged: (String? new_value) {
-                    if (new_value != null) {
-                      int? c = int.tryParse (new_value);
-     
-                      if (c != null) {
-                        setState (() {
-                          _num_columns = c;
-                          print ("set columns to ${_num_columns}");
-                        });
-                      }
-                    }
-                  },
+                        onChanged: (String? new_value) {
+                          if (new_value != null) {
+                            int? c = int.tryParse (new_value);
+          
+                            if (c != null) {
+                              setState (() {
+                                _num_columns = c;
+                                print ("set columns to ${_num_columns}");
+                              });
+                            }
+                          }
+                        },
 
-                ),
+                      ),
 
-                SizedBox (height: 10),
+                      SizedBox (height: 10),
 
 
-                IconButton (
-                  icon: Icon (Icons.search),
-                  onPressed: () async {
-                    final List <MeasuredVariable>? selected_mvs = await showSearch <List <MeasuredVariable>> (
-                      context: context,
-                      delegate: _measured_variables_search,
-                    );
+                      IconButton (
+                        icon: Icon (Icons.search),
+                        onPressed: () async {
+                          final List <MeasuredVariable>? selected_mvs = await showSearch <List <MeasuredVariable>> (
+                            context: context,
+                            delegate: _measured_variables_search,
+                          );
 
-                    if (selected_mvs != null) {
-                      for (int i = 0; i < selected_mvs.length; ++ i) {
-                        print ("${i}: ${selected_mvs [i].variable_name}");
-                      }
-                    }
-                  },
-                ),
+                          if (selected_mvs != null) {
+                            for (int i = 0; i < selected_mvs.length; ++ i) {
+                              print ("${i}: ${selected_mvs [i].variable_name}");
+                            }
 
-                SizedBox (height: 10),
+                            model.addValues (selected_mvs); 
+                          }
+                        },
+                      ),
 
-               // _mvs_widget = _getSelectedMeasuredVariablesListWidget (false),
+                      SizedBox (height: 10),
 
-              ]
-            )
-          )
+                      //phenotypes_widget,
+
+                    ]
+                  )
+                )
+              )
+            );
+          }
         )
-      )
-    );
-
+      );
   }
 
 
@@ -288,10 +298,12 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
       _is_loading = true;
       _trials = trials_data;
+      /*
       print ("Got ${_trials.length} cached trials");
       print ("BEGIN _trials");
       print ("${_trials}");
       print ("END _trials");
+      */
       _is_loading = false;
     }
 
@@ -302,7 +314,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
     List <MeasuredVariable>? l = _measured_variables_search.getSelectedVariables ();
 
     if (l != null) {
-      return MeasuredVariablesListWidget (measured_variables: l, isSelectionMode: selectable);
+      return MeasuredVariablesListWidget ();
     } else {
       return Text ("");
     }

@@ -124,9 +124,84 @@ class MeasuredVariable {
 }
 
 
+class MeasuredVariablesModel with ChangeNotifier {
+  final List <MeasuredVariable> _values = <MeasuredVariable> [];
+
+  /* Make a copy each time */
+  List <MeasuredVariable> get values => _values.toList ();
+
+  int get length => _values.length;
+
+  void add (MeasuredVariable mv) {
+    _values.add (mv);
+    notifyListeners ();
+  }
+
+  List <MeasuredVariable> getSelectedVariables () {
+    List <MeasuredVariable> selected_vars = <MeasuredVariable> [];
+
+    for (int i = 0; i < _values.length; ++ i) {
+      if (_values [i].selected) {
+        selected_vars.add (_values [i]);
+      }    
+    }
+
+    return selected_vars;
+  }
+
+  MeasuredVariable at (int index) {
+    return _values [index];
+  }
+
+
+  void setValues (List <MeasuredVariable> new_values) {
+    bool force_notify_flag = false;
+
+    if (_values.length > 0) {
+      force_notify_flag = true;
+      _values.clear ();
+    }
+
+    _addValues (new_values, force_notify_flag);
+  }
+
+  void addValues (List <MeasuredVariable> new_values) {
+    _addValues (new_values, false);
+  }
+
+
+  void _addValues (List <MeasuredVariable> new_values, bool force_notify_flag) {
+    bool added_flag = false;
+
+    for (MeasuredVariable mv in new_values) {
+
+      print ("_addValues (): checking ${mv.variable_name}");
+
+      if (! (_values.contains (mv))) {
+        _values.add (mv);
+ 
+       print ("_addValues (): adding ${mv.variable_name}");
+
+        if (!added_flag) {
+          added_flag = true;
+        }
+      }
+    } 
+
+    if (added_flag) {
+      print ("_addValues (): about to call notifyListeners ()");
+      notifyListeners ();
+    }
+    
+  }
+
+
+}
+
+
 class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVariable>> {
 
-  MeasuredVariablesListWidget? _list_widget;
+  MeasuredVariablesListWidget _list_widget = MeasuredVariablesListWidget ();
   
   void OnTap () {
 
@@ -150,7 +225,7 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
       onPressed: () {
         List <MeasuredVariable> mvs = [];
         
-        MeasuredVariablesListWidget? w = _list_widget;
+        MeasuredVariablesListWidget w = _list_widget;
 
         if (w != null) {
          mvs = w.getSelectedVariables ();
@@ -169,23 +244,16 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
     return FutureBuilder <List <MeasuredVariable>> (
       future: _search (),
       builder: (BuildContext context, AsyncSnapshot <List <MeasuredVariable>> snapshot) {
+        
         if (snapshot.connectionState == ConnectionState.done) {
+          _list_widget =  MeasuredVariablesListWidget ();
 
           List <MeasuredVariable>? results = snapshot.data;
 
           if ((results != null) && (results.length > 0)) {
-            _list_widget =  MeasuredVariablesListWidget (
-              measured_variables: results, 
-              isSelectionMode: true, 
-            );
+            _list_widget.setValues (results);
+            return _list_widget;
 
-            final Widget? w = _list_widget;
-
-            if (w != null) {
-              return w;
-            } else {
-              return Text ("Error searching, please try again");
-            }
           } else {
             return Text ("No hits found");
           }
@@ -251,37 +319,33 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
 
 class MeasuredVariablesListWidget extends StatefulWidget {
 
-  MeasuredVariablesListWidget({
-      super.key,
-      required this.measured_variables,
-      required this.isSelectionMode,
-  });
+  MeasuredVariablesListWidget ();
   
-  final bool isSelectionMode;
-  List <MeasuredVariable> measured_variables;
+  MeasuredVariablesModel _model = MeasuredVariablesModel ();
 
   late _MeasuredVariablesListWidgetState _state;
 
   @override
-  _MeasuredVariablesListWidgetState createState() {
+  _MeasuredVariablesListWidgetState createState () {
     _state = _MeasuredVariablesListWidgetState ();
     return _state;
   } 
 
-  void updateValues (List <MeasuredVariable> vars) {
-     measured_variables = vars;
+  void setValues (List <MeasuredVariable> new_values) {
+     _model.setValues (new_values);
   }
 
+  void addValues (List <MeasuredVariable> new_values) {
+    _model.addValues (new_values);
+  }
+
+
   List <MeasuredVariable> getSelectedVariables () {
-    List <MeasuredVariable> selected_vars = [];
+    return _model.getSelectedVariables ();
+  }
 
-    for (int i = 0; i < measured_variables.length; ++ i) {
-      if (measured_variables [i].selected) {
-        selected_vars.add (measured_variables [i]);
-      }    
-    }
-
-    return selected_vars;
+  MeasuredVariablesModel getModel () {
+    return _model;
   }
 
 }
@@ -294,15 +358,13 @@ class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidg
   }
 
   void _toggle (int index) {
-    if (widget.isSelectionMode) {
-      setState(() {
-        final MeasuredVariable? mv = widget.measured_variables [index];
+    setState(() {
+      final MeasuredVariable? mv = widget._model.at (index);
 
-        if (mv != null) {
-          mv.selected  = !mv.selected;
-        }
-      });
-    }
+      if (mv != null) {
+        mv.selected  = !mv.selected;
+      }
+    });
   }
 
 /*
@@ -323,21 +385,15 @@ class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidg
   Widget build(BuildContext context) {
 
     return ListView.builder(
-      itemCount: widget.measured_variables.length,
+      itemCount: widget._model.length,
       itemBuilder: (BuildContext context, int index) {
-        MeasuredVariable mv = widget.measured_variables [index];
+        MeasuredVariable mv = widget._model.at (index);
         String item_subtitle = mv.trait_name + " - " + mv.measurement_name + " - " + mv.unit_name;
 
-        Widget trailing_widget;
-
-        if (widget.isSelectionMode) {
-          trailing_widget = Checkbox(
+        Widget trailing_widget = Checkbox(
             value: mv.selected,
             onChanged: (bool? x) => _toggle(index),
           );
-        } else {
-          trailing_widget = const SizedBox.shrink ();
-        }
 
         return ListTile (
           onTap: () => _toggle(index),
