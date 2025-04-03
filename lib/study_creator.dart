@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:grassroots_field_trials/caching.dart';
 import 'package:grassroots_field_trials/measured_variables.dart';
+import 'package:grassroots_field_trials/search_phenotypes.dart';
 import 'package:hive/hive.dart';
 
 import 'package:grassroots_field_trials/api_requests.dart';
@@ -34,11 +35,11 @@ class _NewStudyPageState extends State <NewStudyPage> {
   bool _is_loading = true;
   List <Map <String, String>> _trials = []; // Store both name and ID
 
-  Widget? _mvs_widget;
+  MeasuredVariableSearchDelegate _measured_variables_search = MeasuredVariableSearchDelegate ("search new phenotypes");
+  
+  MeasuredVariablesModel _model = MeasuredVariablesModel("Selected Phenotypes List");
 
-
-  MeasuredVariableSearchDelegate _measured_variables_search = MeasuredVariableSearchDelegate();
-
+  
   String? _name;
   int _num_rows = 1;
   int _num_columns = 1;
@@ -58,18 +59,42 @@ class _NewStudyPageState extends State <NewStudyPage> {
     super.dispose();
   }
 
-  void updateMeasuredVariablesList () {
+  void updateMeasuredVariablesList (MeasuredVariablesModel model) {
     setState(() {
-      
+      _model = model;
     });
+  }
+
+
+  Future <MeasuredVariablesModel ?> _navigateAndDisplaySelection (BuildContext context) async {
+    // Navigator.push returns a Future that completes after calling
+    // Navigator.pop on the Selection Screen.
+    final MeasuredVariablesModel? result = await Navigator.push(
+      context,
+      // Create the SelectionScreen in the next step.
+      MaterialPageRoute(builder: (context) => SearchPhenotypesPage ()),
+    );
+
+    // When a BuildContext is used from a StatefulWidget, the mounted property
+    // must be checked after an asynchronous gap.
+    if (!context.mounted) {
+      return null;
+    }
+
+    if (result != null) {
+      List <MeasuredVariable> mvs = result.values;
+
+      for (int i = 0; i < mvs.length; ++ i) {
+        print (">>> _navigateAndDisplaySelection () returned ${i}: ${mvs [i].variable_name}");
+      }
+    }
+    return result;
   }
 
   @override
   Widget build(BuildContext context) {
 
-    MeasuredVariablesListWidget phenotypes_widget = MeasuredVariablesListWidget ();
-
-    MeasuredVariablesModel model = phenotypes_widget.getModel ();
+    MeasuredVariablesListWidget phenotypes_widget = MeasuredVariablesListWidget ("Selected Phenotypes List", _model);
 
     return Scaffold(
       appBar: AppBar(
@@ -87,9 +112,17 @@ class _NewStudyPageState extends State <NewStudyPage> {
         ),
         title: Text('Create a Study'),
       ),
-      body: ListenableBuilder (
-        listenable: model, 
+      body: 
+
+      ListenableBuilder (
+        listenable: _model, 
         builder: (BuildContext context, Widget? child) { 
+          // We rebuild the ListView each time the list changes,
+          // so that the framework knows to update the rendering. 
+          final List <MeasuredVariable> values = _model.values; // copy the list
+
+
+
           return Padding (
               padding: EdgeInsets.all(16.0),
               child: SingleChildScrollView(
@@ -209,6 +242,17 @@ class _NewStudyPageState extends State <NewStudyPage> {
                       IconButton (
                         icon: Icon (Icons.search),
                         onPressed: () async {
+/*
+                          MeasuredVariablesModel? m = await _navigateAndDisplaySelection (context);
+
+                          if (m != null) {
+                            print ("ABOUT TO SET STATE WITH ${m.length} values");
+                            setState(() {
+                              phenotypes_widget.addValues (m.values);
+                            });
+                          }
+*/
+                          
                           final List <MeasuredVariable>? selected_mvs = await showSearch <List <MeasuredVariable>> (
                             context: context,
                             delegate: _measured_variables_search,
@@ -219,14 +263,19 @@ class _NewStudyPageState extends State <NewStudyPage> {
                               print ("${i}: ${selected_mvs [i].variable_name}");
                             }
 
-                            model.addValues (selected_mvs); 
+
+                            setState (() {
+                              // Call setState to refresh the page.
+                              phenotypes_widget.addValues (selected_mvs); 
+                            });
                           }
+                          
                         },
                       ),
 
                       SizedBox (height: 10),
 
-                      //phenotypes_widget,
+                      phenotypes_widget,
 
                     ]
                   )
@@ -310,29 +359,17 @@ class _NewStudyPageState extends State <NewStudyPage> {
   }
 
 
-  Widget _getSelectedMeasuredVariablesListWidget (bool selectable) {
-    List <MeasuredVariable>? l = _measured_variables_search.getSelectedVariables ();
-
-    if (l != null) {
-      return MeasuredVariablesListWidget ();
-    } else {
-      return Text ("");
-    }
-  
-  }
-
-
 
   List <StringEntry> GetTrialsAsList () {
     List <StringEntry> l = [];
 
-    print ("in GetStudiesAsList ()"); 
-    print ("Num studies ${_trials}"); 
+    print ("in GetTrialsAsList ()"); 
+    print ("Num trials ${_trials}"); 
   
     for (final e in _trials) {
       var trial = e;
 
-      print ("TRIAL: ${trial}");
+      //print ("TRIAL: ${trial}");
       var id = trial ['id'];
 
       if (id != null) {

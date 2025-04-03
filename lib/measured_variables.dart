@@ -126,6 +126,13 @@ class MeasuredVariable {
 
 class MeasuredVariablesModel with ChangeNotifier {
   final List <MeasuredVariable> _values = <MeasuredVariable> [];
+  late String _name;
+
+  MeasuredVariablesModel (String name) {
+    _name = name;    
+  }
+
+
 
   /* Make a copy each time */
   List <MeasuredVariable> get values => _values.toList ();
@@ -175,12 +182,12 @@ class MeasuredVariablesModel with ChangeNotifier {
 
     for (MeasuredVariable mv in new_values) {
 
-      print ("_addValues (): checking ${mv.variable_name}");
+      print ("${_name} :: _addValues (): checking ${mv.variable_name}");
 
       if (! (_values.contains (mv))) {
         _values.add (mv);
  
-       print ("_addValues (): adding ${mv.variable_name}");
+       print ("${_name} :: _addValues (): adding ${mv.variable_name}");
 
         if (!added_flag) {
           added_flag = true;
@@ -189,7 +196,7 @@ class MeasuredVariablesModel with ChangeNotifier {
     } 
 
     if (added_flag) {
-      print ("_addValues (): about to call notifyListeners ()");
+      print ("${_name} :: _addValues (): about to call notifyListeners ()");
       notifyListeners ();
     }
     
@@ -201,15 +208,16 @@ class MeasuredVariablesModel with ChangeNotifier {
 
 class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVariable>> {
 
-  MeasuredVariablesListWidget _list_widget = MeasuredVariablesListWidget ();
-  
+
+  MeasuredVariableSearchDelegate (String name) {
+    _list_widget = MeasuredVariablesListWidget (name, null);
+  }
+
+  late MeasuredVariablesListWidget _list_widget;
+
   void OnTap () {
 
   }
-  
-  MeasuredVariableSearchDelegate (
-  );
-
 
 
   @override
@@ -232,6 +240,7 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
         }
           
       //MeasuredVariable mv = _selected_entries.entries.first.value;
+
         close (context, mvs);
       },
     );
@@ -246,17 +255,14 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
       builder: (BuildContext context, AsyncSnapshot <List <MeasuredVariable>> snapshot) {
         
         if (snapshot.connectionState == ConnectionState.done) {
-          _list_widget =  MeasuredVariablesListWidget ();
-
           List <MeasuredVariable>? results = snapshot.data;
 
           if ((results != null) && (results.length > 0)) {
             _list_widget.setValues (results);
-            return _list_widget;
-
-          } else {
-            return Text ("No hits found");
           }
+
+          return _list_widget;
+
         } else if ((snapshot.connectionState == ConnectionState.active) || (snapshot.connectionState == ConnectionState.waiting)) {
           return Center(
             child: CircularProgressIndicator (),
@@ -319,11 +325,23 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
 
 class MeasuredVariablesListWidget extends StatefulWidget {
 
-  MeasuredVariablesListWidget ();
+  MeasuredVariablesListWidget (String name, MeasuredVariablesModel? model) {
+    _name = name;
+
+    if (model != null) {
+      print ("USING EXISTING MODEL OF ${model.length} VALUES");
+      _model = model;
+    } else {
+      _model = MeasuredVariablesModel (_name);
+    }
+
+  }
   
-  MeasuredVariablesModel _model = MeasuredVariablesModel ();
+  late MeasuredVariablesModel _model;
 
   late _MeasuredVariablesListWidgetState _state;
+
+  late String _name;
 
   @override
   _MeasuredVariablesListWidgetState createState () {
@@ -332,7 +350,7 @@ class MeasuredVariablesListWidget extends StatefulWidget {
   } 
 
   void setValues (List <MeasuredVariable> new_values) {
-     _model.setValues (new_values);
+    _model.setValues (new_values);
   }
 
   void addValues (List <MeasuredVariable> new_values) {
@@ -351,7 +369,9 @@ class MeasuredVariablesListWidget extends StatefulWidget {
 }
 
 
-class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidget> {
+class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidget>  {
+
+
   @override
   void initState () {
     super.initState ();
@@ -383,27 +403,56 @@ class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidg
 
   @override
   Widget build(BuildContext context) {
+    final List  <MeasuredVariable> values = widget._model._values;
 
-    return ListView.builder(
-      itemCount: widget._model.length,
-      itemBuilder: (BuildContext context, int index) {
-        MeasuredVariable mv = widget._model.at (index);
-        String item_subtitle = mv.trait_name + " - " + mv.measurement_name + " - " + mv.unit_name;
+    print ("building list of ${values.length} items for ${widget._name}");
 
-        Widget trailing_widget = Checkbox(
-            value: mv.selected,
-            onChanged: (bool? x) => _toggle(index),
+    if (values.length > 0) {
+      final int count = values.length;
+
+
+
+      print ("LIST MODE ${count}");
+      
+      for (int i = 0; i < count; ++ i) {
+        print ("About to add ${i} = ${values [i].variable_name}");
+      }
+      return ListView.builder(
+        shrinkWrap: true,
+        itemCount: count,
+        itemBuilder: (BuildContext context, int index) {
+          MeasuredVariable mv = values [index];
+          String item_subtitle = mv.trait_name + " - " + mv.measurement_name + " - " + mv.unit_name;
+
+          print ("ADDING ${index}");//: ${mv.variable_name}");
+
+         
+          Widget trailing_widget = Checkbox(
+              value: mv.selected,
+              onChanged: (bool? x) => _toggle(index),
+            );
+        
+
+          return ListTile (
+            onTap: () => _toggle(index),
+            trailing: trailing_widget,
+            title: Text (mv.variable_name),
+            subtitle: Html (data: item_subtitle),
           );
+        },
+      );
+    } else {
+      print ("BUTTON MODE");
 
-        return ListTile (
-          onTap: () => _toggle(index),
-          trailing: trailing_widget,
-          title: Text (mv.variable_name),
-          subtitle: Html (data: item_subtitle),
-        );
-      },
-    );
-
+      return ElevatedButton (
+       onPressed: () {
+        setState(() {
+          
+        });
+       }, 
+       child: Text ('Phenotypes'),
+      );
+    }
 /*
     return ListView.builder (
       itemCount: widget.measured_variables.length,
