@@ -1,13 +1,19 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
+import 'package:global_configuration/global_configuration.dart';
+
 
 class GrassrootsRequest {
   // Server names for public, private and queen services. Currently using BETA SERVER
+/*
   static const Map<String, String> _serverUrls = {
     'public': 'https://grassroots.tools/grassroots/public_backend',    
     'private': 'https://grassroots.tools/grassroots/private_backend',
     'queen_bee_backend': 'https://grassroots.tools/grassroots/queen_bee_backend'
   };
+*/
 
   // User name and password for requests to queen services.
   static const String _username = 'doc';
@@ -15,11 +21,13 @@ class GrassrootsRequest {
 
   static Future<Map<String, dynamic>> sendRequest(String requestString, String serverKey) async {
     // Determine the URL based on the serverKey provided
-    String? url = _serverUrls[serverKey];
+    String? url = GlobalConfiguration().getValue (serverKey);
 
     if (url == null) {
       throw Exception('Server key "$serverKey" does not correspond to a known server.');
     }
+
+    print (">>> Calling Grassroots Server at ${url}");
 
     // Creating a Map for headers
     Map<String, String> headers = {

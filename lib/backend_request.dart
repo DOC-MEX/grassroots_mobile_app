@@ -52,7 +52,7 @@ class backendRequests {
     }
   }
 
- //fetch all studies from Grassroots. Used when loading grassroot_studies.dart
+ //fetch all Trials from Grassroots. Used when loading grassroot_studies.dart
   static Future <List <Map <String, String>>> fetchAllTrials () async {
     String requestString = jsonEncode({
       "services": [
@@ -75,6 +75,7 @@ class backendRequests {
         //String name = study['title'] as String? ?? 'Unknown Study';
         String name = trial['data']['so:name'] as String? ?? 'Unknown Trials';
         String id = trial['data']['_id']['\$oid'] as String? ?? 'Unknown ID';
+
         return {'name': name, 'id': id};
       }).toList();
 
@@ -91,6 +92,55 @@ class backendRequests {
     }
   }
 
+
+ //fetch all Locations from Grassroots. Used when loading grassroot_studies.dart
+  static Future <List <Map <String, String>>> fetchAllLocations () async {
+    String requestString = jsonEncode({
+      "services": [
+        {
+          "so:name": "Search Field Trials",
+          "start_service": true,
+          "parameter_set": {
+            "level": "advanced",
+            "parameters": [{
+              "param": "Get all Locations",
+              "current_value": true,
+              "group": "Location"
+            }]
+          }
+        }
+      ]
+    });
+
+    try {
+      var response = await GrassrootsRequest.sendRequest(requestString, 'public');
+
+      print ("locations: ${response}");
+
+      List<Map<String, String>> locations = response['results'][0]['results'].map<Map<String, String>>((location) {
+        //String name = study['title'] as String? ?? 'Unknown Study';
+        String name = location['data']['name'] as String? ?? 'Unknown Location';
+        String id = location['data']['_id']['\$oid'] as String? ?? 'Unknown ID';
+
+        print ("Adding location ${name}");
+
+        return {'name': name, 'id': id};
+      }).toList();
+
+      print ("num locations ${locations.length}");
+
+      // Sort studies alphabetically by name
+      locations.sort((a, b) => a['name']!.compareTo(b['name']!));
+
+      IdNamesCache.cache (locations, CACHE_LOCATIONS);
+
+      return locations;
+    } catch (e) {
+      print('Error fetching Locations: $e');
+      // Optionally, handle the error in a specific way or rethrow it
+      throw e;
+    }
+  }
 
   //fetch single study from Grassroots. Used after a study is selected in grassroot_studies.dart
   static Future<Map<String, dynamic>> fetchSingleStudy(String studyId) async {

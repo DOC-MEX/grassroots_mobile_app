@@ -1,0 +1,11 @@
+{
+
+  "public": "http://localhost:2000/grassroots/public_backend",
+  "private": "http://localhost:2000/grassroots/private_backend",
+  "queen_bee_backend": "http://localhost:2000/grassroots/queen_bee_backend",
+
+  "queen_bee_username": "doc",
+  "queen_bee_password": "123_REPLACE_",
+
+  "photo_receiver_url": "http://localhost:2000/photo_receiver/"
+}

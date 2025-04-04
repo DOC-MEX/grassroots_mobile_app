@@ -1,4 +1,10 @@
 // global_variables.dart
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
+
+import 'package:global_configuration/global_configuration.dart';
+
 List<String> allowedStudyIDs = [
   '64f1e4e77c486e019b4e3017',
   '63bfce1a86ff5b59175e1d66',   // Study 1. Testing/debugging
@@ -16,3 +22,45 @@ final String CACHE_LOCATIONS = "locations_cache";
 final String CACHE_PROGRAMMES = "programmes_cache";
 final String CACHE_MEASURED_VARIABLES = "measured_variables_cache";
 
+
+
+class GrassrootsConfig {
+  static Map <String, String>? _config;
+
+  static Future <Map <String, String>?> LoadConfig () async {
+    if (_config == null) {
+      final String config_path = "assets/config.json";
+
+      try {
+        final String config_data = await rootBundle.loadString (config_path);
+        _config = json.decode (config_data);
+    
+      } on Exception {
+        print ("Could not load ${config_path}");
+      }
+    }
+
+    return _config;
+  }
+
+
+  static Future <String?> GetConfigValue (String key) async {
+    Map <String, dynamic>? config = await LoadConfig ();
+
+    if (config != null) {
+      return config [key];
+    } else {
+      return null;
+    }
+  }
+
+  static Future <String?> GetPublicBackendURL () {
+    return GetConfigValue ("public");
+  }
+
+  static Future <String?> GetPrivateBackendURL () {
+    return GetConfigValue ("private");
+  }
+
+
+}

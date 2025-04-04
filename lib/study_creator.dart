@@ -1,5 +1,7 @@
 
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:grassroots_field_trials/caching.dart';
@@ -32,8 +34,11 @@ class NewStudyPage extends StatefulWidget {
 
 class _NewStudyPageState extends State <NewStudyPage> {
   final TextEditingController _trials_controller = TextEditingController();
+  final TextEditingController _locations_controller = TextEditingController();
   bool _is_loading = true;
   List <Map <String, String>> _trials = []; // Store both name and ID
+
+  List <Map <String, String>> _locations = []; // Store both name and ID
 
   MeasuredVariableSearchDelegate _measured_variables_search = MeasuredVariableSearchDelegate ("search new phenotypes");
   
@@ -49,6 +54,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
     super.initState ();
 
     fetchTrials ();
+    fetchLocations ();
   }
 
   @override
@@ -185,6 +191,47 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
                       SizedBox (height: 10),
 
+
+                      // Locations menu
+                      DropdownMenu (
+                        expandedInsets: EdgeInsets.zero,  // full width
+                        requestFocusOnTap: true,
+                        dropdownMenuEntries: GetLocationsAsList (),
+                        controller: _locations_controller,
+                        enableFilter: true,
+                        label: const Text ("Choose the Location for this study..."),
+                        helperText: "Select a Location",
+                        trailingIcon: Icon (
+                          Icons.arrow_drop_down,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        textStyle: TextStyle (color: Theme.of(context).primaryColor),
+                        inputDecorationTheme: InputDecorationTheme (
+                          labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+                          helperStyle: TextStyle (color: Theme.of(context).primaryColor),
+                        ),
+
+                        /*
+                        inputDecorationTheme: InputDecorationTheme(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          constraints: BoxConstraints.tight(const 
+                          Size.fromHeight(40)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        */
+
+                        menuHeight: 500,
+                        menuStyle: MenuStyle (
+                          backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
+                        ),
+                        
+                      ),
+
+                      SizedBox (height: 10),
+
+
                       // Number of plot rows
                       TextField (
                         decoration: new InputDecoration (
@@ -288,95 +335,122 @@ class _NewStudyPageState extends State <NewStudyPage> {
   }
 
 
-  void fetchTrials() async {
+
+  void fetchTrials () async {
+    setState(() {
+      _is_loading  = true;
+    });
+
+    try {
+      List <Map <String, String>> trials = await _FetchData (backendRequests.fetchAllTrials, CACHE_TRIALS, "Trial");
+
+      if (mounted) {
+        setState(() {
+          _is_loading = true;
+          _trials = trials;
+          _is_loading = false;
+        });
+      }
+    } catch (e) {
+        print('Error fetching s: $e');
+        if (mounted) {
+          setState(() {
+            _is_loading = false;
+          });
+        }
+    }
+  }
+
+
+  void fetchLocations () async {
+    setState(() {
+      _is_loading  = true;
+    });
+
+    try {
+      List <Map <String, String>> locations = await _FetchData (backendRequests.fetchAllLocations, CACHE_LOCATIONS, "Location");
+
+      if (mounted) {
+        setState(() {
+          _is_loading = true;
+          _locations = locations;
+          _is_loading = false;
+        });
+      }
+    } catch (e) {
+        print('Error fetching s: $e');
+        if (mounted) {
+          setState(() {
+            _is_loading = false;
+          });
+        }
+    }
+  }
+
+
+  Future <List <Map <String, String>>> _FetchData (Future <List <Map <String, String>>> Function() rest_api_call,  final String cache_name, final String datatype) async {
+    List <Map <String, String>> data = [];
     bool healthy_flag = await ApiRequests.isServerHealthy ();  
 
     /*
      * If the server are online then get the live data
      */
     if (healthy_flag) {
-      setState(() {
-        _is_loading  = true;
-      });
-
-      try {
-        var trials_data = await backendRequests.fetchAllTrials ();
-        if (mounted) {
-          setState(() {
-            _trials = trials_data;
-
-            print ("got ${_trials.length} trials");
-            _is_loading = false;
-          });
-        }
-      } catch (e) {
-        print('Error fetching trials: $e');
-        if (mounted) {
-          setState(() {
-            _is_loading = false;
-          });
-        }
-      }
+      data = await rest_api_call ();
 
     } else {
       /* Use any cached data */
-      var box = await Hive.openBox <IdName> (CACHE_STUDIES);
+      var box = await Hive.openBox <IdName> (cache_name);
 
       final int num_entries = box.length;
-      List <Map <String, String>> trials_data = [];
 
       for (int i = 0; i < num_entries; i ++) {
         Map <String, String> entry = Map <String, String> ();
-        IdName? study = box.getAt (i);
+        IdName? cached_item = box.getAt (i);
 
-        if (study != null) {
-          entry ["name"] = study.name;
-          entry ["id"] = study.id;
+        if (cached_item != null) {
+          entry ["name"] = cached_item.name;
+          entry ["id"] = cached_item.id;
 
           String date_str = "";
-          if (study.date != null) {
-            date_str = study.date.toString ();
+          if (cached_item.date != null) {
+            date_str = cached_item.date.toString ();
           }
- 
-          //print ("using cached study ${entry ["name"]}, ${entry ["id"]} from ${date_str}");
-
-          trials_data.add (entry);        
+          data.add (entry);        
   
         }
       }
-
-      _is_loading = true;
-      _trials = trials_data;
-      /*
-      print ("Got ${_trials.length} cached trials");
-      print ("BEGIN _trials");
-      print ("${_trials}");
-      print ("END _trials");
-      */
-      _is_loading = false;
     }
 
+    return data;
   }
 
 
 
   List <StringEntry> GetTrialsAsList () {
+    return _GetEntries (_trials, "Trial");
+  }
+
+
+
+  List <StringEntry> GetLocationsAsList () {
+    return _GetEntries (_locations, "Location");
+  }
+
+
+  List <StringEntry> _GetEntries (List <Map <String, String>> mongo_obects, final String datatype) {
     List <StringEntry> l = [];
 
-    print ("in GetTrialsAsList ()"); 
-    print ("Num trials ${_trials}"); 
+    print ("Num ${datatype}s: ${mongo_obects}"); 
   
-    for (final e in _trials) {
-      var trial = e;
-
-      //print ("TRIAL: ${trial}");
-      var id = trial ['id'];
+    for (final e in mongo_obects) {
+      var id = e ['id'];
 
       if (id != null) {
-        StringLabel sl = StringLabel (trial['name'] ?? 'Unknown Trial', id);
+        StringLabel sl = StringLabel (e['name'] ?? 'Unknown ${datatype}', id);
 
         StringEntry se = StringEntry(
-          label: trial['name'] ?? 'Unknown Trial', 
+          label: e ['name'] ?? 'Unknown ${datatype}', 
           value: sl,
           style: ButtonStyle (
             foregroundColor: WidgetStateProperty.all(Theme.of(context).primaryColor),
@@ -385,13 +459,109 @@ class _NewStudyPageState extends State <NewStudyPage> {
         
         l.add (se);            
       } else {
-        print ("no id in ${trial}");
+        print ("no id in ${e}");
       }
 
     }
 
-    print ("num StringEntries for Studies ${l.length}");
+    print ("num StringEntries for ${datatype}s ${l.length}");
     return l;
   }
 
-}
+
+
+
+  bool submitStudy (final String study_name, final String trial_id, final String location_id, final String user_email, final String user_name,
+                    final int num_rows, final int num_cols, final List <MeasuredVariable> phenotypes) {
+ 
+    StringBuffer mvs = StringBuffer ();
+
+    for (int i = 0; i < phenotypes.length; ++ i) {
+      MeasuredVariable phenotype = phenotypes [i];
+      mvs.write ("\"");
+      mvs.write (phenotype.variable_name);
+      mvs.write ("\"");
+
+      if (i < phenotypes.length - 1) {
+        mvs.writeln (",");
+      }
+    }
+
+    String requestString = jsonEncode ({
+      "services": [{ 
+        "so:name": "Submit Field Trial Study",
+          "start_service": true,
+          "parameter_set": {
+            "level": "simple",
+            "parameters": [{
+                "param": "ST Name",
+                "current_value": "${study_name}",
+                "group": "Study"
+              }, {
+                "param": "Field Trials",
+                "current_value": "${trial_id}",
+                "group": "Study"
+              }, {
+                "param": "Locations",
+                "current_value": "${location_id}",
+                "group": "Study"
+              }, {
+                "param": "ST Curator name",
+                "current_value": "{username}",
+                "group": "Curator"
+              }, {
+                "param": "ST Curator email",
+                "current_value": "${user_email}",
+                "group": "Curator"
+              }, {
+                "param": "ST Curator role",
+                "current_value": null,
+                "group": "Curator"
+              }, {
+                "param": "ST Curator affiliation",
+                "current_value": null,
+                "group": "Curator"
+              }, {
+                "param": "ST Curator orcid",
+                "current_value": null,
+                "group": "Curator"
+              }, {
+                "param": "ST Description",
+                "current_value": "",
+                "group": "Study"
+              }, {
+                "param": "ST Design",
+                "current_value": "",
+                "group": "Study"
+              }, {
+                "param": "Photo",
+                "current_value": null,
+                "group": "Study"
+              }, {
+                "param": "ST Image Notes",
+                "current_value": "",
+                "group": "Study"
+              }, {
+                "param": "ST Num Rows",
+                "current_value": "${num_rows}",
+                "group": "Default Plots data"
+              }, {
+                "param": "ST Num Columns",
+                "current_value": "${num_cols}",
+                "group": "Default Plots data"
+              }, {
+                "param": "ST Measured Variables",
+                "current_value": [
+                  mvs
+                ],
+                "group": "Measured Variables"
+              }
+            ]
+          }
+        }]
+      });
+
+      return false;
+    }
+  }
+

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:global_configuration/global_configuration.dart';
 import 'package:grassroots_field_trials/caching.dart';
 import 'package:grassroots_field_trials/global_variable.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -39,6 +40,7 @@ void main() async{
   Hive.registerAdapter (IdsAdapter ());
   await Hive.openBox <IdsList> (IdsCache.ic_name);
 
+  await GlobalConfiguration ().loadFromAsset ("config");
 
   try {
     runApp(const MyApp ());
