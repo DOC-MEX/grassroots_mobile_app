@@ -9,7 +9,7 @@ import 'global_variable.dart';
 
 class backendRequests {
   //fetch all studies from Grassroots. Used when loading grassroot_studies.dart
-  static Future<List<Map<String, String>>> fetchAllStudies() async {
+  static Future<List<Map<String, String>>> fetchAllStudies () async {
     String requestString = jsonEncode({
       "services": [
         {
@@ -70,19 +70,23 @@ class backendRequests {
     });
 
     try {
+      GrassrootsConfig.debug_flag = true;
       var response = await GrassrootsRequest.sendRequest(requestString, 'public');
+
       List<Map<String, String>> trials = response['results'][0]['results'].map<Map<String, String>>((trial) {
         //String name = study['title'] as String? ?? 'Unknown Study';
-        String name = trial['data']['so:name'] as String? ?? 'Unknown Trials';
+        String name = trial['data']['so:name'] as String? ?? 'Unknown Trial';
         String id = trial['data']['_id']['\$oid'] as String? ?? 'Unknown ID';
 
         return {'name': name, 'id': id};
       }).toList();
 
-      // Sort studies alphabetically by name
+      // Sort trials alphabetically by name
       trials.sort((a, b) => a['name']!.compareTo(b['name']!));
 
       IdNamesCache.cache (trials, CACHE_TRIALS);
+
+      GrassrootsConfig.debug_flag = false;
 
       return trials;
     } catch (e) {
@@ -115,18 +119,21 @@ class backendRequests {
     try {
       var response = await GrassrootsRequest.sendRequest(requestString, 'public');
 
-      print ("locations: ${response}");
+      if (GrassrootsConfig.debug_flag) {
+        print ("locations: ${response}");
+      }
 
       List<Map<String, String>> locations = response['results'][0]['results'].map<Map<String, String>>((location) {
         //String name = study['title'] as String? ?? 'Unknown Study';
         String name = location['data']['name'] as String? ?? 'Unknown Location';
         String id = location['data']['_id']['\$oid'] as String? ?? 'Unknown ID';
 
-        print ("Adding location ${name}");
+        if (GrassrootsConfig.debug_flag) {
+          print ("Adding location ${name}");
+        }
 
         return {'name': name, 'id': id};
       }).toList();
-
       print ("num locations ${locations.length}");
 
       // Sort studies alphabetically by name

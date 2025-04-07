@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:grassroots_field_trials/backend_request.dart';
 
 import 'package:flutter_html/flutter_html.dart';
+import 'package:grassroots_field_trials/global_variable.dart';
 
 /*
   "unit": {
@@ -43,31 +44,43 @@ class MeasuredVariable {
 
   factory MeasuredVariable.fromJson (Map <String, dynamic> json) {
 
-    print (">>> json ${json}");
+    if (GrassrootsConfig.debug_flag) {
+      print (">>> json ${json}");
+    }
 
     String mv_id = json ["id"];
 
-    print ("id ${mv_id}");
+    if (GrassrootsConfig.debug_flag) {
+      print ("id ${mv_id}");
+    }
 
     if (mv_id != "") {
       var child = json ["unit"];
 
-      print ("unit ${child}");
+      if (GrassrootsConfig.debug_flag) {
+        print ("unit ${child}");
+      }
 
       if (child != null) {
         String mv_unit_name = child ["so:name"];
       
-        print ("mv_unit_name ${mv_unit_name}");
+        if (GrassrootsConfig.debug_flag) {
+          print ("mv_unit_name ${mv_unit_name}");
+        }
 
         if (mv_unit_name != "") {
           child = json ["trait"];
 
-           print ("trait ${child}"); 
+          if (GrassrootsConfig.debug_flag) {
+             print ("trait ${child}"); 
+          }
 
           if (child != null) {
             String mv_trait_name = child ["so:name"];
 
-            print ("mv_trait_name ${mv_trait_name}");
+            if (GrassrootsConfig.debug_flag) {
+              print ("mv_trait_name ${mv_trait_name}");
+            }
 
             if (mv_trait_name != "") {
               String? mv_trait_descrption = child ["so:description"];
@@ -76,16 +89,22 @@ class MeasuredVariable {
                 mv_trait_descrption = null;
               }
 
-              print ("mv_trait_descrption ${mv_trait_descrption}");
+              if (GrassrootsConfig.debug_flag) {
+                print ("mv_trait_descrption ${mv_trait_descrption}");
+              }
 
               child = json ["measurement"];
 
-              print ("measurement ${child}"); 
+              if (GrassrootsConfig.debug_flag) {
+                print ("measurement ${child}"); 
+              }
 
               if (child != null) {
                 String mv_measurement_name = child ["so:name"];
                 
-                print ("mv_measurement_name ${mv_measurement_name}");
+                if (GrassrootsConfig.debug_flag) {
+                  print ("mv_measurement_name ${mv_measurement_name}");
+                }
 
                 if (mv_measurement_name != "") {
                   String? mv_measurement_description = child ["so:description"];
@@ -94,20 +113,25 @@ class MeasuredVariable {
                     mv_measurement_description = null;
                   }
 
-                  print ("mv_measurement_description ${mv_measurement_description}");
+                  if (GrassrootsConfig.debug_flag) {
+                    print ("mv_measurement_description ${mv_measurement_description}");
+                  }
 
                   child = json ["variable"];
 
-                  print ("variable ${child}"); 
+                  if (GrassrootsConfig.debug_flag) {
+                    print ("variable ${child}"); 
+                  }
 
                   if (child != null) {
                     String mv_variable_name = child ["so:name"];
 
-                    print ("mv_variable_name ${mv_variable_name}");
+                    if (GrassrootsConfig.debug_flag) {
+                      print ("mv_variable_name ${mv_variable_name}");
+                    }
 
                     if (mv_variable_name != "") {
                       return MeasuredVariable (mv_id, mv_unit_name, mv_trait_name, mv_trait_descrption, mv_measurement_name, mv_measurement_description, mv_variable_name, false);
-
                     }
                   }
                 }
@@ -182,12 +206,16 @@ class MeasuredVariablesModel with ChangeNotifier {
 
     for (MeasuredVariable mv in new_values) {
 
-      print ("${_name} :: _addValues (): checking ${mv.variable_name}");
+      if (GrassrootsConfig.debug_flag) {
+        print ("${_name} :: _addValues (): checking ${mv.variable_name}");
+      }
 
       if (! (_values.contains (mv))) {
         _values.add (mv);
  
-       print ("${_name} :: _addValues (): adding ${mv.variable_name}");
+        if (GrassrootsConfig.debug_flag) {
+          print ("${_name} :: _addValues (): adding ${mv.variable_name}");
+        }
 
         if (!added_flag) {
           added_flag = true;
@@ -196,7 +224,10 @@ class MeasuredVariablesModel with ChangeNotifier {
     } 
 
     if (added_flag) {
-      print ("${_name} :: _addValues (): about to call notifyListeners ()");
+      if (GrassrootsConfig.debug_flag) {
+        print ("${_name} :: _addValues (): about to call notifyListeners ()");
+      }
+
       notifyListeners ();
     }
     
@@ -235,12 +266,8 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
         
         MeasuredVariablesListWidget w = _list_widget;
 
-        if (w != null) {
-         mvs = w.getSelectedVariables ();
-        }
+        mvs = w.getSelectedVariables ();
           
-      //MeasuredVariable mv = _selected_entries.entries.first.value;
-
         close (context, mvs);
       },
     );
@@ -305,10 +332,13 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
       results = m.getSelectedVariables ();
     }
 
-    if (results != null) {
-      print ("getSelectedVariables () has ${results.length} entries");
-    } else {
-      print ("getSelectedVariables () has no entries");
+    if (GrassrootsConfig.debug_flag) {
+      if (results != null) {
+        print ("getSelectedVariables () has ${results.length} entries");
+      } else {
+        print ("getSelectedVariables () has no entries");
+      }
+   
     }
 
     return results;
@@ -329,7 +359,11 @@ class MeasuredVariablesListWidget extends StatefulWidget {
     _name = name;
 
     if (model != null) {
-      print ("USING EXISTING MODEL OF ${model.length} VALUES");
+      
+      if (GrassrootsConfig.debug_flag) {
+        print ("USING EXISTING MODEL OF ${model.length} VALUES");
+      }
+
       _model = model;
     } else {
       _model = MeasuredVariablesModel (_name);
@@ -405,18 +439,22 @@ class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidg
   Widget build(BuildContext context) {
     final List  <MeasuredVariable> values = widget._model._values;
 
-    print ("building list of ${values.length} items for ${widget._name}");
+    if (GrassrootsConfig.debug_flag) {
+      print ("building list of ${values.length} items for ${widget._name}");
+    }
 
     if (values.length > 0) {
       final int count = values.length;
 
+      if (GrassrootsConfig.debug_flag) {
+        print ("LIST MODE ${count}");
 
-
-      print ("LIST MODE ${count}");
+        for (int i = 0; i < count; ++ i) {
+          print ("About to add ${i} = ${values [i].variable_name}");
+        }
       
-      for (int i = 0; i < count; ++ i) {
-        print ("About to add ${i} = ${values [i].variable_name}");
       }
+
       return ListView.builder(
         shrinkWrap: true,
         itemCount: count,
@@ -424,8 +462,9 @@ class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidg
           MeasuredVariable mv = values [index];
           String item_subtitle = mv.trait_name + " - " + mv.measurement_name + " - " + mv.unit_name;
 
-          print ("ADDING ${index}");//: ${mv.variable_name}");
-
+          if (GrassrootsConfig.debug_flag) {
+            print ("ADDING ${index}: ${mv.variable_name}");
+          }
          
           Widget trailing_widget = Checkbox(
               value: mv.selected,
@@ -442,16 +481,7 @@ class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidg
         },
       );
     } else {
-      print ("BUTTON MODE");
-
-      return ElevatedButton (
-       onPressed: () {
-        setState(() {
-          
-        });
-       }, 
-       child: Text ('Phenotypes'),
-      );
+      return Text ("");
     }
 /*
     return ListView.builder (

@@ -4,7 +4,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:global_configuration/global_configuration.dart';
 import 'package:grassroots_field_trials/caching.dart';
+import 'package:grassroots_field_trials/grassroots_request.dart';
 import 'package:grassroots_field_trials/measured_variables.dart';
 import 'package:grassroots_field_trials/search_phenotypes.dart';
 import 'package:hive/hive.dart';
@@ -44,16 +46,26 @@ class _NewStudyPageState extends State <NewStudyPage> {
   
   MeasuredVariablesModel _model = MeasuredVariablesModel("Selected Phenotypes List");
 
-  
+  final GlobalKey <FormState> _key = GlobalKey <FormState> ();
+
   String? _name;
   int _num_rows = 1;
   int _num_columns = 1;
+
+  StringLabel? _selected_trial;
+  StringLabel? _selected_location;
+
+
 
   @override
   void initState () {
     super.initState ();
 
+    GrassrootsConfig.debug_flag = true;
     fetchTrials ();
+    GrassrootsConfig.debug_flag = false;
+
+
     fetchLocations ();
   }
 
@@ -131,203 +143,273 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
           return Padding (
               padding: EdgeInsets.all(16.0),
-              child: SingleChildScrollView(
-                child: Form(
-                  child: Column(
-                    children: <Widget>[
 
-                      TextField (
-                        decoration: InputDecoration (
-                          border: OutlineInputBorder (), 
-                          labelText: 'Study name'
-                        ),
-                      
-                        onChanged: (String? new_value) {
-                          setState (() {
-                            _name = new_value;
-                            print ("set _name to ${_name}");
-                          });
-                        }
-                      ),
+              child: Container (
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: _key,
+                    child: Column(
+                      children: <Widget>[
 
-                      SizedBox (height: 10),
-
-                      // Trials menu
-                      DropdownMenu (
-                        expandedInsets: EdgeInsets.zero,  // full width
-                        requestFocusOnTap: true,
-                        dropdownMenuEntries: GetTrialsAsList (),
-                        controller: _trials_controller,
-                        enableFilter: true,
-                        label: const Text ("Choose the Field Trial that this study is a part of..."),
-                        helperText: "Select a Trial",
-                        trailingIcon: Icon (
-                          Icons.arrow_drop_down,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        textStyle: TextStyle (color: Theme.of(context).primaryColor),
-                        inputDecorationTheme: InputDecorationTheme (
-                          labelStyle: TextStyle (color: Theme.of(context).primaryColor),
-                          helperStyle: TextStyle (color: Theme.of(context).primaryColor),
-                        ),
-
-                        /*
-                        inputDecorationTheme: InputDecorationTheme(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                          constraints: BoxConstraints.tight(const 
-                          Size.fromHeight(40)),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                        TextFormField (
+                          decoration: InputDecoration (
+                            border: OutlineInputBorder (), 
+                            labelText: 'Study name'
                           ),
-                        ),
-                        */
-
-                        menuHeight: 500,
-                        menuStyle: MenuStyle (
-                          backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
-                        ),
                         
-                      ),
-
-                      SizedBox (height: 10),
-
-
-                      // Locations menu
-                      DropdownMenu (
-                        expandedInsets: EdgeInsets.zero,  // full width
-                        requestFocusOnTap: true,
-                        dropdownMenuEntries: GetLocationsAsList (),
-                        controller: _locations_controller,
-                        enableFilter: true,
-                        label: const Text ("Choose the Location for this study..."),
-                        helperText: "Select a Location",
-                        trailingIcon: Icon (
-                          Icons.arrow_drop_down,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        textStyle: TextStyle (color: Theme.of(context).primaryColor),
-                        inputDecorationTheme: InputDecorationTheme (
-                          labelStyle: TextStyle (color: Theme.of(context).primaryColor),
-                          helperStyle: TextStyle (color: Theme.of(context).primaryColor),
-                        ),
-
-                        /*
-                        inputDecorationTheme: InputDecorationTheme(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                          constraints: BoxConstraints.tight(const 
-                          Size.fromHeight(40)),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        */
-
-                        menuHeight: 500,
-                        menuStyle: MenuStyle (
-                          backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
-                        ),
-                        
-                      ),
-
-                      SizedBox (height: 10),
-
-
-                      // Number of plot rows
-                      TextField (
-                        decoration: new InputDecoration (
-                          labelText: "Number of rows of plots"
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly
-                        ], // Only numbers can be entered
-                      
-                        onChanged: (String? new_value) {
-                          if (new_value != null) {
-                            int? c = int.tryParse (new_value);
-          
-                            if (c != null) {
-                              setState (() {
-                                _num_rows = c;
-                                print ("set rows to ${_num_rows}");
-                              });
-                            }
-                          }
-                        },                
-                      ),
-
-                      SizedBox (height: 10),
-
-                      // Number of plot columns
-                      TextField (
-                        decoration: new InputDecoration (
-                          labelText: "Number of columns of plots"
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly
-                        ], // Only numbers can be entered
-
-                        onChanged: (String? new_value) {
-                          if (new_value != null) {
-                            int? c = int.tryParse (new_value);
-          
-                            if (c != null) {
-                              setState (() {
-                                _num_columns = c;
-                                print ("set columns to ${_num_columns}");
-                              });
-                            }
-                          }
-                        },
-
-                      ),
-
-                      SizedBox (height: 10),
-
-
-                      IconButton (
-                        icon: Icon (Icons.search),
-                        onPressed: () async {
-/*
-                          MeasuredVariablesModel? m = await _navigateAndDisplaySelection (context);
-
-                          if (m != null) {
-                            print ("ABOUT TO SET STATE WITH ${m.length} values");
-                            setState(() {
-                              phenotypes_widget.addValues (m.values);
-                            });
-                          }
-*/
-                          
-                          final List <MeasuredVariable>? selected_mvs = await showSearch <List <MeasuredVariable>> (
-                            context: context,
-                            delegate: _measured_variables_search,
-                          );
-
-                          if (selected_mvs != null) {
-                            for (int i = 0; i < selected_mvs.length; ++ i) {
-                              print ("${i}: ${selected_mvs [i].variable_name}");
-                            }
-
-
+                          onSaved: (String? new_value) {
                             setState (() {
-                              // Call setState to refresh the page.
-                              phenotypes_widget.addValues (selected_mvs); 
+                              _name = new_value;
+                              print ("set _name to ${_name}");
                             });
-                          }
-                          
-                        },
-                      ),
+                          },
+                          validator: _ValidateStringField,
+                        ),
 
-                      SizedBox (height: 10),
+                        SizedBox (height: 10),
 
-                      phenotypes_widget,
+                        // Trials menu
+                        FormField <StringLabel> (
+                          builder: (FormFieldState <StringLabel> state) {
 
-                    ]
+                            return DropdownMenu (
+                              initialSelection: _selected_trial,
+                              expandedInsets: EdgeInsets.zero,  // full width
+                              requestFocusOnTap: true,
+                              dropdownMenuEntries: GetTrialsAsList (),
+                              controller: _trials_controller,
+                              enableFilter: true,
+                              label: const Text ("Choose the Field Trial that this study is a part of..."),
+                              helperText: "Select a Trial",
+                              trailingIcon: Icon (
+                                Icons.arrow_drop_down,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              textStyle: TextStyle (color: Theme.of(context).primaryColor),
+                              inputDecorationTheme: InputDecorationTheme (
+                                labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+                                helperStyle: TextStyle (color: Theme.of(context).primaryColor),
+                              ),
+
+                              /*
+                              inputDecorationTheme: InputDecorationTheme(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                                constraints: BoxConstraints.tight(const 
+                                Size.fromHeight(40)),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              */
+
+                              menuHeight: 500,
+                              menuStyle: MenuStyle (
+                                backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
+                              ),
+
+                              onSelected: (value) {
+                                if (value != null) {
+                                  state.didChange (value);
+                                  _key.currentState!.validate (); // this will undo error message once user selects option
+                                  setState(() {
+                                    _selected_location = value;
+                                  });
+                                }
+                              }
+
+                            );
+                          },
+                          validator: (StringLabel? value) {
+                            if (value == null) {
+                              return "A Trial is required";
+                            }
+                            return null;
+                          },
+                        ),
+                        
+                        SizedBox (height: 10),
+
+                        // Locations menu
+                        FormField <StringLabel> (
+                          builder: (FormFieldState <StringLabel> state) {
+                            return DropdownMenu (
+                              initialSelection: _selected_location,
+                              expandedInsets: EdgeInsets.zero,  // full width
+                              requestFocusOnTap: true,
+                              dropdownMenuEntries: GetLocationsAsList (),
+                              controller: _locations_controller,
+                              enableFilter: true,
+                              label: const Text ("Choose the Location for this study..."),
+                              helperText: "Select a Location",
+                              trailingIcon: Icon (
+                                Icons.arrow_drop_down,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              textStyle: TextStyle (color: Theme.of(context).primaryColor),
+                              inputDecorationTheme: InputDecorationTheme (
+                                labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+                                helperStyle: TextStyle (color: Theme.of(context).primaryColor),
+                              ),
+
+                              /*
+                              inputDecorationTheme: InputDecorationTheme(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                                constraints: BoxConstraints.tight(const 
+                                Size.fromHeight(40)),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              */
+
+                              menuHeight: 500,
+                              menuStyle: MenuStyle (
+                                backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
+                              ),
+                              
+
+                              onSelected: (value) {
+                                if (value != null) {
+                                  state.didChange (value);
+                                  _key.currentState!.validate (); // this will undo error message once user selects option
+                                  setState(() {
+                                    _selected_location = value;
+                                  });
+                                }
+                              }
+                            );
+                        
+                          },
+                          validator: (StringLabel? value) {
+                            if (value == null) {
+                              return "A location is required";
+                            }
+                            return null;
+                          },
+                        ),
+
+                        SizedBox (height: 10),
+
+
+                        // Number of plot rows
+                        TextFormField (
+                          decoration: new InputDecoration (
+                            labelText: "Number of rows of plots"
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly
+                          ], // Only numbers can be entered
+                        
+                          onSaved: (String? new_value) {
+                            if (new_value != null) {
+                              int? c = int.tryParse (new_value);
+            
+                              if (c != null) {
+                                setState (() {
+                                  _num_rows = c;
+                                  print ("set rows to ${_num_rows}");
+                                });
+                              }
+                            }
+                          },
+                          validator: _ValidateNumberField,
+                  
+                        ),
+
+                        SizedBox (height: 10),
+
+                        // Number of plot columns
+                        TextFormField (
+                          decoration: new InputDecoration (
+                            labelText: "Number of columns of plots"
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly
+                          ], // Only numbers can be entered
+
+                          onSaved: (String? new_value) {
+                            if (new_value != null) {
+                              int? c = int.tryParse (new_value);
+            
+                              if (c != null) {
+                                setState (() {
+                                  _num_columns = c;
+                                  print ("set columns to ${_num_columns}");
+                                });
+                              }
+                            }
+                          },
+                          validator: _ValidateNumberField,
+                        ),
+
+                        SizedBox (height: 10),
+
+                        Text ("Phenotypes"),
+
+                        IconButton (
+                          icon: Icon (Icons.search),
+                          onPressed: () async {
+  /*
+                            MeasuredVariablesModel? m = await _navigateAndDisplaySelection (context);
+
+                            if (m != null) {
+                              print ("ABOUT TO SET STATE WITH ${m.length} values");
+                              setState(() {
+                                phenotypes_widget.addValues (m.values);
+                              });
+                            }
+  */
+                            
+                            final List <MeasuredVariable>? selected_mvs = await showSearch <List <MeasuredVariable>> (
+                              context: context,
+                              delegate: _measured_variables_search,
+                            );
+
+                            if (selected_mvs != null) {
+                              for (int i = 0; i < selected_mvs.length; ++ i) {
+                                print ("${i}: ${selected_mvs [i].variable_name}");
+                              }
+
+
+                              setState (() {
+                                // Call setState to refresh the page.
+                                phenotypes_widget.addValues (selected_mvs); 
+                              });
+                            }
+                            
+                          },
+                        ),
+
+                        SizedBox (height: 10),
+
+                        phenotypes_widget,
+
+
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Validate will return true if the form is valid, or false if
+                              // the form is invalid.
+                              if (_key.currentState!.validate ()) {
+                                // Process data.
+                              }
+                            },
+                            child: const Text('Submit'),
+                          ),
+                        ),
+                      
+                      ]
+                    )
+                  
+
                   )
                 )
-              )
+              
+              ),
+
             );
           }
         )
@@ -335,6 +417,35 @@ class _NewStudyPageState extends State <NewStudyPage> {
   }
 
 
+  String? _ValidateStringField (String? value) {
+    String? res = null;
+
+    print ("Value \"${value}\"");
+
+    if ((value == null) || (value.trim ().length == 0)) {
+      res = "This is required";
+    }
+
+    return res;
+  }
+
+  String? _ValidateNumberField (String? value) {
+    if (value != null) {
+      int? c = int.tryParse (value);
+
+      if (c != null) {
+        if (c > 0) {
+          return null;
+        } else {
+          return "Value must be a number greater than 0";
+        }
+      } else {
+        return "Value must be a number";
+      }
+    } else {
+      return "This is required";
+    }
+  }
 
   void fetchTrials () async {
     setState(() {
@@ -471,8 +582,8 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
 
 
-  bool submitStudy (final String study_name, final String trial_id, final String location_id, final String user_email, final String user_name,
-                    final int num_rows, final int num_cols, final List <MeasuredVariable> phenotypes) {
+  Future <bool> submitStudy (final String study_name, final String trial_id, final String location_id, final String user_email, final String user_name,
+                    final int num_rows, final int num_cols, final List <MeasuredVariable> phenotypes) async {
  
     StringBuffer mvs = StringBuffer ();
 
@@ -560,6 +671,19 @@ class _NewStudyPageState extends State <NewStudyPage> {
           }
         }]
       });
+
+
+    try {
+      Map <String, dynamic> response = await GrassrootsRequest.sendRequest(requestString, 'private');
+
+      print ("submit study: ${response}");
+
+
+    } catch (e) {
+      print('Error submitting study: $e');
+      // Optionally, handle the error in a specific way or rethrow it
+      throw e;
+    }
 
       return false;
     }

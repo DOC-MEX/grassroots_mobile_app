@@ -23,9 +23,10 @@ final String CACHE_PROGRAMMES = "programmes_cache";
 final String CACHE_MEASURED_VARIABLES = "measured_variables_cache";
 
 
-
 class GrassrootsConfig {
   static Map <String, String>? _config;
+
+  static bool debug_flag = false;
 
   static Future <Map <String, String>?> LoadConfig () async {
     if (_config == null) {
