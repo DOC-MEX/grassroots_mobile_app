@@ -77,7 +77,7 @@ class StudyDetailsWidget extends StatelessWidget {
             child: Text('Add New Observation'),
           ),
       ],
-    );
+    ),
     );
   }
 }

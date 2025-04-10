@@ -1,10 +1,16 @@
-# Mobile App for Grassroots Field Trials
+# mobile
 
+A new Flutter project.
 
-## Description
+## Getting Started
 
-The mobile app displays and submit the observations in field trials. It is written in Flutter and will available for both Android and iOS. The current version is a prototype and it is only available for Android.
+This project is a starting point for a Flutter application.
 
+A few resources to get you started if this is your first Flutter project:
 
-The app is can be downloaded from the [Google Play Store](https://play.google.com/store/apps/details?id=tools.grassroots.qr_reader).
- 
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.

@@ -143,7 +143,7 @@ Future<void> _printLocalPhotoSubmissions() async {
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: IntrinsicHeight(
-                  child: Stack(
+                  child: Column(
                     children: [
                       // Welcome message
                       WelcomeMessageWidget(),

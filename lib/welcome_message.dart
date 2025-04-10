@@ -8,17 +8,13 @@ class WelcomeMessageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: 50.0,
-      left: 3,
-      right: 3,
-      child: RichText(
+    return RichText(
         textAlign: TextAlign.center,
         text: TextSpan(
           style: TextStyle(fontSize: 16, color: Theme.of(context).primaryColor),
           children: [
             TextSpan(
-              text: "Welcome to the QR reader for Grassroots.\n\n",
+              text: "Welcome to the Grassroots Field Trials App\n\n",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             //TextSpan(
@@ -49,7 +45,6 @@ class WelcomeMessageWidget extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }

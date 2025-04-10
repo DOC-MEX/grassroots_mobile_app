@@ -234,6 +234,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
                       // Number of plot rows
                       TextField (
+                        style: TextStyle(color: Theme.of(context).primaryColor),
                         decoration: new InputDecoration (
                           labelText: "Number of rows of plots"
                         ),
@@ -260,8 +261,9 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
                       // Number of plot columns
                       TextField (
+                        style: TextStyle(color: Theme.of(context).primaryColor),
                         decoration: new InputDecoration (
-                          labelText: "Number of columns of plots"
+                          labelText: "Number of columns of plots",
                         ),
                         keyboardType: TextInputType.number,
                         inputFormatters: <TextInputFormatter>[
