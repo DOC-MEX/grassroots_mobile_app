@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:grassroots_field_trials/global_variable.dart';
 import 'welcome_message.dart';
 import 'grassroots_studies.dart';
 import 'api_requests.dart';
@@ -201,6 +202,18 @@ Future<void> _printLocalPhotoSubmissions() async {
                                   child: Text('Exit'),
                                 ),
 
+                                ElevatedButton(
+                                  onPressed: () {
+                                    EmptyBox (CACHE_TRIALS);
+                                    EmptyBox (CACHE_LOCATIONS);
+                                    EmptyBox (CACHE_STUDIES);
+                                    EmptyBox (CACHE_MEASURED_VARIABLES);
+                                    EmptyBox (CACHE_PROGRAMMES);
+                                  },
+                                  child: Text('Clear'),
+                                ),
+
+
                               ],
 
                             )
@@ -218,5 +231,9 @@ Future<void> _printLocalPhotoSubmissions() async {
         ),
       ),
     );
+  }
+
+  void EmptyBox (final String name) async {
+    await Hive.deleteBoxFromDisk (name);
   }
 }

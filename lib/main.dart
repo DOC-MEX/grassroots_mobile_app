@@ -31,10 +31,8 @@ void main() async{
   /* Cache studies for offline use */
   Hive.registerAdapter (IdNameAdapter ());
   await Hive.openBox <IdName> (CACHE_STUDIES);
-
-
   await Hive.openBox <IdName> (CACHE_TRIALS);
-
+  await Hive.openBox <IdName> (CACHE_LOCATIONS);
 
   /* Cache allowed study ids for offline use */
   Hive.registerAdapter (IdsAdapter ());

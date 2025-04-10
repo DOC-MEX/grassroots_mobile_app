@@ -4,7 +4,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:global_configuration/global_configuration.dart';
 import 'package:grassroots_field_trials/caching.dart';
+import 'package:grassroots_field_trials/grassroots_request.dart';
 import 'package:grassroots_field_trials/measured_variables.dart';
 import 'package:grassroots_field_trials/search_phenotypes.dart';
 import 'package:hive/hive.dart';
@@ -232,43 +234,45 @@ class _NewStudyPageState extends State <NewStudyPage> {
                       SizedBox (height: 10),
 
 
-                      // Number of plot rows
-                      TextField (
-                        style: TextStyle(color: Theme.of(context).primaryColor),
-                        decoration: new InputDecoration (
-                          labelText: "Number of rows of plots"
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly
-                        ], // Only numbers can be entered
-                      
-                        onChanged: (String? new_value) {
-                          if (new_value != null) {
-                            int? c = int.tryParse (new_value);
-          
-                            if (c != null) {
-                              setState (() {
-                                _num_rows = c;
-                                print ("set rows to ${_num_rows}");
-                              });
+                        // Number of plot rows
+                        TextFormField (
+                          style: TextStyle (color: Theme.of(context).primaryColor),
+                          decoration: new InputDecoration (
+                            labelText: "Number of rows of plots"
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly
+                          ], // Only numbers can be entered
+
+                          onSaved: (String? new_value) {
+                            if (new_value != null) {
+                              int? c = int.tryParse (new_value);
+
+                              if (c != null) {
+                                setState (() {
+                                  _num_rows = c;
+                                  print ("set rows to ${_num_rows}");
+                                });
+                              }
                             }
-                          }
-                        },                
-                      ),
+                          },
+                          validator: _ValidateNumberField,
+
+                        ),
 
                       SizedBox (height: 10),
 
-                      // Number of plot columns
-                      TextField (
-                        style: TextStyle(color: Theme.of(context).primaryColor),
-                        decoration: new InputDecoration (
-                          labelText: "Number of columns of plots",
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly
-                        ], // Only numbers can be entered
+                        // Number of plot columns
+                        TextFormField (
+                          style: TextStyle (color: Theme.of(context).primaryColor),
+                          decoration: new InputDecoration (
+                            labelText: "Number of columns of plots"
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly
+                          ], // Only numbers can be entered
 
                         onChanged: (String? new_value) {
                           if (new_value != null) {
@@ -337,6 +341,35 @@ class _NewStudyPageState extends State <NewStudyPage> {
   }
 
 
+  String? _ValidateStringField (String? value) {
+    String? res = null;
+
+    print ("Value \"${value}\"");
+
+    if ((value == null) || (value.trim ().length == 0)) {
+      res = "This is required";
+    }
+
+    return res;
+  }
+
+  String? _ValidateNumberField (String? value) {
+    if (value != null) {
+      int? c = int.tryParse (value);
+
+      if (c != null) {
+        if (c > 0) {
+          return null;
+        } else {
+          return "Value must be a number greater than 0";
+        }
+      } else {
+        return "Value must be a number";
+      }
+    } else {
+      return "This is required";
+    }
+  }
 
   void fetchTrials () async {
     setState(() {

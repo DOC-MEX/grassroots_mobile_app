@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:grassroots_field_trials/global_variable.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:global_configuration/global_configuration.dart';
@@ -19,7 +20,7 @@ class GrassrootsRequest {
   static const String _username = 'doc';
   static const String _password = '123_REPLACE_';
 
-  static Future<Map<String, dynamic>> sendRequest(String requestString, String serverKey) async {
+  static Future<Map<String, dynamic>> sendRequest(String requestString, String serverKey,) async {
     // Determine the URL based on the serverKey provided
     String? url = GlobalConfiguration().getValue (serverKey);
 
@@ -27,8 +28,10 @@ class GrassrootsRequest {
       throw Exception('Server key "$serverKey" does not correspond to a known server.');
     }
 
-    print (">>> Calling Grassroots Server at ${url}");
-
+    if (GrassrootsConfig.debug_flag) {
+      print (">>> Calling Grassroots Server at ${url}");
+    }
+    
     // Creating a Map for headers
     Map<String, String> headers = {
       'Content-Type': 'application/json; charset=UTF-8',
@@ -48,6 +51,12 @@ class GrassrootsRequest {
 
     // The rest of your method remains unchanged
     if (response.statusCode == 200) {
+
+      if (GrassrootsConfig.debug_flag) {
+        print ("REQUEST: ${response.body}");
+        print ("RESPONSE BODY: ${response.body}");
+      }
+
       var data = json.decode(response.body);
       if ((data['results'] as List).isEmpty) {
         throw Exception("EmptyResults");
