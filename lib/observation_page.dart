@@ -293,7 +293,7 @@ class _ObservationPageState extends State<ObservationPage> {
                           print('JSON Request: $jsonString');
 
                           // Send the primary request to the server and await the response
-                          var response = await GrassrootsRequest.sendRequest(jsonString, 'private', false);
+                          var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
 
                           // Handle the response data
                           print('Response from server: $response');
@@ -314,7 +314,7 @@ class _ObservationPageState extends State<ObservationPage> {
                           String cacheClearRequestJson = clearCacheRequest(widget.studyID);
                           print('CACHE Request: $cacheClearRequestJson');
                           // Fire-and-forget the clear cache request, no await used
-                          GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend', false).then((cacheResponse) {
+                          GrassrootsRequest.sendRequest(cacheClearRequestJson, 'queen_bee_backend').then((cacheResponse) {
                             // Log the cache clear response
                             print('+++Cache clear response: $cacheResponse');
                           }).catchError((error) {

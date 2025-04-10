@@ -138,7 +138,8 @@ class _NewStudyPageState extends State <NewStudyPage> {
                   child: Column(
                     children: <Widget>[
 
-                      TextField (
+                      TextFormField (
+                        style: TextStyle (color: Theme.of(context).primaryColor),
                         decoration: InputDecoration (
                           border: OutlineInputBorder (), 
                           labelText: 'Study name'

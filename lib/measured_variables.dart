@@ -252,6 +252,17 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
 
 
   @override
+  ThemeData appBarTheme(BuildContext context) {
+    return ThemeData(
+      textTheme: Theme.of(context).textTheme.copyWith(
+        headlineMedium: TextStyle(color: Theme.of(context).primaryColor),
+      )
+
+    );
+  }
+
+
+  @override
   List <Widget>? buildActions (BuildContext context) {
     return <Widget>[];
   }
@@ -276,7 +287,7 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
   /* The results shown after the user submits a search from the search page. */
   @override
   Widget buildResults (BuildContext context) {
-  
+
     return FutureBuilder <List <MeasuredVariable>> (
       future: _search (),
       builder: (BuildContext context, AsyncSnapshot <List <MeasuredVariable>> snapshot) {
