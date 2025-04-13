@@ -46,10 +46,14 @@ class _NewStudyPageState extends State <NewStudyPage> {
   
   MeasuredVariablesModel _model = MeasuredVariablesModel("Selected Phenotypes List");
 
-  
+  final GlobalKey<FormState> _form_key = GlobalKey <FormState> ();
+    
   String? _name;
   int _num_rows = 1;
   int _num_columns = 1;
+
+  String? _selected_trial_id;
+  String? _selected_location_id;
 
   @override
   void initState () {
@@ -135,6 +139,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
               padding: EdgeInsets.all(16.0),
               child: SingleChildScrollView(
                 child: Form(
+                  key: _form_key,
                   child: Column(
                     children: <Widget>[
 
@@ -150,13 +155,15 @@ class _NewStudyPageState extends State <NewStudyPage> {
                             _name = new_value;
                             print ("set _name to ${_name}");
                           });
-                        }
+                        },
+
+                        validator: _ValidateStringField,
                       ),
 
                       SizedBox (height: 10),
 
                       // Trials menu
-                      DropdownMenu (
+                      DropdownMenu <StringLabel> (
                         expandedInsets: EdgeInsets.zero,  // full width
                         requestFocusOnTap: true,
                         dropdownMenuEntries: GetTrialsAsList (),
@@ -190,6 +197,16 @@ class _NewStudyPageState extends State <NewStudyPage> {
                           backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
                         ),
                         
+                        onSelected: (StringLabel? trial) {
+                          setState(() {
+                            if (trial != null) {
+                              _selected_trial_id = trial.id;
+                            } else {
+                              _selected_trial_id = null;
+                            }
+                          });
+                        },
+
                       ),
 
                       SizedBox (height: 10),
@@ -230,55 +247,64 @@ class _NewStudyPageState extends State <NewStudyPage> {
                           backgroundColor: WidgetStateProperty.all(Theme.of(context).canvasColor),
                         ),
                         
+                        onSelected: (StringLabel? location) {
+                          setState(() {
+                            if (location != null) {
+                              _selected_location_id = location.id;
+                            } else {
+                              _selected_location_id = null;
+                            }
+                          });
+                        },
                       ),
 
                       SizedBox (height: 10),
 
 
-                        // Number of plot rows
-                        TextFormField (
-                          style: TextStyle (color: Theme.of(context).primaryColor),
-                          decoration: new InputDecoration (
-                            labelText: "Number of rows of plots"
-                          ),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: <TextInputFormatter>[
-                            FilteringTextInputFormatter.digitsOnly
-                          ], // Only numbers can be entered
-
-                          onSaved: (String? new_value) {
-                            if (new_value != null) {
-                              int? c = int.tryParse (new_value);
-
-                              if (c != null) {
-                                setState (() {
-                                  _num_rows = c;
-                                  print ("set rows to ${_num_rows}");
-                                });
-                              }
-                            }
-                          },
-                          validator: _ValidateNumberField,
-
+                      // Number of plot rows
+                      TextFormField (
+                        style: TextStyle (color: Theme.of(context).primaryColor),
+                        decoration: new InputDecoration (
+                          labelText: "Number of rows of plots"
                         ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.digitsOnly
+                        ], // Only numbers can be entered
+
+                        onSaved: (String? new_value) {
+                          if (new_value != null) {
+                            int? c = int.tryParse (new_value);
+
+                            if (c != null) {
+                              setState (() {
+                                _num_rows = c;
+                                print ("set rows to ${_num_rows}");
+                              });
+                            }
+                          }
+                        },
+                        validator: _ValidateNumberField,
+
+                      ),
 
                       SizedBox (height: 10),
 
-                        // Number of plot columns
-                        TextFormField (
-                          style: TextStyle (color: Theme.of(context).primaryColor),
-                          decoration: new InputDecoration (
-                            labelText: "Number of columns of plots"
-                          ),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: <TextInputFormatter>[
-                            FilteringTextInputFormatter.digitsOnly
-                          ], // Only numbers can be entered
+                      // Number of plot columns
+                      TextFormField (
+                        style: TextStyle (color: Theme.of(context).primaryColor),
+                        decoration: new InputDecoration (
+                          labelText: "Number of columns of plots"
+                        ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.digitsOnly
+                        ], // Only numbers can be entered
 
                         onChanged: (String? new_value) {
                           if (new_value != null) {
                             int? c = int.tryParse (new_value);
-          
+        
                             if (c != null) {
                               setState (() {
                                 _num_columns = c;
@@ -287,58 +313,92 @@ class _NewStudyPageState extends State <NewStudyPage> {
                             }
                           }
                         },
-
                       ),
 
-                      SizedBox (height: 10),
+                    SizedBox (height: 10),
 
 
-                      IconButton (
-                        icon: Icon (Icons.search),
-                        onPressed: () async {
+                    IconButton (
+                      icon: Icon (Icons.search),
+                      onPressed: () async {
 /*
-                          MeasuredVariablesModel? m = await _navigateAndDisplaySelection (context);
+                        MeasuredVariablesModel? m = await _navigateAndDisplaySelection (context);
 
-                          if (m != null) {
-                            print ("ABOUT TO SET STATE WITH ${m.length} values");
-                            setState(() {
-                              phenotypes_widget.addValues (m.values);
-                            });
-                          }
+                        if (m != null) {
+                          print ("ABOUT TO SET STATE WITH ${m.length} values");
+                          setState(() {
+                            phenotypes_widget.addValues (m.values);
+                          });
+                        }
 */
-                          
-                          final List <MeasuredVariable>? selected_mvs = await showSearch <List <MeasuredVariable>> (
-                            context: context,
-                            delegate: _measured_variables_search,
-                          );
+                        
+                        final List <MeasuredVariable>? selected_mvs = await showSearch <List <MeasuredVariable>> (
+                          context: context,
+                          delegate: _measured_variables_search,
+                        );
 
-                          if (selected_mvs != null) {
-                            for (int i = 0; i < selected_mvs.length; ++ i) {
-                              print ("${i}: ${selected_mvs [i].variable_name}");
-                            }
-
-
-                            setState (() {
-                              // Call setState to refresh the page.
-                              phenotypes_widget.addValues (selected_mvs); 
-                            });
+                        if (selected_mvs != null) {
+                          for (int i = 0; i < selected_mvs.length; ++ i) {
+                            print ("${i}: ${selected_mvs [i].variable_name}");
                           }
-                          
+
+
+                          setState (() {
+                            // Call setState to refresh the page.
+                            phenotypes_widget.addValues (selected_mvs); 
+                          });
+                        }
+                        
+                      },
+                    ),
+
+                    SizedBox (height: 10),
+
+                    phenotypes_widget,
+
+                    SizedBox (height: 10),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Validate will return true if the form is valid, or false if
+                          // the form is invalid.
+                          if (_form_key.currentState!.validate ()) {
+                            // Process data.
+                            String user_name = "user name";
+                            String user_email = "user email";
+                            List <MeasuredVariable> phenotypes = phenotypes_widget.getSelectedVariables ();
+                            final String? name = _name;
+                            final String? trial_id = _selected_trial_id;
+                            final String? location_id = _selected_location_id;
+
+                            if (name != null) {
+                              if (trial_id != null) {
+                                if (location_id != null) {
+                                  bool success_flag = submitStudy (name, trial_id, location_id, user_email, user_name, _num_rows, _num_columns, phenotypes);
+                                } else {
+                                  print ("no location id");
+                                }
+                              } else {
+                                print ("no trial id");
+                              }
+                            } else {
+                              print ("no study name");
+                            }
+                          }
                         },
+                        child: const Text('Submit'),
                       ),
-
-                      SizedBox (height: 10),
-
-                      phenotypes_widget,
-
-                    ]
-                  )
+                    ),
+                  ]
                 )
               )
-            );
-          }
-        )
-      );
+            )
+          );
+        }
+      )
+    );
   }
 
 
@@ -449,10 +509,8 @@ class _NewStudyPageState extends State <NewStudyPage> {
           entry ["id"] = cached_item.id;
 
           String date_str = "";
-          if (cached_item.date != null) {
-            date_str = cached_item.date.toString ();
-          }
-          data.add (entry);        
+          date_str = cached_item.date.toString ();
+                  data.add (entry);        
   
         }
       }
@@ -523,7 +581,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
       }
     }
 
-    String requestString = jsonEncode ({
+    String request_string = jsonEncode ({
       "services": [{ 
         "so:name": "Submit Field Trial Study",
           "start_service": true,
@@ -596,6 +654,10 @@ class _NewStudyPageState extends State <NewStudyPage> {
           }
         }]
       });
+
+      if (GrassrootsConfig.debug_flag) {
+        print ("About to send:\n${request_string}");
+      }
 
       return false;
     }
