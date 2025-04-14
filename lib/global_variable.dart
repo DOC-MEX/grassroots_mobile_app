@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
-import 'package:global_configuration/global_configuration.dart';
 
 List<String> allowedStudyIDs = [
   '64f1e4e77c486e019b4e3017',
@@ -26,7 +25,7 @@ final String CACHE_MEASURED_VARIABLES = "measured_variables_cache";
 class GrassrootsConfig {
   static Map <String, String>? _config;
 
-  static bool debug_flag = false;
+  static bool debug_flag = true;
 
   static Future <Map <String, String>?> LoadConfig () async {
     if (_config == null) {

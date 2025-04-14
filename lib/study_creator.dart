@@ -138,8 +138,8 @@ class _NewStudyPageState extends State <NewStudyPage> {
           return Padding (
               padding: EdgeInsets.all(16.0),
               child: SingleChildScrollView(
-                child: Form(
-                  key: _form_key,
+                //child: Form(
+                //  key: _form_key,
                   child: Column(
                     children: <Widget>[
 
@@ -157,7 +157,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
                           });
                         },
 
-                        validator: _ValidateStringField,
+                       // validator: _ValidateStringField,
                       ),
 
                       SizedBox (height: 10),
@@ -284,7 +284,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
                             }
                           }
                         },
-                        validator: _ValidateNumberField,
+                       // validator: _ValidateNumberField,
 
                       ),
 
@@ -364,7 +364,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
                         onPressed: () {
                           // Validate will return true if the form is valid, or false if
                           // the form is invalid.
-                          if (_form_key.currentState!.validate ()) {
+                        //  if (_form_key.currentState!.validate ()) {
                             // Process data.
                             String user_name = "user name";
                             String user_email = "user email";
@@ -373,9 +373,17 @@ class _NewStudyPageState extends State <NewStudyPage> {
                             final String? trial_id = _selected_trial_id;
                             final String? location_id = _selected_location_id;
 
+                            if (GrassrootsConfig.debug_flag) {
+                              print ("name ${name}");
+                              print ("trial_id ${trial_id}");
+                              print ("location_id ${location_id}");
+                              print ("phenotypes ${phenotypes.length}");
+                            }
+
                             if (name != null) {
                               if (trial_id != null) {
                                 if (location_id != null) {
+                                  print ("submitting");
                                   bool success_flag = submitStudy (name, trial_id, location_id, user_email, user_name, _num_rows, _num_columns, phenotypes);
                                 } else {
                                   print ("no location id");
@@ -386,13 +394,16 @@ class _NewStudyPageState extends State <NewStudyPage> {
                             } else {
                               print ("no study name");
                             }
-                          }
+                        //  } else {
+                        //    print ("failed to validate");
+                        //  }
+
                         },
                         child: const Text('Submit'),
                       ),
                     ),
                   ]
-                )
+              // )
               )
             )
           );
@@ -567,19 +578,28 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
   bool submitStudy (final String study_name, final String trial_id, final String location_id, final String user_email, final String user_name,
                     final int num_rows, final int num_cols, final List <MeasuredVariable> phenotypes) {
- 
-    StringBuffer mvs = StringBuffer ();
 
-    for (int i = 0; i < phenotypes.length; ++ i) {
-      MeasuredVariable phenotype = phenotypes [i];
-      mvs.write ("\"");
-      mvs.write (phenotype.variable_name);
-      mvs.write ("\"");
+    String measured_variables = "";
 
-      if (i < phenotypes.length - 1) {
-        mvs.writeln (",");
+    if (phenotypes.length > 0) {
+      StringBuffer buffer = StringBuffer ();
+
+
+      for (int i = 0; i < phenotypes.length; ++ i) {
+        MeasuredVariable phenotype = phenotypes [i];
+        buffer.write ("\"");
+        buffer.write (phenotype.variable_name);
+        buffer.write ("\"");
+
+        if (i < phenotypes.length - 1) {
+          buffer.writeln (",");
+        }
       }
+
+      measured_variables = buffer.toString ();
     }
+
+    print ("measured_variables: ${measured_variables}");
 
     String request_string = jsonEncode ({
       "services": [{ 
@@ -601,7 +621,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
                 "group": "Study"
               }, {
                 "param": "ST Curator name",
-                "current_value": "{username}",
+                "current_value": "${user_name}",
                 "group": "Curator"
               }, {
                 "param": "ST Curator email",
@@ -646,7 +666,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
               }, {
                 "param": "ST Measured Variables",
                 "current_value": [
-                  mvs
+                  measured_variables
                 ],
                 "group": "Measured Variables"
               }
