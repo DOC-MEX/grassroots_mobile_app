@@ -317,39 +317,48 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
                     SizedBox (height: 10),
 
+                    Row (
+                      children: [
+                        IconButton (
+                          icon: Icon (
+                            Icons.search,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          onPressed: () async {
+    /*
+                            MeasuredVariablesModel? m = await _navigateAndDisplaySelection (context);
 
-                    IconButton (
-                      icon: Icon (Icons.search),
-                      onPressed: () async {
-/*
-                        MeasuredVariablesModel? m = await _navigateAndDisplaySelection (context);
+                            if (m != null) {
+                              print ("ABOUT TO SET STATE WITH ${m.length} values");
+                              setState(() {
+                                phenotypes_widget.addValues (m.values);
+                              });
+                            }
+    */
+                            
+                            final List <MeasuredVariable>? selected_mvs = await showSearch <List <MeasuredVariable>> (
+                              context: context,
+                              delegate: _measured_variables_search,
+                            );
 
-                        if (m != null) {
-                          print ("ABOUT TO SET STATE WITH ${m.length} values");
-                          setState(() {
-                            phenotypes_widget.addValues (m.values);
-                          });
-                        }
-*/
-                        
-                        final List <MeasuredVariable>? selected_mvs = await showSearch <List <MeasuredVariable>> (
-                          context: context,
-                          delegate: _measured_variables_search,
-                        );
-
-                        if (selected_mvs != null) {
-                          for (int i = 0; i < selected_mvs.length; ++ i) {
-                            print ("${i}: ${selected_mvs [i].variable_name}");
-                          }
+                            if (selected_mvs != null) {
+                              for (int i = 0; i < selected_mvs.length; ++ i) {
+                                print ("${i}: ${selected_mvs [i].variable_name}");
+                              }
 
 
-                          setState (() {
-                            // Call setState to refresh the page.
-                            phenotypes_widget.addValues (selected_mvs); 
-                          });
-                        }
-                        
-                      },
+                              setState (() {
+                                // Call setState to refresh the page.
+                                phenotypes_widget.addValues (selected_mvs); 
+                              });
+                            }
+                            
+                          },
+                        ),
+                        Text ("Phenotypes"),
+
+
+                      ],
                     ),
 
                     SizedBox (height: 10),

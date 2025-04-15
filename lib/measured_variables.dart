@@ -253,12 +253,7 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
 
   @override
   ThemeData appBarTheme(BuildContext context) {
-    return ThemeData(
-      textTheme: Theme.of(context).textTheme.copyWith(
-        headlineMedium: TextStyle(color: Theme.of(context).primaryColor),
-      )
-
-    );
+    return Theme.of(context); 
   }
 
 
@@ -271,7 +266,10 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
   @override
   Widget? buildLeading (BuildContext context) {
     return IconButton(
-      icon: const Icon (Icons.arrow_back),
+      icon: const Icon (
+        Icons.arrow_back,
+//        color: Theme.of(context).primaryColor,
+      ),
       onPressed: () {
         List <MeasuredVariable> mvs = [];
         
@@ -488,6 +486,7 @@ class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidg
             trailing: trailing_widget,
             title: Text (mv.variable_name),
             subtitle: Html (data: item_subtitle),
+            iconColor: Theme.of (context).primaryColor,
           );
         },
       );
