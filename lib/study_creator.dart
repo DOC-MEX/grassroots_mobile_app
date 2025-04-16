@@ -615,7 +615,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
         "so:name": "Submit Field Trial Study",
           "start_service": true,
           "parameter_set": {
-            "level": "simple",
+            "level": "wizard",
             "parameters": [{
                 "param": "ST Name",
                 "current_value": "${study_name}",
