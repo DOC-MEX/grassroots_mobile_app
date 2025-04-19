@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:grassroots_field_trials/global_variable.dart';
 import 'package:hive/hive.dart';
 
@@ -136,7 +135,7 @@ class IdsCache {
     
     IdsList ids_list = IdsList (ids: ids, date: d);
 
-    var box = await Hive.openBox <IdsList> (ic_name);
+    final box = await Hive.openBox <IdsList> (ic_name);
 
 
     int num_ids = ids.length; 
@@ -148,8 +147,44 @@ class IdsCache {
     print ("caching ids done");
 
     box.add (ids_list);
-
   }
+
 }
 
 
+
+class IdCache {
+
+  static Future <int> GetNumberOfEntries (final String box_name) async {
+    final box = await Hive.openBox <String> (box_name);
+    return box.length;
+  }
+
+  static Future <void> AddId (final String box_name, final String id) async {
+    final box = await Hive.openBox <String> (box_name);
+ 
+    if (GrassrootsConfig.debug_flag) {
+      print ("adding id ${id} to box ${box_name}");
+    }
+
+    box.add (id);
+  }
+
+  static Future <List <String>> GetAllEntries (final String box_name) async {
+    List <String> entries = [];
+    final box = await Hive.openBox <String> (box_name);
+
+    Iterable <String> ids = box.values;
+
+    for (String id in ids) {
+      entries.add (id);
+    }
+
+    if (GrassrootsConfig.debug_flag) {
+      print ("box ${box_name} has ${entries}");
+    }
+
+    return entries;
+  }
+
+}

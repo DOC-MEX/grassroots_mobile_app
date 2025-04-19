@@ -272,7 +272,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
                           FilteringTextInputFormatter.digitsOnly
                         ], // Only numbers can be entered
 
-                        onSaved: (String? new_value) {
+                        onChanged: (String? new_value) {
                           if (new_value != null) {
                             int? c = int.tryParse (new_value);
 
@@ -387,13 +387,15 @@ class _NewStudyPageState extends State <NewStudyPage> {
                               print ("trial_id ${trial_id}");
                               print ("location_id ${location_id}");
                               print ("phenotypes ${phenotypes.length}");
+                              print ("rows ${_num_rows}");
+                              print ("columns ${_num_columns}");
                             }
 
                             if (name != null) {
                               if (trial_id != null) {
                                 if (location_id != null) {
                                   print ("submitting");
-                                  bool success_flag = submitStudy (name, trial_id, location_id, user_email, user_name, _num_rows, _num_columns, phenotypes);
+                                  Future <bool> success_flag = submitStudy (name, trial_id, location_id, user_email, user_name, _num_rows, _num_columns, phenotypes);
                                 } else {
                                   print ("no location id");
                                 }
@@ -585,27 +587,15 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
 
 
-  bool submitStudy (final String study_name, final String trial_id, final String location_id, final String user_email, final String user_name,
-                    final int num_rows, final int num_cols, final List <MeasuredVariable> phenotypes) {
+  Future <bool> submitStudy (final String study_name, final String trial_id, final String location_id, final String user_email, final String user_name,
+                    final int num_rows, final int num_cols, final List <MeasuredVariable> phenotypes) async {
 
-    String measured_variables = "";
+    List <String> measured_variables = [];
 
     if (phenotypes.length > 0) {
-      StringBuffer buffer = StringBuffer ();
-
-
       for (int i = 0; i < phenotypes.length; ++ i) {
-        MeasuredVariable phenotype = phenotypes [i];
-        buffer.write ("\"");
-        buffer.write (phenotype.variable_name);
-        buffer.write ("\"");
-
-        if (i < phenotypes.length - 1) {
-          buffer.writeln (",");
-        }
+        measured_variables.add (phenotypes [i].variable_name);
       }
-
-      measured_variables = buffer.toString ();
     }
 
     print ("measured_variables: ${measured_variables}");
@@ -650,11 +640,11 @@ class _NewStudyPageState extends State <NewStudyPage> {
                 "group": "Curator"
               }, {
                 "param": "ST Description",
-                "current_value": "",
+                "current_value": null,
                 "group": "Study"
               }, {
                 "param": "ST Design",
-                "current_value": "",
+                "current_value": null,
                 "group": "Study"
               }, {
                 "param": "Photo",
@@ -662,16 +652,24 @@ class _NewStudyPageState extends State <NewStudyPage> {
                 "group": "Study"
               }, {
                 "param": "ST Image Notes",
-                "current_value": "",
+                "current_value": null,
                 "group": "Study"
               }, {
                 "param": "ST Num Rows",
-                "current_value": "${num_rows}",
+                "current_value": num_rows,
                 "group": "Default Plots data"
               }, {
                 "param": "ST Num Columns",
-                "current_value": "${num_cols}",
+                "current_value": num_cols,
                 "group": "Default Plots data"
+              }, {
+                "param": "This Crop",
+                "current_value": "Unknown",
+                "group": "Study"
+              }, {
+                "param": "Previous Crop",
+                "current_value": "Unknown",
+                "group": "Study"
               }, {
                 "param": "ST Measured Variables",
                 "current_value": [
@@ -687,6 +685,36 @@ class _NewStudyPageState extends State <NewStudyPage> {
       if (GrassrootsConfig.debug_flag) {
         print ("About to send:\n${request_string}");
       }
+
+      Map <String, dynamic> response =  await GrassrootsRequest.sendRequest(request_string, 'public');
+
+      Map <String, dynamic>? service_result = response['results']?[0];
+
+      if (service_result != null) {
+        String? status = service_result ['status_text'];
+
+        if ((status != null) && (status == 'Succeeded')) {
+          /* 
+          * The study was created successfully so we can add it to the 
+          * list of allowed study ids.
+          */
+
+          if (GrassrootsConfig.debug_flag) {
+            print ("status ${status}");
+          }
+
+          Map <String, dynamic>? first_result = service_result['results']?[0];
+          if (first_result != null) {
+            String? study_id = first_result ['title'];
+
+            if (study_id != null) {
+              /* Add the study id to the list of allowed studies */
+              IdCache.AddId (LOCAL_ALLOWED_STUDIES, study_id);
+            }
+          }          
+        }
+      }
+  
 
       return false;
     }

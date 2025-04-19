@@ -50,63 +50,59 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
     fetchStudies(); // Updated to call the new method to fetch all studies
      _checkAndUpdateAllowedStudyIDs(); // Add this to check for new study IDs
     print ("_GrassrootsPageState :: initState () finished");
-}
+  }
 
-Future<void> _checkAndUpdateAllowedStudyIDs() async {
-  print('Initial Allowed Study IDs: $allowedStudyIDs');
-  bool healthy_flag = await ApiRequests.isServerHealthy ();  
-  List <String> ?fetchedIDs;
+  Future<void> _checkAndUpdateAllowedStudyIDs() async {
+    print('Initial Allowed Study IDs: $allowedStudyIDs');
+    bool healthy_flag = await ApiRequests.isServerHealthy ();  
+    List <String> fetchedIDs = [];
 
-  print ("healthy_flag $healthy_flag}");
+    print ("healthy_flag $healthy_flag}");
 
-  if (healthy_flag) {
-    fetchedIDs = await ApiRequests.fetchAllowedStudyIDs();
-  } else {
-    /* Use any cached data */
-    var box = await Hive.openBox <IdsList> (IdsCache.ic_name);
+    if (healthy_flag) {
+      List <String>? server_ids = await ApiRequests.fetchAllowedStudyIDs ();
 
-    final int num_entries = box.length;
-
-    print ("num cached id lists ${num_entries}");
-
-    if (num_entries > 0) {
-      IdsList? ids = box.getAt (num_entries - 1);
-
-      print ("ids at ${num_entries - 1}");
-
-      if (ids != null) {
-        print ("using cached ids from ${ids.date.toString ()}");
-        fetchedIDs = ids.ids;
-      } else {
-        print ("ids are null!!");
+      if (server_ids != null) {
+        for (int i = 0; i < server_ids.length; ++ i) {
+          fetchedIDs.add (server_ids [i]);
+        }
       }
-
+    } else {
+      /* Use any cached data */
+      GetandAddLocallyAllowedStudies (CACHE_SERVER_ALLOWED_STUDIES, fetchedIDs);
     }
-  }
-  
 
+    /* Add any user-created studies */
+    GetandAddLocallyAllowedStudies (LOCAL_ALLOWED_STUDIES, fetchedIDs);
 
-  if (fetchedIDs != null) {
     setState(() {
-      if (fetchedIDs != null) {
-        // Add only new IDs to the allowedStudyIDs list
-        final int num_fetched_ids = fetchedIDs.length;
+      // Add only new IDs to the allowedStudyIDs list
+      final int num_fetched_ids = fetchedIDs.length;
 
-        for (int i = 0; i < num_fetched_ids; i ++) {
-          final String id = fetchedIDs [i];
+      for (int i = 0; i < num_fetched_ids; i ++) {
+        final String id = fetchedIDs [i];
 
-          if (!allowedStudyIDs.contains(id)) {
-            allowedStudyIDs.add(id);
-            print('Added new ID to Allowed Study IDs: $id');
-          }
-        }      
-      }
+        if (!allowedStudyIDs.contains(id)) {
+          allowedStudyIDs.add(id);
+          print('Added new ID to Allowed Study IDs: $id');
+        }
+      }      
     });
-    print('Final Allowed Study IDs: $allowedStudyIDs');
-  } else {
-    print('Failed to fetch allowed study IDs.');
+
+    print('Final Allowed Study IDs: $allowedStudyIDs'); 
   }
-}
+
+
+
+  static Future <int> GetandAddLocallyAllowedStudies (final String box_name, List <String> ids) async {
+    List <String> local_ids = await IdCache.GetAllEntries (box_name);
+
+    for (String local_id in local_ids) {
+      ids.add (local_id);
+    }
+
+    return local_ids.length;
+  }
 
 
   void fetchStudies() async {
@@ -155,10 +151,8 @@ Future<void> _checkAndUpdateAllowedStudyIDs() async {
           entry ["id"] = study.id;
 
           String date_str = "";
-          if (study.date != null) {
-            date_str = study.date.toString ();
-          }
- 
+          date_str = study.date.toString ();
+         
           //print ("using cached study ${entry ["name"]}, ${entry ["id"]} from ${date_str}");
 
           studies_data.add (entry);        

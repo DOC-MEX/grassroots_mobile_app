@@ -8,7 +8,6 @@ import 'models/observation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'models/photo_submission.dart'; 
 import 'theme.dart';
-import 'package:provider/provider.dart';
 //import 'theme_notifier.dart';
 
 
@@ -34,9 +33,11 @@ void main() async{
   await Hive.openBox <IdName> (CACHE_TRIALS);
   await Hive.openBox <IdName> (CACHE_LOCATIONS);
 
+  /* The Ids of any Studies created in this app */
+  await Hive.openBox <String> (LOCAL_ALLOWED_STUDIES);
+
   /* Cache allowed study ids for offline use */
-  Hive.registerAdapter (IdsAdapter ());
-  await Hive.openBox <IdsList> (IdsCache.ic_name);
+  await Hive.openBox <String> (CACHE_SERVER_ALLOWED_STUDIES);
 
   await GlobalConfiguration ().loadFromAsset ("config");
 

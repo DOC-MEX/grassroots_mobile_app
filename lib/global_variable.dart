@@ -20,6 +20,9 @@ final String CACHE_TRIALS = "trials_cache";
 final String CACHE_LOCATIONS = "locations_cache";
 final String CACHE_PROGRAMMES = "programmes_cache";
 final String CACHE_MEASURED_VARIABLES = "measured_variables_cache";
+final String LOCAL_ALLOWED_STUDIES = "local_allowed_studies";
+final String CACHE_SERVER_ALLOWED_STUDIES = "server_allowed_studies_cache";
+
 
 
 class GrassrootsConfig {

@@ -478,6 +478,7 @@ class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidg
           Widget trailing_widget = Checkbox(
               value: mv.selected,
               onChanged: (bool? x) => _toggle(index),
+              
             );
         
 
