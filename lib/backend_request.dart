@@ -183,6 +183,7 @@ class backendRequests {
     required String? selectedTrait,
     required String measurement,
     required String dateString,
+    String? accession,
     String? note,
   }) {
 // List of allowed study IDs
@@ -238,6 +239,11 @@ class backendRequests {
                 "param": "RO Observation Notes",
                 "current_value": note != null ? [note] : [null],
                 "group": "Phenotypes"
+              },
+              {
+                "param": "RO Accession",
+                "current_value": accession != null ? [accession] : [null],
+                "group": "Plot"
               },
             ]
           }

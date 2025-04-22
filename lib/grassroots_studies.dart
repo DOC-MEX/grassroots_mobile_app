@@ -39,6 +39,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
   Map<String, dynamic>? fetchedStudyDetails;
   Map<String, dynamic>? selectedPlot;
   String? selectedPhenotype;
+  String? _selected_plot_accession;
   Map<String, String> traits = {};
   Map<String, String> units = {};
 
@@ -361,7 +362,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
 
             if (resultData.containsKey('plotId')) {
               selectedPlotId = resultData['plotId'];
-
+          
               plotIDs.clear();
               plotDisplayValues.clear();
               observationCount = 0;
@@ -721,6 +722,7 @@ GetStudyDetails (selected_study_id) async {
                                             studyDetails: fetchedStudyDetails!,
                                             plotId: selectedPlotId!,
                                             plotDetails: selectedPlot ?? {},
+                                            accession: _selected_plot_accession!,
                                             onReturn: onNewObservationReturn,
                                           ),
                                         ),
@@ -808,6 +810,12 @@ GetStudyDetails (selected_study_id) async {
                                           print('Variable to Trait Map: $variableToTraitMap');
                                         } else {
                                           observationCount = 0;
+                                        }
+
+                                        var material = selectedPlot!['rows'][0]['material'];
+
+                                        if (material != null) {
+                                          _selected_plot_accession = material!['accession'];
                                         }
                                       }
                                     }

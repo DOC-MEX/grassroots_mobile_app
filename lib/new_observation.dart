@@ -20,12 +20,14 @@ class NewObservationPage extends StatefulWidget {
   final String plotId;
   final Map<String, dynamic> plotDetails;
   final Function(Map<String, dynamic>) onReturn;
+  final String? accession;
   final String? selectedTraitKey;
 
   NewObservationPage({
     required this.studyDetails,
     required this.plotId,
     required this.plotDetails,
+    required this.accession,
     required this.onReturn,
     this.selectedTraitKey,
   });
@@ -40,7 +42,8 @@ class _NewObservationPageState extends State<NewObservationPage> {
   Map<String, String> scales = {};
   String? selectedTraitKey;
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _textEditingController = TextEditingController();
+  final TextEditingController _valueController = TextEditingController();
+  final TextEditingController _accessionController = TextEditingController();
   final TextEditingController _notesEditingController = TextEditingController();
   final TextEditingController _maxHeightController = TextEditingController();
   final TextEditingController _minHeightController = TextEditingController();
@@ -287,6 +290,7 @@ void _handleUpload() async {
 
     Map<String, dynamic>? nextPlotDetails;
     String? nextPlotId;
+    String? next_plot_accession;
 
     if (_isPhotoLoading) {
       print("Photo is still loading, please wait.");
@@ -299,13 +303,27 @@ void _handleUpload() async {
     int currentIndex = plotNumber ?? -1;
 
     for (var plot in plots) {
-      var nextIndex = plot['rows']?[0]['study_index'] as int?;
-      if (nextIndex != null &&
-          nextIndex > currentIndex &&
-          !(plot['rows'][0].containsKey('discard') && plot['rows'][0]['discard'])) {
-        nextPlotDetails = plot;
-        nextPlotId = plot['rows'][0]['_id']['\$oid'];
-        break;
+      if (plot ["rows"] != null) {
+        var next_row = plot['rows']?[0];
+
+        if (next_row != null) {          
+          var nextIndex = next_row ['study_index'] as int?;
+
+          if ((nextIndex != null) &&
+              (nextIndex > currentIndex) &&
+              (! (next_row.containsKey('discard') && next_row['discard']))) {
+
+            nextPlotDetails = plot;
+            nextPlotId = next_row ['_id']['\$oid'];
+            
+            if (next_row ["material"] != null) {
+              next_plot_accession = next_row ["material"]["accession"];
+            }
+
+            break;
+          }
+        }
+        
       }
     }
 
@@ -327,6 +345,7 @@ void _handleUpload() async {
               studyDetails: widget.studyDetails,
               plotId: nextPlotId!,
               plotDetails: nextPlotDetails ?? {},
+              accession: next_plot_accession,
               onReturn: widget.onReturn,
               selectedTraitKey: selectedTraitKey, // Pass the selected trait to the next plot
             ),
@@ -379,6 +398,7 @@ void _handleUpload() async {
 
     Map<String, dynamic>? previousPlotDetails;
     String? previousPlotId;
+    String? previous_plot_accession;
 
     if (_isPhotoLoading) {
       print("Photo is still loading, please wait.");
@@ -391,15 +411,30 @@ void _handleUpload() async {
     int currentIndex = plotNumber ?? -1;
 
     for (var plot in plots.reversed) {
-      var prevIndex = plot['rows']?[0]['study_index'] as int?;
-      if (prevIndex != null &&
-          prevIndex < currentIndex &&
-          !(plot['rows'][0].containsKey('discard') && plot['rows'][0]['discard'])) {
-        previousPlotDetails = plot;
-        previousPlotId = plot['rows'][0]['_id']['\$oid'];
-        break;
+      if (plot ["rows"] != null) {
+        var prev_row = plot['rows']?[0];
+
+        if (prev_row != null) {          
+          var prevIndex = prev_row ['study_index'] as int?;
+
+          if ((prevIndex != null) &&
+              (prevIndex > currentIndex) &&
+              (! (prev_row.containsKey('discard') && prev_row['discard']))) {
+
+            previousPlotDetails = plot;
+            previousPlotId = prev_row ['_id']['\$oid'];
+            
+            if (prev_row ["material"] != null) {
+              previous_plot_accession = prev_row ["material"]["accession"];
+            }
+
+            break;
+          }
+        }
+        
       }
     }
+
 
     if (previousPlotId != null && previousPlotDetails != null) {
       try {
@@ -419,6 +454,7 @@ void _handleUpload() async {
               studyDetails: widget.studyDetails,
               plotId: previousPlotId!,
               plotDetails: previousPlotDetails ?? {},
+              accession: previous_plot_accession,
               onReturn: widget.onReturn,
               selectedTraitKey: selectedTraitKey, // Pass the selected trait to the next plot
             ),
@@ -455,7 +491,7 @@ void _handleUpload() async {
     );
     if (picked != null && picked != DateTime.now()) {
       setState(() {
-        _textEditingController.text = DateFormat('yyyy-MM-dd').format(picked);
+        _valueController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
   }
@@ -650,10 +686,10 @@ Future<void> _submitObservation() async {
   if (_formKey.currentState!.validate()) {
     String plotID = widget.plotId; // Plot ID
     String? trait = selectedTraitKey; // Selected trait
-    String measurement = _textEditingController.text; // Entered measurement
+    String measurement = _valueController.text; // Entered measurement
     String dateString = DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now()); // Date
     String? note = _notesEditingController.text.isEmpty ? null : _notesEditingController.text; // Notes
-
+    String ?accession = _accessionController.text.isEmpty ? null : _accessionController.text;
     print('Plot ID: $plotID');
     print('Trait: $trait');
     print('Measurement: $measurement');
@@ -668,6 +704,7 @@ Future<void> _submitObservation() async {
         selectedTrait: trait,
         measurement: measurement,
         dateString: dateString,
+        accession: accession,
         note: note,
       );
       
@@ -768,7 +805,7 @@ void _clearForm() {
     _formKey.currentState!.reset();
     setState(() {
       selectedDate = null;
-      _textEditingController.clear();
+      _valueController.clear();
       _notesEditingController.clear();
       _image = null;
     });
@@ -802,6 +839,27 @@ void _clearForm() {
             key: _formKey,
             child: Column(
               children: <Widget>[
+
+                // Accession 
+                TextFormField (
+                  controller: _accessionController,
+                  decoration: InputDecoration(
+                    labelText: 'Accession',
+                    hintText: 'The crop accession',
+                    border: OutlineInputBorder (),
+                    labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+                    hintStyle: TextStyle (color: Theme.of(context).primaryColor),
+
+                  ),
+                  keyboardType: TextInputType.text,
+
+                  style: TextStyle (color: Theme.of(context).primaryColor),
+                  validator: (value) {
+                    // Optional: Add validation logic if needed
+                    return null; // No validation error
+                  },
+                ),
+                
                 // Conditional Button for Editing Max and Min Values
                 //if (selectedTraitKey == 'PH_M_cm' || selectedTraitKey == 'FLeafLLng_M_cm')
                 if (isNumericalTrait(selectedTraitKey))
@@ -824,7 +882,7 @@ void _clearForm() {
                   children: [
                     Expanded(
                       child: TextFormField(
-                        controller: _textEditingController,
+                        controller: _valueController,
                         readOnly: units[selectedTraitKey] == 'yyyymmdd', // Make field read-only when unit is 'yyyymmdd'
                         keyboardType: units[selectedTraitKey] == 'day' ? TextInputType.number : TextInputType.datetime,
                         decoration: InputDecoration(
