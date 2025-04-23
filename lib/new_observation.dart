@@ -198,7 +198,7 @@ void _handleUpload() async {
           studyId: studyID!,
           plotNumber: plotNumber!,
           date: DateTime.now().toIso8601String(),
-          syncStatus: 'synced', // Mark as synced since the upload succeeded
+          syncStatus: backendRequests.SYNCED, // Mark as synced since the upload succeeded
         );
 
         var photoBox = Hive.box<PhotoSubmission>('photo_submissions');
@@ -766,7 +766,7 @@ Future<void> _submitObservation() async {
         notes: note,
         //photoPath: _image?.path,
         date: dateString,
-        syncStatus: submissionSuccessful ? 'synced' : 'pending',
+        syncStatus: submissionSuccessful ? backendRequests.SYNCED : backendRequests.PENDING,
       );
 
       
@@ -799,6 +799,35 @@ Future<void> _saveObservationLocally(Observation observation) async {
     print('Error saving observation locally: $e');
   }
 }
+
+
+Future <void> _syncLocalObservations() async {
+  try {
+    // Open the Hive box
+    var box = await Hive.openBox<Observation>('observations');
+    
+    // Get all of the entries
+    Iterable <dynamic> keys = box.keys;
+
+    for (String key in keys) {
+      Observation? o = box.get (key);
+
+      if (o != null) {
+        if (o.syncStatus == backendRequests.PENDING) {
+
+        }
+      }
+
+    }
+
+
+
+  } catch (e) {
+    // Handle any errors that occur during the save process
+    print('Error saving observation locally: $e');
+  }
+}
+
 
 
 void _clearForm() {

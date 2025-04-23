@@ -8,6 +8,10 @@ import 'dart:convert';
 import 'global_variable.dart';
 
 class backendRequests {
+  static final String SYNCED = "synced";
+  static final String PENDING = "pending";
+
+
   //fetch all studies from Grassroots. Used when loading grassroot_studies.dart
   static Future<List<Map<String, String>>> fetchAllStudies () async {
     String requestString = jsonEncode({
@@ -178,7 +182,7 @@ class backendRequests {
 
   ////////// request for submitting observation used in new_observation.dart //////////
   static String submitObservationRequest({
-    required String studyID,
+    required String studyId,
     required String detectedQRCode,
     required String? selectedTrait,
     required String measurement,
@@ -194,7 +198,7 @@ class backendRequests {
   //  ];
 
     // Check if the studyID is in the list of allowed IDs
-    if (!allowedStudyIDs.contains(studyID)) {
+    if (!allowedStudyIDs.contains(studyId)) {
       // If not allowed, handle accordingly. For example:
       print('Modification not allowed for this study.');
       return '{}'; // Return a dummy JSON string or handle as needed
