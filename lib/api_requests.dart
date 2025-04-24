@@ -155,7 +155,7 @@ class ApiRequests {
 
       List <String> allowed_studies = List<String>.from(jsonResponse['allowed_studies']);
 
-      IdsCache.cacheIds (allowed_studies);
+      //IdsCache.cacheIds (allowed_studies);
       
       return allowed_studies;
 

@@ -689,17 +689,43 @@ Future<void> _submitObservation() async {
     String measurement = _valueController.text; // Entered measurement
     String dateString = DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now()); // Date
     String? note = _notesEditingController.text.isEmpty ? null : _notesEditingController.text; // Notes
-    String ?accession = _accessionController.text.isEmpty ? null : _accessionController.text;
+    String? accession = _accessionController.text.isEmpty ? null : _accessionController.text;
     print('Plot ID: $plotID');
     print('Trait: $trait');
     print('Measurement: $measurement');
     print('Note: $note');
     print('Study ID: $studyID');
 
+    final String? studyId = studyID;
+    if ((trait != null) && (studyId != null)) {
+      Observation obs = Observation (plotId: plotID, studyId: studyId, trait: trait, value: measurement, date: dateString, syncStatus: backendRequests.PENDING);
+
+      int ret = await obs.Submit ();
+
+      switch (ret) {
+        case 1:
+          print('Submission successful *****SET FLAG TO TRUE******');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Data successfully submitted',
+                style: TextStyle(fontSize: 16.0),
+              ),
+            ),
+          );
+          break;
+      
+        case 0: 
+
+          break;
+
+      }
+    }
+
     try {
       // Create the JSON request
       String jsonString = backendRequests.submitObservationRequest(
-        studyID: studyID ?? 'defaultStudyID',
+        studyId: studyID ?? 'defaultStudyID',
         detectedQRCode: plotID,
         selectedTrait: trait,
         measurement: measurement,
@@ -758,8 +784,13 @@ Future<void> _submitObservation() async {
         ),
       );
     } finally {
+        final String? sid = studyID;
+
+      if (sid != null) {
+
       // Save locally
       final observation = Observation(
+        studyId: sid,
         plotId: plotID,
         trait: trait ?? 'Unknown',
         value: measurement,
@@ -769,10 +800,13 @@ Future<void> _submitObservation() async {
         syncStatus: submissionSuccessful ? backendRequests.SYNCED : backendRequests.PENDING,
       );
 
-      
       print('Saving locally: ${observation.toJson()}');
       await _saveObservationLocally(observation);
 
+
+      }
+
+      
       // Pass the result back to the parent
       widget.onReturn({
         'plotId': plotID,

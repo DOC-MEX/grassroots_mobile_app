@@ -23,13 +23,15 @@ class ObservationAdapter extends TypeAdapter<Observation> {
       notes: fields[3] as String?,
       date: fields[4] as String,
       syncStatus: fields[5] as String,
+      studyId: fields[6] as String,
+      accession: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Observation obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.plotId)
       ..writeByte(1)
@@ -41,7 +43,11 @@ class ObservationAdapter extends TypeAdapter<Observation> {
       ..writeByte(4)
       ..write(obj.date)
       ..writeByte(5)
-      ..write(obj.syncStatus);
+      ..write(obj.syncStatus)
+      ..writeByte(6)
+      ..write(obj.studyId)
+      ..writeByte(7)
+      ..write(obj.accession);
   }
 
   @override

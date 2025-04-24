@@ -204,6 +204,59 @@ class backendRequests {
       return '{}'; // Return a dummy JSON string or handle as needed
     }
 
+    if (GrassrootsConfig.debug_flag) {
+      print ("studyId ${studyId}");
+      print ("detectedQRCode ${detectedQRCode}");
+      print ("selectedTrait ${selectedTrait}");
+      print ("measurement ${measurement}");
+      print ("dateString ${dateString}");
+      print ("accession ${accession}");
+      print ("note ${note}");
+    }
+
+    List <Map <String, Object>> params_array = [
+      {"param": "RO Id", "current_value": detectedQRCode, "group": "Plot"},
+      {"param": "RO Append Observations", "current_value": true, "group": "Plot"},
+      {
+        "param": "RO Measured Variable Name",
+        "current_value": [selectedTrait],
+        "group": "Phenotypes"
+      },
+      {
+        "param": "RO Phenotype Raw Value",
+        "current_value": [measurement],
+        "group": "Phenotypes"
+      },
+      {
+        "param": "RO Phenotype Corrected Value",
+        "current_value": [null],
+        "group": "Phenotypes"
+      },
+      {
+        "param": "RO Phenotype Start Date",
+        "current_value": [dateString],
+        "group": "Phenotypes"
+      },
+      {
+        "param": "RO Phenotype End Date",
+        "current_value": [null],
+        "group": "Phenotypes"
+      },
+      {
+        "param": "RO Observation Notes",
+        "current_value": note != null ? [note] : [null],
+        "group": "Phenotypes"
+      }
+    ];
+
+    if ((accession != null) && (accession.isNotEmpty)) {
+      params_array.add ({
+        "param": "RO Accession",
+        "current_value": accession,
+        "group": "Plot"
+      });
+    }
+
     final requestMap = {
       "services": [
         {
@@ -211,52 +264,20 @@ class backendRequests {
           "start_service": true,
           "parameter_set": {
             "level": "simple",
-            "parameters": [
-              {"param": "RO Id", "current_value": detectedQRCode, "group": "Plot"},
-              {"param": "RO Append Observations", "current_value": true, "group": "Plot"},
-              {
-                "param": "RO Measured Variable Name",
-                "current_value": [selectedTrait],
-                "group": "Phenotypes"
-              },
-              {
-                "param": "RO Phenotype Raw Value",
-                "current_value": [measurement],
-                "group": "Phenotypes"
-              },
-              {
-                "param": "RO Phenotype Corrected Value",
-                "current_value": [null],
-                "group": "Phenotypes"
-              },
-              {
-                "param": "RO Phenotype Start Date",
-                "current_value": [dateString],
-                "group": "Phenotypes"
-              },
-              {
-                "param": "RO Phenotype End Date",
-                "current_value": [null],
-                "group": "Phenotypes"
-              },
-              {
-                "param": "RO Observation Notes",
-                "current_value": note != null ? [note] : [null],
-                "group": "Phenotypes"
-              },
-              {
-                "param": "RO Accession",
-                "current_value": accession != null ? [accession] : [null],
-                "group": "Plot"
-              },
-            ]
+            "parameters": params_array
           }
         }
       ]
     };
 
     // Convert map to a JSON string
-    return jsonEncode(requestMap);
+    String req = jsonEncode (requestMap);
+    
+    if (GrassrootsConfig.debug_flag) {
+      print ("Obs req: ${req}");
+    }
+
+    return req;
   }
 
 //-- request for clearing cache after submitting observation (Used in new_observation.dart).

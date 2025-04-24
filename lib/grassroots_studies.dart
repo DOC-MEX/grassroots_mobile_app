@@ -68,13 +68,31 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
           fetchedIDs.add (server_ids [i]);
         }
       }
+
+      if (GrassrootsConfig.debug_flag) {
+        print ("1: Allowed studies ${fetchedIDs}");
+      }
     } else {
       /* Use any cached data */
-      GetandAddLocallyAllowedStudies (CACHE_SERVER_ALLOWED_STUDIES, fetchedIDs);
+      await GetandAddLocallyAllowedStudies (CACHE_SERVER_ALLOWED_STUDIES, fetchedIDs);
+
+      if (GrassrootsConfig.debug_flag) {
+        print ("2: Allowed studies ${fetchedIDs}");
+      }
+
     }
 
+    if (GrassrootsConfig.debug_flag) {
+      print ("3: Allowed studies ${fetchedIDs}");
+    }
+
+
     /* Add any user-created studies */
-    GetandAddLocallyAllowedStudies (LOCAL_ALLOWED_STUDIES, fetchedIDs);
+    await GetandAddLocallyAllowedStudies (LOCAL_ALLOWED_STUDIES, fetchedIDs);
+
+    if (GrassrootsConfig.debug_flag) {
+      print ("4: Allowed studies ${fetchedIDs}");
+    }
 
     setState(() {
       // Add only new IDs to the allowedStudyIDs list
@@ -85,12 +103,17 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
 
         if (!allowedStudyIDs.contains(id)) {
           allowedStudyIDs.add(id);
-          print('Added new ID to Allowed Study IDs: $id');
+
+          if (GrassrootsConfig.debug_flag) {          
+            print('Added new ID to Allowed Study IDs: $id');
+          }
         }
       }      
     });
 
-    print('Final Allowed Study IDs: $allowedStudyIDs'); 
+    if (GrassrootsConfig.debug_flag) {
+      print('Final Allowed Study IDs: $allowedStudyIDs'); 
+    }
   }
 
 
@@ -100,6 +123,10 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
 
     for (String local_id in local_ids) {
       ids.add (local_id);
+
+      if (GrassrootsConfig.debug_flag) {
+        print ("Getting ${local_id} from ${box_name}");
+      }
     }
 
     return local_ids.length;
@@ -714,6 +741,7 @@ GetStudyDetails (selected_study_id) async {
                               onPressed: selectedPlotId == null
                                   ? null
                                   : () {
+                                      
                                       // Use Navigator to push NewObservationPage with the required details
                                       Navigator.push(
                                         context,
@@ -722,7 +750,7 @@ GetStudyDetails (selected_study_id) async {
                                             studyDetails: fetchedStudyDetails!,
                                             plotId: selectedPlotId!,
                                             plotDetails: selectedPlot ?? {},
-                                            accession: _selected_plot_accession!,
+                                            accession: _selected_plot_accession,
                                             onReturn: onNewObservationReturn,
                                           ),
                                         ),

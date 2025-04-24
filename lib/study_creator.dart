@@ -672,9 +672,9 @@ class _NewStudyPageState extends State <NewStudyPage> {
                 "group": "Study"
               }, {
                 "param": "ST Measured Variables",
-                "current_value": [
+                "current_value": 
                   measured_variables
-                ],
+                ,
                 "group": "Measured Variables"
               }
             ]

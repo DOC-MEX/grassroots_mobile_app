@@ -58,38 +58,52 @@ class Observation extends HiveObject {
   }
 
 
-  Future <bool> Submit () async {
-    bool success_flag = false;
+  Future <int> Submit () async {
+    int ret = 0;
 
-        try {
-      // Create the JSON request
-      String jsonString = backendRequests.submitObservationRequest(
-        studyId: studyId,
-        detectedQRCode: plotId,
-        selectedTrait: trait,
-        measurement: value,
-        dateString: date,
-        accession: accession,
-        note: notes,
-      );
+
+    if (GrassrootsConfig.debug_flag) {
+      print ("BEGIN Observation");
+      print ("studyId ${studyId}");
+      print ("plotId ${plotId}");
+      print ("trait ${trait}");
+      print ("value ${value}");
+      print ("date ${date}");
+      print ("accession ${accession}");
+      print ("notes ${notes}");
+      print ("END Observation");
+    }
+       
+    // Create the JSON request
+    String jsonString = backendRequests.submitObservationRequest(
+      studyId: studyId,
+      detectedQRCode: plotId,
+      selectedTrait: trait,
+      measurement: value,
+      dateString: date,
+      accession: accession,
+      note: notes,
+    );
+    
+    if (GrassrootsConfig.debug_flag) {
+      print('Request to server: $jsonString');
+    }
+
+    if (jsonString != '{}') {
+      var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
       
       if (GrassrootsConfig.debug_flag) {
-        print('Request to server: $jsonString');
+        print('Response from server: $response');
       }
 
-      if (jsonString != '{}') {
-        var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
-        
-        if (GrassrootsConfig.debug_flag) {
-          print('Response from server: $response');
-        }
-
-        String? statusText = response['results']?[0]['status_text'];
-        bool submissionSuccessful = (statusText != null) && (statusText == 'Succeeded');
-
+      String? statusText = response['results']?[0]['status_text'];
+      if ((statusText != null) && (statusText == 'Succeeded')) {
+        ret = 1;
       }
-        }
+    }
 
-    return success_flag;
+    return ret;
   }
+
 }
+
