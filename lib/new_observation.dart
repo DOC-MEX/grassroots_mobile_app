@@ -491,10 +491,20 @@ void _handleUpload() async {
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: Theme.of (context).copyWith(
-            primaryColor: const Color(0xFF8CE7F1),
-            colorScheme: ColorScheme.light(primary: const Color(0xFF8CE7F1)),
+            primaryColor: Theme.of(context).colorScheme.primary,
+            canvasColor: Theme.of(context).colorScheme.onPrimary,
+            //colorScheme: ColorScheme.light(primary: const Color(0xFF8CE7F1)),
+            textButtonTheme: TextButtonThemeData (
+              style: TextButton.styleFrom (
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                textStyle: TextStyle (
+                  color: Colors.red, //Theme.of (context).primaryColor,
+                )
+              ),
+            ),
             buttonTheme: ButtonThemeData(
-                textTheme: ButtonTextTheme.primary
+                textTheme: ButtonTextTheme.accent
             ),
           ),
           child: child!,
@@ -1131,7 +1141,10 @@ void _clearForm() {
                                       moveToPreviousPlot(); // Function to go to the previous plot
                                       print('Previous Plot');
                                     },
-                                    icon: Icon(Icons.arrow_back),
+                                    icon: Icon(
+                                        Icons.arrow_back,
+                                        color: Theme.of(context).primaryColor,
+                                    ),
                                     iconSize: 40.0, // Increase the size of the arrow icon
                                     tooltip: 'Previous Plot',
                                   ),
@@ -1149,7 +1162,10 @@ void _clearForm() {
                                     onPressed: () {
                                       moveToNextPlot(); // Function to go to the next plot
                                     },
-                                    icon: Icon(Icons.arrow_forward),
+                                    icon: Icon(
+                                        Icons.arrow_forward,
+                                        color: Theme.of(context).primaryColor,
+                                    ),
                                     iconSize: 40.0, // Increase the size of the arrow icon
                                     tooltip: 'Next Plot',
                                   ),
