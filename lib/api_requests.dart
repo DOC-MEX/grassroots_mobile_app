@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:global_configuration/global_configuration.dart';
 import 'package:grassroots_field_trials/caching.dart';
+import 'package:grassroots_field_trials/global_variable.dart';
 import 'package:http/http.dart' as http;
 //import 'package:flutter/material.dart';
 //import 'dart:typed_data';
@@ -7,11 +9,24 @@ import 'dart:convert'; // For jsonDecode()
 import 'package:intl/intl.dart';
 
 class ApiRequests {
-  static const String baseUrl = 'https://grassroots.tools/photo_receiver/';
+  static String GetPhotoReceiverUrl () {
+    String? url = GlobalConfiguration().getValue("photo_receiver_url");
+
+    if (url == null) {
+      url =  'https://grassroots.tools/photo_receiver/';
+    }
+
+    if (GrassrootsConfig.debug_flag) {
+      print ("GetPhotoReceiverUrl () returning ${url}");
+    }
+
+    return url;
+  }
 
   static Future<bool> uploadImageDate(File image, String studyID, int plotNumber) async {
     try {
-      var uri = Uri.parse('${baseUrl}upload/');
+      final String base_url = GetPhotoReceiverUrl ();
+      var uri = Uri.parse('${base_url}upload/');
 
       // Include the current date in the file name
       String date = DateFormat('yyyy_MM_dd').format(DateTime.now());
@@ -38,8 +53,9 @@ class ApiRequests {
     try {
       String subfolder = studyID;
       String photoName = 'photo_plot_${plotNumber.toString()}.jpg';
+      final String base_url = GetPhotoReceiverUrl ();
 
-      var apiUrl = Uri.parse('${baseUrl}retrieve_photo/$subfolder/$photoName');
+      var apiUrl = Uri.parse('${base_url}retrieve_photo/$subfolder/$photoName');
       var response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -57,9 +73,11 @@ class ApiRequests {
     try {
       // Updated API URL to match the new endpoint
       //print path used for the API
-      print('${baseUrl}retrieve_latest_photo/$studyID/$plotNumber/');
+      final String base_url = GetPhotoReceiverUrl ();
 
-      var apiUrl = Uri.parse('${baseUrl}retrieve_latest_photo/$studyID/$plotNumber/');
+      print('${base_url}retrieve_latest_photo/$studyID/$plotNumber/');
+
+      var apiUrl = Uri.parse('${base_url}retrieve_latest_photo/$studyID/$plotNumber/');
       var response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -88,7 +106,9 @@ class ApiRequests {
   static Future<Map<String, Map<String, int?>>?> retrieveLimits(String studyID) async {
     try {
       String subfolder = studyID;
-      var apiUrl = Uri.parse('${baseUrl}retrieve_limits/$subfolder/');
+      final String base_url = GetPhotoReceiverUrl ();
+
+      var apiUrl = Uri.parse('${base_url}retrieve_limits/$subfolder/');
       var response = await http.get(apiUrl);
 
       if (response.statusCode == 200) {
@@ -122,7 +142,9 @@ class ApiRequests {
 
   static Future<bool> updateLimits(String studyID, int newMin, int newMax, String traitKey) async {
     String subfolder = studyID;
-    var url = Uri.parse('${baseUrl}update_limits/$subfolder/');
+    final String base_url = GetPhotoReceiverUrl ();
+
+    var url = Uri.parse('${base_url}update_limits/$subfolder/');
 
     try {
       final response = await http.post(
@@ -145,7 +167,9 @@ class ApiRequests {
   }
 
   static Future<List<String>?> fetchAllowedStudyIDs() async {
-  const String allowedStudyIDsUrl = '${baseUrl}allowed_studies/';
+    final String base_url = GetPhotoReceiverUrl ();
+
+    String allowedStudyIDsUrl = '${base_url}allowed_studies/';
 
   try {
     final response = await http.get(Uri.parse(allowedStudyIDsUrl));
@@ -171,7 +195,14 @@ class ApiRequests {
 
 static Future<Map<String, String>> fetchHealthStatus() async {
     try {
-      final response = await http.get(Uri.parse('${baseUrl}online_check/'));
+      final String base_url = GetPhotoReceiverUrl ();
+
+      final response = await http.get(Uri.parse('${base_url}online_check/'));
+
+      if (GrassrootsConfig.debug_flag) {
+        print ("called ${base_url}online_check/ got ${response.statusCode}");
+      }
+
       if (response.statusCode == 200) {
         // Parse the JSON response and return it
         final jsonResponse = json.decode(response.body);

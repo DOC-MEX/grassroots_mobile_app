@@ -487,9 +487,21 @@ void _handleUpload() async {
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime(2025),
+      lastDate: DateTime.now ().add (Duration (days: 1825)),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of (context).copyWith(
+            primaryColor: const Color(0xFF8CE7F1),
+            colorScheme: ColorScheme.light(primary: const Color(0xFF8CE7F1)),
+            buttonTheme: ButtonThemeData(
+                textTheme: ButtonTextTheme.primary
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
-    if (picked != null && picked != DateTime.now()) {
+    if (picked != null /* && picked != DateTime.now() */) {
       setState(() {
         _valueController.text = DateFormat('yyyy-MM-dd').format(picked);
       });

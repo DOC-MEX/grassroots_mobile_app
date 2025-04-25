@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:global_configuration/global_configuration.dart';
 import 'package:grassroots_field_trials/caching.dart';
 import 'package:grassroots_field_trials/global_variable.dart';
@@ -40,6 +41,18 @@ void main() async{
   await Hive.openBox <String> (CACHE_SERVER_ALLOWED_STUDIES);
 
   await GlobalConfiguration ().loadFromAsset ("config");
+
+  /* Load any custom config if it exists */
+  try {
+    await GlobalConfiguration ().loadFromAsset ("custom_config.json");
+  } catch (e) {
+    if (GrassrootsConfig.debug_flag) {
+      print ("custom_config.json not found");
+    }
+  }
+
+
+
 
   try {
     runApp(const MyApp ());
