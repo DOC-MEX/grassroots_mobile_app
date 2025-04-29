@@ -15,6 +15,9 @@ import 'models/photo_submission.dart'; // Import the PhotoSubmission model
   
 import 'package:path_provider/path_provider.dart';
 
+import 'package:collection/collection.dart';
+
+
 class NewObservationPage extends StatefulWidget {
   final Map<String, dynamic> studyDetails;
   final String plotId;
@@ -263,7 +266,10 @@ void _handleUpload() async {
     ////////////////////////////////////////////////////////////////////////////
   }
 
-  void moveToNextPlot() async {
+
+  void moveToPlot (bool forwards_flag) async {
+    int counter_inc = forwards_flag ? 1 : -1;
+
     if (isNavigating) return; // Prevent multiple rapid navigations
     setState(() {
       isNavigating = true; // Mark navigation as in progress
@@ -281,16 +287,13 @@ void _handleUpload() async {
       return;
     }
 
-    // Sort the plots by 'study_index' in ascending order
-    plots.sort((a, b) {
-      var indexA = a['rows']?[0]['study_index'] as int? ?? 0;
-      var indexB = b['rows']?[0]['study_index'] as int? ?? 0;
-      return indexA.compareTo(indexB);
-    });
+    /* Sort the plots by study index */
+    plots.sort (_ComparePlots);
 
-    Map<String, dynamic>? nextPlotDetails;
-    String? nextPlotId;
-    String? next_plot_accession;
+    /* The info for the plot that we are going to scroll to */
+    Map<String, dynamic>? other_plot_details;
+    String? other_plot_id;
+    String? other_plot_accession;
 
     if (_isPhotoLoading) {
       print("Photo is still loading, please wait.");
@@ -300,116 +303,48 @@ void _handleUpload() async {
       return;
     }
 
-    int currentIndex = plotNumber ?? -1;
+    int? currentIndex = plotNumber;
 
-    for (var plot in plots) {
-      if (plot ["rows"] != null) {
-        var next_row = plot['rows']?[0];
+    if (currentIndex != null) {
+      /*
+       * The study indices start from 1 and arrays count from 0
+       * so we need to decrement the index that we're looking for
+       */
+      int res = binarySearch (plots, plots [currentIndex - 1], compare: _ComparePlots);
 
-        if (next_row != null) {          
-          var nextIndex = next_row ['study_index'] as int?;
+      /* Have we found the element? */
+      if (res != -1) {
 
-          if ((nextIndex != null) &&
-              (nextIndex > currentIndex) &&
-              (! (next_row.containsKey('discard') && next_row['discard']))) {
+        /*
+         * As we're looking for the next/previous entry we need to go to
+         * usr the counter_inc to go past the matching element
+         */
+        res += counter_inc;
+        bool loop_flag = (res >= 0) && (res < plots.length);
 
-            nextPlotDetails = plot;
-            nextPlotId = next_row ['_id']['\$oid'];
-            
-            if (next_row ["material"] != null) {
-              next_plot_accession = next_row ["material"]["accession"];
+        while (loop_flag) {
+          var other_row = plots [res];
+
+          if (!(other_row.containsKey('discard') && other_row['discard'])) {
+            other_plot_details = plots [res];
+            other_plot_id = other_row ['_id']['\$oid'];
+
+            if (other_row ["material"] != null) {
+              other_plot_accession = other_row ["material"]["accession"];
             }
 
-            break;
+            loop_flag = false;
+          } else {
+            res += counter_inc;
+            loop_flag = (res >= 0) && (res < plots.length);
           }
         }
-        
       }
+
     }
 
-    if (nextPlotId != null && nextPlotDetails != null) {
-      try {
-        await Future.delayed(Duration(milliseconds: 300)); // Small delay to avoid rapid navigation
 
-        if (!mounted) {
-          setState(() {
-            isNavigating = false; // Reset the navigation flag
-          });
-          return;
-        }
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => NewObservationPage(
-              studyDetails: widget.studyDetails,
-              plotId: nextPlotId!,
-              plotDetails: nextPlotDetails ?? {},
-              accession: next_plot_accession,
-              onReturn: widget.onReturn,
-              selectedTraitKey: selectedTraitKey, // Pass the selected trait to the next plot
-            ),
-          ),
-        ).then((_) {
-          if (!mounted) return; // Ensure the widget is still mounted
-          setState(() {
-            isNavigating = false; // Reset the navigation flag
-          });
-        });
-      } catch (e) {
-        print('Error navigating to the next plot: $e');
-        setState(() {
-          isNavigating = false; // Reset the navigation flag
-        });
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No more valid plots available')),
-      );
-      setState(() {
-        isNavigating = false; // Reset the navigation flag
-      });
-    }
-  }
-
-  void moveToPreviousPlot() async {
-    if (isNavigating) return; // Prevent multiple rapid navigations
-    setState(() {
-      isNavigating = true; // Mark navigation as in progress
-    });
-
-    var plots = widget.studyDetails['results'][0]['results'][0]['data']['plots'] as List<dynamic>;
-
-    if (plots.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No more plots available')),
-      );
-      setState(() {
-        isNavigating = false; // Reset the navigation flag
-      });
-      return;
-    }
-
-    plots.sort((a, b) {
-      var indexA = a['rows']?[0]['study_index'] as int? ?? 0;
-      var indexB = b['rows']?[0]['study_index'] as int? ?? 0;
-      return indexA.compareTo(indexB);
-    });
-
-    Map<String, dynamic>? previousPlotDetails;
-    String? previousPlotId;
-    String? previous_plot_accession;
-
-    if (_isPhotoLoading) {
-      print("Photo is still loading, please wait.");
-      setState(() {
-        isNavigating = false; // Reset the navigation flag
-      });
-      return;
-    }
-
-    int currentIndex = plotNumber ?? -1;
-
+    /*
     for (var plot in plots.reversed) {
       if (plot ["rows"] != null) {
         var prev_row = plot['rows']?[0];
@@ -434,9 +369,9 @@ void _handleUpload() async {
         
       }
     }
+    */
 
-
-    if (previousPlotId != null && previousPlotDetails != null) {
+    if ((other_plot_id != null) && (other_plot_details != null)) {
       try {
         await Future.delayed(Duration(milliseconds: 300)); // Small delay to avoid rapid navigation
 
@@ -452,9 +387,9 @@ void _handleUpload() async {
           MaterialPageRoute(
             builder: (context) => NewObservationPage(
               studyDetails: widget.studyDetails,
-              plotId: previousPlotId!,
-              plotDetails: previousPlotDetails ?? {},
-              accession: previous_plot_accession,
+              plotId: other_plot_id!,
+              plotDetails: other_plot_details ?? {},
+              accession: other_plot_accession,
               onReturn: widget.onReturn,
               selectedTraitKey: selectedTraitKey, // Pass the selected trait to the next plot
             ),
@@ -479,6 +414,33 @@ void _handleUpload() async {
         isNavigating = false; // Reset the navigation flag
       });
     }
+  }
+
+  int _ComparePlots (dynamic plot_a, dynamic plot_b) {
+    int a_index = plot_a['rows']?[0]['study_index'] as int? ?? 0;
+    int b_index = plot_b['rows']?[0]['study_index'] as int? ?? 0;
+    return (a_index - b_index);
+  }
+
+
+  int _BinarySearchPlots (list, element) {
+    int start = 0;
+    int end = list.length - 1;
+    int i = 0;
+    while (start <= end) {
+      int mid = ((start + end) * 0.50).floor ();
+
+      int res = _ComparePlots (list [mid], element);
+
+      if (res == 0) {
+        return mid;
+      } else if (res < 0) {
+        start = mid + 1;
+      } else {
+        end = mid - 1;
+      }
+    }
+    return -1;
   }
 
 ////////////////////////////////////////////////////////////////////
@@ -1138,7 +1100,7 @@ void _clearForm() {
                                 children: [
                                   IconButton(
                                     onPressed: () {
-                                      moveToPreviousPlot(); // Function to go to the previous plot
+                                      moveToPlot (false); // Function to go to the previous plot
                                       print('Previous Plot');
                                     },
                                     icon: Icon(
@@ -1160,7 +1122,7 @@ void _clearForm() {
                                 children: [
                                   IconButton(
                                     onPressed: () {
-                                      moveToNextPlot(); // Function to go to the next plot
+                                      moveToPlot (true); // Function to go to the next plot
                                     },
                                     icon: Icon(
                                         Icons.arrow_forward,

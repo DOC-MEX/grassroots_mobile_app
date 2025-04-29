@@ -4,16 +4,27 @@
   "_private": "https://grassroots.tools/grassroots/private_backend",
   "_queen_bee_backend": "https://grassroots.tools/grassroots/queen_bee_backend",
 
-  "public": "http://192.168.1.225:2000/grassroots/public_backend",
-  "private": "http://192.168.1.225:2000/grassroots/public_backend",
-  "queen_bee_backend": "http://192.168.1.225:2000/grassroots/public_backend",
+  "_public": "http://192.168.86.68:2000/grassroots/public_backend",
+  "_private": "http://192.168.86.68:2000/grassroots/public_backend",
+  "_queen_bee_backend": "http://192.168.86.68:2000/grassroots/public_backend",
 
   "_public": "http://localhost:2000/grassroots/public_backend",
   "_private": "http://localhost:2000/grassroots/private_backend",
   "_queen_bee_backend": "http://localhost:2000/grassroots/queen_bee_backend",
 
+  "_public": "http://192.168.252.91:2000/grassroots/public_backend",
+  "_private": "http://192.168.252.91:2000/grassroots/public_backend",
+  "_queen_bee_backend": "http://192.168.252.91:2000/grassroots/public_backend",
+
+
+  "public": "http://192.168.1.225:2000/grassroots/public_backend",
+  "private": "http://192.168.1.225:2000/grassroots/public_backend",
+  "queen_bee_backend": "http://192.168.1.225:2000/grassroots/public_backend",
+
   "queen_bee_username": "doc",
   "queen_bee_password": "123_REPLACE_",
 
+  "_photo_receiver_url": "http://192.168.122.1:2000/photo_receiver/",
+  "_photo_receiver_url": "http://192.168.86.68:2000/photo_receiver/",
   "photo_receiver_url": "http://192.168.1.225:2000/photo_receiver/"
 }
