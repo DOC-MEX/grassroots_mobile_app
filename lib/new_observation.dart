@@ -684,121 +684,63 @@ Future<void> _submitObservation() async {
     if ((trait != null) && (studyId != null)) {
       Observation obs = Observation (plotId: plotID, studyId: studyId, trait: trait, value: measurement, date: dateString, syncStatus: backendRequests.PENDING);
 
-      int ret = await obs.Submit ();
+      int ret = await obs.Submit (true);
+      String? message;
+      bool error_flag = false;
 
       switch (ret) {
         case 1:
           print('Submission successful *****SET FLAG TO TRUE******');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Data successfully submitted',
-                style: TextStyle(fontSize: 16.0),
-              ),
-            ),
-          );
+          message = "Data successfully submitted";
           break;
       
-        case 0: 
-
+        case 0:
+          print('Submission failed');
+          message = "Failed to submit observation";
+          error_flag = true;
           break;
 
+        case -1:
+          print('NOT ALLOWED');
+          message = "Submission not allowed for this study";
+          error_flag = true;
+          break;
       }
-    }
 
-    try {
-      // Create the JSON request
-      String jsonString = backendRequests.submitObservationRequest(
-        studyId: studyID ?? 'defaultStudyID',
-        detectedQRCode: plotID,
-        selectedTrait: trait,
-        measurement: measurement,
-        dateString: dateString,
-        accession: accession,
-        note: note,
-      );
-      
-      print('Request to server: $jsonString');
+      if (message != null) {
+        Icon icon = error_flag ?
+          Icon (Icons.error_outline, color: Colors.red) :
+          Icon (Icons.check_circle_outline, color: Colors.green);
 
-      if (jsonString != '{}') {
-        var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
-        
-        print('Response from server: $response');
-
-        String? statusText = response['results']?[0]['status_text'];
-        submissionSuccessful = statusText != null && statusText == 'Succeeded';
-
-        if (submissionSuccessful) {
-          print('Submission successful *****SET FLAG TO TRUE******');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Data successfully submitted',
-                style: TextStyle(fontSize: 16.0),
-              ),
-            ),
-          );
-        } else {
-          print('Submission failed: $statusText');
-          throw Exception('Failed to submit observation');
-        }
-      } else {
-        print('NOT ALLOWED');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Submission not allowed for this study')),
+          SnackBar(
+            content: Row(
+              children: [
+                icon,
+                SizedBox (width: 10),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: TextStyle(fontSize: 16.0),
+                  ),
+                ),
+              ],
+            ),
+
+          ),
         );
       }
-    } catch (e) {
-      // Original error handling print
-      print('Error sending request: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.red),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Failed to submit data',
-                  style: TextStyle(fontSize: 16.0),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    } finally {
-        final String? sid = studyID;
-
-      if (sid != null) {
-
-      // Save locally
-      final observation = Observation(
-        studyId: sid,
-        plotId: plotID,
-        trait: trait ?? 'Unknown',
-        value: measurement,
-        notes: note,
-        //photoPath: _image?.path,
-        date: dateString,
-        syncStatus: submissionSuccessful ? backendRequests.SYNCED : backendRequests.PENDING,
-      );
-
-      print('Saving locally: ${observation.toJson()}');
-      await _saveObservationLocally(observation);
-
-
-      }
+    }
 
       
-      // Pass the result back to the parent
-      widget.onReturn({
-        'plotId': plotID,
-        'submissionSuccessful': submissionSuccessful,
-      });
+    // Pass the result back to the parent
+    widget.onReturn({
+      'plotId': plotID,
+      'submissionSuccessful': submissionSuccessful,
+    });
 
-      _clearForm(); // Clears the form after saving and returning data
-    }
+    _clearForm(); // Clears the form after saving and returning data
+
   }
 }
 
@@ -817,35 +759,6 @@ Future<void> _saveObservationLocally(Observation observation) async {
     print('Error saving observation locally: $e');
   }
 }
-
-
-Future <void> _syncLocalObservations() async {
-  try {
-    // Open the Hive box
-    var box = await Hive.openBox<Observation>('observations');
-    
-    // Get all of the entries
-    Iterable <dynamic> keys = box.keys;
-
-    for (String key in keys) {
-      Observation? o = box.get (key);
-
-      if (o != null) {
-        if (o.syncStatus == backendRequests.PENDING) {
-
-        }
-      }
-
-    }
-
-
-
-  } catch (e) {
-    // Handle any errors that occur during the save process
-    print('Error saving observation locally: $e');
-  }
-}
-
 
 
 void _clearForm() {

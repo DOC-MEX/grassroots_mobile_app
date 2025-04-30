@@ -23,6 +23,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+
+    GrassrootsPageState.CheckAndUpdateAllowedStudyIDs ();
     checkHealthStatus();
      _printLocalObservations(); // Fetch and print local observations
     _printLocalPhotoSubmissions(); 
@@ -58,11 +60,32 @@ Future<void> _printLocalPhotoSubmissions() async {
   Future<void> checkHealthStatus() async {
      print("checkHealthStatus called");
     try {
+      final bool old_health_status = _GetServerHealth (false);
+
       final healthStatus = await ApiRequests.fetchHealthStatus();
       setState(() {
         hps_djangoStatus = healthStatus['django'] ?? 'unknown';
         hps_mongoStatus = healthStatus['mongo'] ?? 'unknown';
       });
+
+      bool new_health_status = _GetServerHealth (false);
+
+      /* Are we back online? */
+      if ((!old_health_status) && new_health_status) {
+        /* Sync any locally-saved observations */
+        SnackBar snack_bar = SnackBar (
+          content: Text(
+            'Syncing local data',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.green,
+        );
+
+        ScaffoldMessenger.of (context).showSnackBar (snack_bar);
+        await Observation.SyncLocalObservations ();
+        ScaffoldMessenger.of (context).hideCurrentSnackBar ();
+      }
+
       print('Django: $hps_djangoStatus, Mongo: $hps_mongoStatus');
       // Show snackbar if server is unhealthy
       if (hps_djangoStatus != 'running' || hps_mongoStatus != 'available') {
@@ -96,10 +119,13 @@ Future<void> _printLocalPhotoSubmissions() async {
     }
   }
 
+  bool _GetServerHealth (bool refresh_flag) {
+    return ((hps_djangoStatus == 'running') && (hps_mongoStatus == 'available'));
+  }
 
   @override
   Widget build(BuildContext context) {
-       bool isServerHealthy = (hps_djangoStatus == 'running') && (hps_mongoStatus == 'available');
+    bool isServerHealthy = _GetServerHealth (false);
 
     return Scaffold(
       appBar: AppBar(

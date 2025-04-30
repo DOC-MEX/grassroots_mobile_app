@@ -14,12 +14,12 @@ import 'server.dart';
 
 class GrassrootsStudies extends StatefulWidget {
   @override
-  _GrassrootsPageState createState() => _GrassrootsPageState();
+  GrassrootsPageState createState() => GrassrootsPageState();
 }
 
 
 
-class _GrassrootsPageState extends State<GrassrootsStudies> {
+class GrassrootsPageState extends State<GrassrootsStudies> {
   final TextEditingController studies_controller = TextEditingController();
   bool isLoading = true;
   bool isSingleStudyLoading = false;
@@ -49,13 +49,13 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
   void initState() {
     super.initState();
     fetchStudies(); // Updated to call the new method to fetch all studies
-     _checkAndUpdateAllowedStudyIDs(); // Add this to check for new study IDs
+     //_checkAndUpdateAllowedStudyIDs(); // Add this to check for new study IDs
     print ("_GrassrootsPageState :: initState () finished");
   }
 
-  Future<void> _checkAndUpdateAllowedStudyIDs() async {
+  static Future<void> CheckAndUpdateAllowedStudyIDs() async {
     print('Initial Allowed Study IDs: $allowedStudyIDs');
-    bool healthy_flag = await ApiRequests.isServerHealthy ();  
+    bool healthy_flag = await ApiRequests.isServerHealthy ();
     List <String> fetchedIDs = [];
 
     print ("healthy_flag $healthy_flag}");
@@ -94,7 +94,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
       print ("4: Allowed studies ${fetchedIDs}");
     }
 
-    setState(() {
+    //setState(() {
       // Add only new IDs to the allowedStudyIDs list
       final int num_fetched_ids = fetchedIDs.length;
 
@@ -109,7 +109,7 @@ class _GrassrootsPageState extends State<GrassrootsStudies> {
           }
         }
       }      
-    });
+    //});
 
     if (GrassrootsConfig.debug_flag) {
       print('Final Allowed Study IDs: $allowedStudyIDs'); 
