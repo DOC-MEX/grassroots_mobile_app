@@ -114,6 +114,8 @@ class Observation extends HiveObject {
         String? statusText = response['results']?[0]['status_text'];
         if ((statusText != null) && (statusText == 'Succeeded')) {
           ret = 1;
+        } else {
+          
         }
 
       } catch (e) {

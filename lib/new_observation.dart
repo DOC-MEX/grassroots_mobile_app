@@ -682,7 +682,7 @@ Future<void> _submitObservation() async {
 
     final String? studyId = studyID;
     if ((trait != null) && (studyId != null)) {
-      Observation obs = Observation (plotId: plotID, studyId: studyId, trait: trait, value: measurement, date: dateString, syncStatus: backendRequests.PENDING);
+      Observation obs = Observation (plotId: plotID, studyId: studyId, trait: trait, value: measurement, notes: note, date: dateString, syncStatus: backendRequests.PENDING);
 
       int ret = await obs.Submit (true);
       String? message;
@@ -692,17 +692,20 @@ Future<void> _submitObservation() async {
         case 1:
           print('Submission successful *****SET FLAG TO TRUE******');
           message = "Data successfully submitted";
+          submissionSuccessful = true;
           break;
       
         case 0:
           print('Submission failed');
           message = "Failed to submit observation";
+          submissionSuccessful = false;
           error_flag = true;
           break;
 
         case -1:
           print('NOT ALLOWED');
           message = "Submission not allowed for this study";
+          submissionSuccessful = false;
           error_flag = true;
           break;
       }
@@ -739,7 +742,9 @@ Future<void> _submitObservation() async {
       'submissionSuccessful': submissionSuccessful,
     });
 
-    _clearForm(); // Clears the form after saving and returning data
+    if (submissionSuccessful) {
+      _clearForm(); // Clears the form after saving and returning data
+    }
 
   }
 }
@@ -946,12 +951,59 @@ void _clearForm() {
                       context: context,
                       initialDate: selectedDate ?? DateTime.now(),
                       firstDate: DateTime(2000), // Adjust the range as needed
-                      lastDate: DateTime(2101),
+
+                      // Make the last Date in 5 years time
+                      lastDate: DateTime.now ().add (Duration (days: 365 * 5)),
+
+                      builder: (BuildContext context, Widget? child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                          colorScheme: Theme.of(context).colorScheme.copyWith (
+                            // This sets the month and arrow colours
+                            onSurface: Theme.of(context).primaryColor
+                          ),
+                          datePickerTheme: DatePickerThemeData(
+                              backgroundColor: Theme.of (context).colorScheme.surface,
+                              headerForegroundColor: Theme.of(context).primaryColor,
+                              dayForegroundColor: WidgetStateProperty.all(Theme.of(context).primaryColor),
+                              //  rangeSelectionOverlayColor:  WidgetStateProperty.all(Theme.of(context).colorScheme.surface),
+                              //rangePickerHeaderBackgroundColor:  Colors.red,
+                              //rangePickerHeaderForegroundColor:  Colors.blue,
+                              weekdayStyle: TextStyle (
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              dayStyle: TextStyle (
+                                color: Theme.of (context).primaryColor,
+                              ),
+                              yearStyle: TextStyle (
+                                //color: Colors.lightBlue,
+                              ),
+                              inputDecorationTheme: InputDecorationTheme(
+                                //focusColor: Colors.green,
+                                //filled: true,
+
+                              ),
+                              cancelButtonStyle: ButtonStyle (
+                                backgroundColor: WidgetStateProperty.all (Theme.of (context).primaryColor),
+                                foregroundColor: WidgetStateProperty.all (Theme.of (context).colorScheme.surface),
+                              ),
+                              confirmButtonStyle: ButtonStyle (
+                                backgroundColor: WidgetStateProperty.all (Theme.of (context).primaryColor),
+                                foregroundColor: WidgetStateProperty.all (Theme.of (context).colorScheme.surface),
+                               )
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
                     );
-                    if (picked != null && picked != selectedDate)
+
+
+                    if (picked != null && picked != selectedDate) {
                       setState(() {
                         selectedDate = picked;
                       });
+                    }
                   },
                 ),
                 //////////// Date Picker  //////////////

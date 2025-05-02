@@ -370,7 +370,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           // Validate will return true if the form is valid, or false if
                           // the form is invalid.
                         //  if (_form_key.currentState!.validate ()) {
@@ -395,7 +395,36 @@ class _NewStudyPageState extends State <NewStudyPage> {
                               if (trial_id != null) {
                                 if (location_id != null) {
                                   print ("submitting");
-                                  Future <bool> success_flag = submitStudy (name, trial_id, location_id, user_email, user_name, _num_rows, _num_columns, phenotypes);
+                                  bool success_flag = await submitStudy (name, trial_id, location_id, user_email, user_name, _num_rows, _num_columns, phenotypes);
+                                  Icon icon;
+                                  String message;
+
+                                  if (success_flag) {
+                                    icon = Icon (Icons.check_circle_outline, color: Colors.green);
+                                    message = "Study ${name} created successfully";
+                                  } else {
+                                    icon = Icon (Icons.error_outline, color: Colors.red);
+                                    message = "Failed to create Study ${name}";
+                                  }
+
+                                  ScaffoldMessenger.of (context).showSnackBar (
+                                    SnackBar (
+                                      content: Row (
+                                        children: [
+                                          icon,
+                                          SizedBox (width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              message,
+                                              style: TextStyle(fontSize: 16.0),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                    ),
+                                  );
+
                                 } else {
                                   print ("no location id");
                                 }
@@ -589,7 +618,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
 
   Future <bool> submitStudy (final String study_name, final String trial_id, final String location_id, final String user_email, final String user_name,
                     final int num_rows, final int num_cols, final List <MeasuredVariable> phenotypes) async {
-
+    bool success_flag = false;
     List <String> measured_variables = [];
 
     if (phenotypes.length > 0) {
@@ -694,6 +723,8 @@ class _NewStudyPageState extends State <NewStudyPage> {
         String? status = service_result ['status_text'];
 
         if ((status != null) && (status == 'Succeeded')) {
+          success_flag = true;
+
           /* 
           * The study was created successfully so we can add it to the 
           * list of allowed study ids.
@@ -714,9 +745,8 @@ class _NewStudyPageState extends State <NewStudyPage> {
           }          
         }
       }
-  
 
-      return false;
+      return success_flag;
     }
   }
 

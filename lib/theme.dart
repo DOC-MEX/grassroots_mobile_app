@@ -54,6 +54,11 @@ final ThemeData light_theme = ThemeData(
       foregroundColor: _light_primary_color, // Text and icon color
     ),
   ),
+  textButtonTheme: TextButtonThemeData (
+    style: TextButton.styleFrom(
+      foregroundColor: _dark_primary_color,
+    ),
+  ),
   inputDecorationTheme: InputDecorationTheme(
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(4.0),
@@ -122,6 +127,11 @@ final ThemeData dark_theme = ThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: Color(0xFF2c3e50), // Button background color
       foregroundColor: _dark_primary_color, // Text and icon color
+    ),
+  ),
+  textButtonTheme: TextButtonThemeData (
+    style: TextButton.styleFrom(
+      foregroundColor: _dark_primary_color,
     ),
   ),
   inputDecorationTheme: InputDecorationTheme(

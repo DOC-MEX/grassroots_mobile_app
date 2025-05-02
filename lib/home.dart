@@ -89,10 +89,12 @@ Future<void> _printLocalPhotoSubmissions() async {
       print('Django: $hps_djangoStatus, Mongo: $hps_mongoStatus');
       // Show snackbar if server is unhealthy
       if (hps_djangoStatus != 'running' || hps_mongoStatus != 'available') {
+        final String app_url = ApiRequests.GetPhotoReceiverUrl();
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Warning: There is a problem with the server connection.',
+              'Warning: There is a problem with the server connection to ${app_url}. Error ${ApiRequests.latest_error}',
               style: TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.red,
@@ -126,7 +128,7 @@ Future<void> _printLocalPhotoSubmissions() async {
   @override
   Widget build(BuildContext context) {
     bool isServerHealthy = _GetServerHealth (false);
-
+    final String app_url =  ApiRequests.GetPhotoReceiverUrl();
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -228,6 +230,7 @@ Future<void> _printLocalPhotoSubmissions() async {
                                   child: Text('Exit'),
                                 ),
 
+                                /*
                                 ElevatedButton(
                                   onPressed: () {
                                     EmptyBox (CACHE_TRIALS);
@@ -238,7 +241,7 @@ Future<void> _printLocalPhotoSubmissions() async {
                                   },
                                   child: Text('Clear'),
                                 ),
-
+                                */
 
                               ],
 

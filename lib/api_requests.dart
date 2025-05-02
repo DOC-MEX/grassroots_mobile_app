@@ -9,6 +9,8 @@ import 'dart:convert'; // For jsonDecode()
 import 'package:intl/intl.dart';
 
 class ApiRequests {
+  static String latest_error = "";
+
   static String GetPhotoReceiverUrl () {
     String? url = GlobalConfiguration().getValue("photo_receiver_url");
 
@@ -218,6 +220,7 @@ static Future<Map<String, String>> fetchHealthStatus() async {
         };
       }
     } catch (e) {
+      latest_error = e.toString();
       // Handle errors like network issues
       return {
         'django': 'error',

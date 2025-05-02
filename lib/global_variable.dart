@@ -28,7 +28,7 @@ final String CACHE_SERVER_ALLOWED_STUDIES = "server_allowed_studies_cache";
 class GrassrootsConfig {
   static Map <String, String>? _config;
 
-  static bool debug_flag = true;
+  static bool debug_flag = false;
 
   static Future <Map <String, String>?> LoadConfig () async {
     if (_config == null) {

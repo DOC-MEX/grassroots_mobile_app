@@ -44,7 +44,7 @@ class backendRequests {
       }).toList();
 
       // Sort studies alphabetically by name
-      studies.sort((a, b) => a['name']!.compareTo(b['name']!));
+      //studies.sort((a, b) => a['name']!.compareTo(b['name']!));
 
       IdNamesCache.cache (studies, CACHE_STUDIES);
 
@@ -74,12 +74,6 @@ class backendRequests {
     });
 
     try {
-      bool old_debug = GrassrootsConfig.debug_flag;
-
-      if (!old_debug) {
-        GrassrootsConfig.debug_flag = true;
-      }
-
       var response = await GrassrootsRequest.sendRequest(requestString, 'public');
 
       List<Map<String, String>> trials = response['results'][0]['results'].map<Map<String, String>>((trial) {
@@ -94,8 +88,6 @@ class backendRequests {
       trials.sort((a, b) => a['name']!.compareTo(b['name']!));
 
       IdNamesCache.cache (trials, CACHE_TRIALS);
-
-      GrassrootsConfig.debug_flag = old_debug;
 
       return trials;
     } catch (e) {

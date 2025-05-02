@@ -190,10 +190,14 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
 
       isLoading = true;
       gps_studies = studies_data;
-      print ("Got ${gps_studies.length} cached studies");
-      print ("BEGIN gps_studies");
-      print ("${gps_studies}");
-      print ("END gps_studies");
+
+      if (GrassrootsConfig.debug_flag) {
+        print("Got ${gps_studies.length} cached studies");
+        print("BEGIN gps_studies");
+        print("${gps_studies}");
+        print("END gps_studies");
+      }
+
       isLoading = false;
     }
 
@@ -467,13 +471,17 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
 List <StringEntry> GetStudiesAsList () {
   List <StringEntry> l = [];
 
-  print ("in GetStudiesAsList ()"); 
-  print ("Num studies ${gps_studies}"); 
- 
+  if (GrassrootsConfig.debug_flag) {
+    print("in GetStudiesAsList ()");
+    print("Num studies ${gps_studies}");
+  }
+
   for (final e in gps_studies) {
     var study = e;
 
-    print ("STUDY: ${study}");
+    if (GrassrootsConfig.debug_flag) {
+      print("STUDY: ${study}");
+    }
     var id = study ['id'];
 
     if (id != null) {
@@ -494,7 +502,10 @@ List <StringEntry> GetStudiesAsList () {
 
   }
 
-  print ("num StringEntries for Studies ${l.length}");
+  if (GrassrootsConfig.debug_flag) {
+    print ("num StringEntries for Studies ${l.length}");
+  }
+
   return l;
 }
 
@@ -508,7 +519,10 @@ GetStudyDetails (selected_study_id) async {
     print (">>>>> Couldn't get study $selected_study_id");
   }
 
-  print ("returning\n$study_details");
+  if (GrassrootsConfig.debug_flag) {
+    print("returning\n$study_details");
+  }
+
   return study_details;
 }
 
@@ -522,7 +536,7 @@ GetStudyDetails (selected_study_id) async {
     //print('Selected Phenotype: $selectedPhenotype');
     //print('Number of Plots: $numberOfPlots');
 
-
+    final List <StringEntry> all_studies = GetStudiesAsList ();
 
     return Scaffold(
       appBar: AppBar(
@@ -542,7 +556,7 @@ GetStudyDetails (selected_study_id) async {
                           //________ Dropdown to select a study.  1st DROPDOWN MENU______
                           DropdownMenu (
                             requestFocusOnTap: true,
-                            dropdownMenuEntries: GetStudiesAsList (),
+                            dropdownMenuEntries: all_studies,
                             controller: studies_controller,
                             enableFilter: true,
                             label: const Text ("Search for a study..."),
