@@ -125,6 +125,48 @@ Future<void> _printLocalPhotoSubmissions() async {
     return ((hps_djangoStatus == 'running') && (hps_mongoStatus == 'available'));
   }
 
+
+  static Widget CreateServerHealthWidget () {
+    bool isServerHealthy = _GetServerHealth (false);
+
+    AppBar app_bar = AppBar(
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('Grassroots App'),
+          Row(
+            children: [
+              // LED Indicator
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isServerHealthy ? Colors.green : Colors.red,
+                ),
+              ),
+              SizedBox(width: 8),
+              Text(
+                isServerHealthy ? 'Server OK' : 'Server Issue',
+                style: TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.refresh),
+          onPressed: checkHealthStatus, // Trigger health check
+          tooltip: 'Refresh Server Status',
+        ),
+      ],
+    );
+
+    return app_bar;
+  }
+
+
   @override
   Widget build(BuildContext context) {
     bool isServerHealthy = _GetServerHealth (false);

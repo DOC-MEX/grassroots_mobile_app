@@ -134,26 +134,20 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
 
 
   void fetchStudies() async {
-    bool healthy_flag = await ApiRequests.isServerHealthy ();  
+    bool healthy_flag = await ApiRequests.isServerHealthy ();
+
+    List <Map <String, String>> studies_data = [];
+
+    setState(() {
+      isLoading = true;
+    });
 
     /*
      * If the server are online then get the live data
      */
     if (healthy_flag) {
-      setState(() {
-        isLoading = true;
-      });
-
       try {
-        var studiesData = await backendRequests.fetchAllStudies ();
-        if (mounted) {
-          setState(() {
-            gps_studies = studiesData;
-
-            print ("got ${gps_studies.length} studies");
-            isLoading = false;
-          });
-        }
+        studies_data = await backendRequests.fetchAllStudies ();
       } catch (e) {
         print('Error fetching studies: $e');
         if (mounted) {
@@ -168,7 +162,6 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
       var box = await Hive.openBox <IdName> (CACHE_STUDIES);
 
       final int num_entries = box.length;
-      List <Map <String, String>> studies_data = [];
 
       for (int i = 0; i < num_entries; i ++) {
         Map <String, String> entry = Map <String, String> ();
@@ -180,16 +173,14 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
 
           String date_str = "";
           date_str = study.date.toString ();
-         
-          //print ("using cached study ${entry ["name"]}, ${entry ["id"]} from ${date_str}");
 
-          studies_data.add (entry);        
-  
+          if (GrassrootsConfig.debug_flag) {
+            print("using cached study ${entry ["name"]}, ${entry ["id"]} from ${date_str}");
+          }
+
+          studies_data.add (entry);
         }
       }
-
-      isLoading = true;
-      gps_studies = studies_data;
 
       if (GrassrootsConfig.debug_flag) {
         print("Got ${gps_studies.length} cached studies");
@@ -197,9 +188,24 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
         print("${gps_studies}");
         print("END gps_studies");
       }
-
-      isLoading = false;
     }
+
+    if (studies_data.length > 0) {
+      if (mounted) {
+        setState(() {
+          gps_studies = studies_data;
+
+          if (GrassrootsConfig.debug_flag) {
+            print("got ${gps_studies.length} studies");
+          }
+        });
+      }
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+
 
   }
 
