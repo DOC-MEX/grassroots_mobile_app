@@ -6,6 +6,7 @@ import 'package:grassroots_field_trials/api_requests.dart';
 import 'package:http/http.dart' as http;
 
 import 'global_variable.dart';
+import 'models/observation.dart';
 
 class StringLabel {
   String name;
@@ -24,51 +25,88 @@ enum ServerStatus {
 }
 
 
-class ServerConnection {
-  static ServerStatus _django_online = ServerStatus.SS_UNKNOWN;
-  static ServerStatus _mongo_online = ServerStatus.SS_UNKNOWN;
+class ServerModel extends ChangeNotifier {
+  ServerStatus _django_online = ServerStatus.SS_UNKNOWN;
+  ServerStatus _mongo_online = ServerStatus.SS_UNKNOWN;
 
-  static String latest_error = "";
+  bool _combined_state = false;
 
-  static bool IsOnline (bool refresh_flag) {
-    if (refresh_flag) {
-      _FetchHealthStatus ();
+  String latest_error = "";
+
+
+  Future <void> CheckStatus () async {
+    final ServerStatus old_django_online = _django_online;
+    final ServerStatus old_mongo_online = _mongo_online;
+
+    await _FetchHealthStatus ();
+
+    if ((old_mongo_online != _mongo_online) || (old_django_online != _django_online)) {
+      // This call tells the widgets that are listening to this model to rebuild.
+      notifyListeners ();
     }
 
-    return ((_django_online == ServerStatus.SS_ONLINE) && (_mongo_online == ServerStatus.SS_ONLINE));
   }
 
 
-  static Future <void> _FetchHealthStatus() async {
+  Future <void> _FetchHealthStatus() async {
     try {
-      final String base_url = ApiRequests.GetPhotoReceiverUrl ();
+      final String base_url = ApiRequests.GetPhotoReceiverUrl();
 
       final response = await http.get(Uri.parse('${base_url}online_check/'));
 
       if (GrassrootsConfig.debug_flag) {
-        print ("called ${base_url}online_check/ got ${response.statusCode}");
+        print("called ${base_url}online_check/ got ${response.statusCode}");
       }
 
       if (response.statusCode == 200) {
         // Parse the JSON response and return it
-        final jsonResponse = json.decode (response.body);
+        final jsonResponse = json.decode(response.body);
+
+        if (GrassrootsConfig.debug_flag) {
+          print("response: $jsonResponse");
+        }
 
         String? s = jsonResponse ["django"];
+
+        if (GrassrootsConfig.debug_flag) {
+          if (s != null) {
+            print("django: ${s}");
+          } else {
+            print("django NULL");
+          }
+        }
 
         if (s != null) {
           if (s == "running") {
             _django_online = ServerStatus.SS_ONLINE;
+
+            if (GrassrootsConfig.debug_flag) {
+              print("setting _django_online to SS_ONLINE");
+            }
           } else {
             _django_online = ServerStatus.SS_OFFLINE;
+
+            if (GrassrootsConfig.debug_flag) {
+              print("setting _django_online to SS_OFFLINE");
+            }
           }
         }
 
         s = jsonResponse ["mongo"];
+
+        if (GrassrootsConfig.debug_flag) {
+          if (s != null) {
+            print("mongo: ${s}");
+          } else {
+            print("mongo NULL");
+          }
+        }
+
         if (s != null) {
           if (s == "available") {
-            _django_online = ServerStatus.SS_ONLINE;
+            _mongo_online = ServerStatus.SS_ONLINE;
           } else {
-            _django_online = ServerStatus.SS_OFFLINE;
+            _mongo_online = ServerStatus.SS_OFFLINE;
           }
         }
       } else {
@@ -77,12 +115,160 @@ class ServerConnection {
         _django_online = ServerStatus.SS_OFFLINE;
         _mongo_online = ServerStatus.SS_OFFLINE;
       }
-
     } catch (e) {
-      latest_error = e.toString ();
+      latest_error = e.toString();
       // Handle errors like network issues
       _django_online = ServerStatus.SS_UNKNOWN;
       _mongo_online = ServerStatus.SS_UNKNOWN;
     }
+
+  }
+
+class ServerConnectionWidget extends StatefulWidget implements PreferredSizeWidget {
+
+  @override
+  final Size preferredSize;
+
+  @override
+  ServerConnectionWidgetState createState() => ServerConnectionWidgetState ();
+
+  ServerConnectionWidget(String title) :
+    preferredSize = Size.fromHeight (kToolbarHeight) {
+
+    _scw_state.SetText (title);
+  }
+
+
+}
+
+
+class ServerConnectionWidgetState extends State <ServerConnectionWidget> {
+  static ServerStatus _django_online = ServerStatus.SS_UNKNOWN;
+  static ServerStatus _mongo_online = ServerStatus.SS_UNKNOWN;
+
+  static bool _combined_state = false;
+
+  static String latest_error = "";
+
+  String _title = "";
+
+
+  bool IsOnline(bool refresh_flag) {
+    if (refresh_flag) {
+      _FetchHealthStatus();
+    }
+
+    //setState(() {
+    _combined_state = ((_django_online == ServerStatus.SS_ONLINE) &&
+        (_mongo_online == ServerStatus.SS_ONLINE));
+    //});
+
+    return _combined_state;
+  }
+
+
+  }
+
+
+  void SetText(String text) {
+    _title = text;
+  }
+
+  Widget build(BuildContext context) {
+    bool isServerHealthy = IsOnline(true);
+
+    return AppBar(
+      title: Text(_title),
+      actions: [
+        // LED Indicator
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _combined_state ? Colors.green : Colors.red,
+          ),
+        ),
+        SizedBox(width: 8),
+        Text(
+          _combined_state ? 'Server OK' : 'Server Issue',
+          style: TextStyle(fontSize: 14),
+        ),
+
+
+        IconButton(
+          icon: Icon(Icons.refresh),
+          onPressed: () async {
+            // Trigger health check
+
+            print("pressed");
+            _combined_state = await checkHealthStatus();
+            print("pressed 2");
+          },
+          tooltip: 'Refresh Server Status',
+        ),
+
+      ],
+    );
+  }
+
+
+  Future<bool> checkHealthStatus() async {
+    if (mounted) {
+      print("checkHealthStatus called");
+      try {
+        final bool old_health_status = IsOnline(false);
+        bool new_health_status = IsOnline(true);
+
+        /* Are we back online? */
+        if ((!old_health_status) && new_health_status) {
+          /* Sync any locally-saved observations */
+          SnackBar snack_bar = SnackBar(
+            content: Text(
+              'Syncing local data',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.green,
+          );
+
+          ScaffoldMessenger.of(context).showSnackBar(snack_bar);
+          await Observation.SyncLocalObservations();
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        }
+
+        print('Django: $_django_online, Mongo: $_mongo_online');
+        // Show snackbar if server is unhealthy
+        if (_django_online != ServerStatus.SS_ONLINE ||
+            _mongo_online == ServerStatus.SS_ONLINE) {
+          final String app_url = ApiRequests.GetPhotoReceiverUrl();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Warning: There is a problem with the server connection to ${app_url}. Error ${ApiRequests
+                    .latest_error}',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+      } catch (e) {
+        print('>>>>> e: $e');
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error checking server status. Please try again.',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+    return IsOnline(false);
   }
 }

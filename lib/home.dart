@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:grassroots_field_trials/global_variable.dart';
+import 'package:grassroots_field_trials/server.dart';
 import 'welcome_message.dart';
 import 'grassroots_studies.dart';
 import 'api_requests.dart';
@@ -19,13 +20,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String hps_djangoStatus = 'unknown';
   String hps_mongoStatus = 'unknown';
+//  ServerConnectionWidget hps_server_connection_widget = ServerConnectionWidget ();
 
   @override
   void initState() {
     super.initState();
 
     GrassrootsPageState.CheckAndUpdateAllowedStudyIDs ();
-    checkHealthStatus();
+    //checkHealthStatus();
      _printLocalObservations(); // Fetch and print local observations
     _printLocalPhotoSubmissions(); 
   }
@@ -57,158 +59,77 @@ Future<void> _printLocalPhotoSubmissions() async {
     }
   }
 
-  Future<void> checkHealthStatus() async {
-     print("checkHealthStatus called");
-    try {
-      final bool old_health_status = _GetServerHealth (false);
 
-      final healthStatus = await ApiRequests.fetchHealthStatus();
-      setState(() {
-        hps_djangoStatus = healthStatus['django'] ?? 'unknown';
-        hps_mongoStatus = healthStatus['mongo'] ?? 'unknown';
-      });
+  // Future<void> checkHealthStatus() async {
+  //    print("checkHealthStatus called");
+  //   try {
+  //     final bool old_health_status = hps_server_connection_widget.IsOnline (false);
+  //     bool new_health_status = hps_server_connection_widget.IsOnline (true);
+  //
+  //     /* Are we back online? */
+  //     if ((!old_health_status) && new_health_status) {
+  //       /* Sync any locally-saved observations */
+  //       SnackBar snack_bar = SnackBar (
+  //         content: Text(
+  //           'Syncing local data',
+  //           style: TextStyle(color: Colors.white),
+  //         ),
+  //         backgroundColor: Colors.green,
+  //       );
+  //
+  //       ScaffoldMessenger.of (context).showSnackBar (snack_bar);
+  //       await Observation.SyncLocalObservations ();
+  //       ScaffoldMessenger.of (context).hideCurrentSnackBar ();
+  //     }
+  //
+  //     print('Django: $hps_djangoStatus, Mongo: $hps_mongoStatus');
+  //     // Show snackbar if server is unhealthy
+  //     if (hps_djangoStatus != 'running' || hps_mongoStatus != 'available') {
+  //       final String app_url = ApiRequests.GetPhotoReceiverUrl();
+  //
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(
+  //             'Warning: There is a problem with the server connection to ${app_url}. Error ${ApiRequests.latest_error}',
+  //             style: TextStyle(color: Colors.white),
+  //           ),
+  //           backgroundColor: Colors.red,
+  //           duration: Duration(seconds: 5),
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     print ('>>>>> e: $e');
+  //
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text(
+  //           'Error checking server status. Please try again.',
+  //           style: TextStyle(color: Colors.white),
+  //         ),
+  //         backgroundColor: Colors.orange,
+  //         duration: Duration(seconds: 5),
+  //       ),
+  //     );
+  //   }
+  // }
 
-      bool new_health_status = _GetServerHealth (false);
-
-      /* Are we back online? */
-      if ((!old_health_status) && new_health_status) {
-        /* Sync any locally-saved observations */
-        SnackBar snack_bar = SnackBar (
-          content: Text(
-            'Syncing local data',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.green,
-        );
-
-        ScaffoldMessenger.of (context).showSnackBar (snack_bar);
-        await Observation.SyncLocalObservations ();
-        ScaffoldMessenger.of (context).hideCurrentSnackBar ();
-      }
-
-      print('Django: $hps_djangoStatus, Mongo: $hps_mongoStatus');
-      // Show snackbar if server is unhealthy
-      if (hps_djangoStatus != 'running' || hps_mongoStatus != 'available') {
-        final String app_url = ApiRequests.GetPhotoReceiverUrl();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Warning: There is a problem with the server connection to ${app_url}. Error ${ApiRequests.latest_error}',
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
-    } catch (e) {
-      print ('>>>>> e: $e');
-      setState(() {
-        hps_djangoStatus = 'error';
-        hps_mongoStatus = 'error';
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Error checking server status. Please try again.',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.orange,
-          duration: Duration(seconds: 5),
-        ),
-      );
-    }
-  }
-
-  bool _GetServerHealth (bool refresh_flag) {
-    return ((hps_djangoStatus == 'running') && (hps_mongoStatus == 'available'));
-  }
-
-
-  static Widget CreateServerHealthWidget () {
-    bool isServerHealthy = _GetServerHealth (false);
-
-    AppBar app_bar = AppBar(
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('Grassroots App'),
-          Row(
-            children: [
-              // LED Indicator
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isServerHealthy ? Colors.green : Colors.red,
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                isServerHealthy ? 'Server OK' : 'Server Issue',
-                style: TextStyle(fontSize: 14),
-              ),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.refresh),
-          onPressed: checkHealthStatus, // Trigger health check
-          tooltip: 'Refresh Server Status',
-        ),
-      ],
-    );
-
-    return app_bar;
-  }
 
 
   @override
   Widget build(BuildContext context) {
-    bool isServerHealthy = _GetServerHealth (false);
+    // ServerConnectionWidget server_widget = ServerConnectionWidget();
+    // bool isServerHealthy = server_widget.IsOnline (false);
     final String app_url =  ApiRequests.GetPhotoReceiverUrl();
+
+
+    ServerConnectionWidget app_bar =  ServerConnectionWidget ("Grassroots");
+
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Grassroots App'),
-            Row(
-              children: [
-                // LED Indicator
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isServerHealthy ? Colors.green : Colors.red,
-                  ),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  isServerHealthy ? 'Server OK' : 'Server Issue',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: checkHealthStatus, // Trigger health check
-            tooltip: 'Refresh Server Status',
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: checkHealthStatus, // Pull-to-refresh action
-        child: LayoutBuilder(
-          builder: (context, constraints) {
+      appBar: app_bar,
+      body:RefreshIndicator (
+        onRefresh: app_bar.checkHealthStatus, // Pull-to-refresh action
+        child: LayoutBuilder(builder: (context, constraints) {
             return SingleChildScrollView(
               physics: AlwaysScrollableScrollPhysics(), // Enable pull-to-refresh
               child: ConstrainedBox(
@@ -300,7 +221,7 @@ Future<void> _printLocalPhotoSubmissions() async {
             );
           },
         ),
-      ),
+      )
     );
   }
 
