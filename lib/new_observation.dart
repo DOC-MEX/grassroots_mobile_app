@@ -426,7 +426,6 @@ void _handleUpload() async {
   int _BinarySearchPlots (list, element) {
     int start = 0;
     int end = list.length - 1;
-    int i = 0;
     while (start <= end) {
       int mid = ((start + end) * 0.50).floor ();
 

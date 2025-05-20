@@ -33,19 +33,36 @@ class ServerModel extends ChangeNotifier {
 
   String latest_error = "";
 
+  ServerModel () {
+    CheckStatus ();
+  }
 
-  Future <void> CheckStatus () async {
+
+
+  Future <void> CheckStatus() async {
     final ServerStatus old_django_online = _django_online;
     final ServerStatus old_mongo_online = _mongo_online;
 
-    await _FetchHealthStatus ();
+    await _FetchHealthStatus();
 
-    if ((old_mongo_online != _mongo_online) || (old_django_online != _django_online)) {
-      // This call tells the widgets that are listening to this model to rebuild.
-      notifyListeners ();
+    if (GrassrootsConfig.debug_flag) {
+      print ("_django_online to ${_django_online}");
+      print ("_mongo_online to ${_mongo_online}");
     }
 
+    if ((old_mongo_online != _mongo_online) ||
+        (old_django_online != _django_online)) {
+      // This call tells the widgets that are listening to this model to rebuild.
+      notifyListeners();
+    }
   }
+
+
+  bool GetCombinedState () {
+    return ((_django_online == ServerStatus.SS_ONLINE) &&
+        (_mongo_online == ServerStatus.SS_ONLINE));
+  }
+
 
 
   Future <void> _FetchHealthStatus() async {
@@ -105,8 +122,18 @@ class ServerModel extends ChangeNotifier {
         if (s != null) {
           if (s == "available") {
             _mongo_online = ServerStatus.SS_ONLINE;
+
+            if (GrassrootsConfig.debug_flag) {
+              print("setting _django_online to SS_ONLINE");
+            }
+
           } else {
             _mongo_online = ServerStatus.SS_OFFLINE;
+
+            if (GrassrootsConfig.debug_flag) {
+              print("setting _django_online to SS_OFFLINE");
+            }
+
           }
         }
       } else {
@@ -114,15 +141,27 @@ class ServerModel extends ChangeNotifier {
 
         _django_online = ServerStatus.SS_OFFLINE;
         _mongo_online = ServerStatus.SS_OFFLINE;
+
+        if (GrassrootsConfig.debug_flag) {
+          print("setting _mongo_online to SS_OFFLINE");
+          print("setting _django_online to SS_OFFLINE");
+        }
+
       }
     } catch (e) {
       latest_error = e.toString();
       // Handle errors like network issues
       _django_online = ServerStatus.SS_UNKNOWN;
       _mongo_online = ServerStatus.SS_UNKNOWN;
-    }
 
+      if (GrassrootsConfig.debug_flag) {
+        print("setting _mongo_online to SS_UNKNOWN");
+        print("setting _django_online to SS_UNKNOWN");
+      }
+
+    }
   }
+}
 
 class ServerConnectionWidget extends StatefulWidget implements PreferredSizeWidget {
 
@@ -135,7 +174,11 @@ class ServerConnectionWidget extends StatefulWidget implements PreferredSizeWidg
   ServerConnectionWidget(String title) :
     preferredSize = Size.fromHeight (kToolbarHeight) {
 
-    _scw_state.SetText (title);
+    //_scw_state.SetText (title);
+  }
+
+  Future <void> CheckHealthStatus () async {
+
   }
 
 
@@ -143,31 +186,32 @@ class ServerConnectionWidget extends StatefulWidget implements PreferredSizeWidg
 
 
 class ServerConnectionWidgetState extends State <ServerConnectionWidget> {
-  static ServerStatus _django_online = ServerStatus.SS_UNKNOWN;
-  static ServerStatus _mongo_online = ServerStatus.SS_UNKNOWN;
 
-  static bool _combined_state = false;
 
   static String latest_error = "";
 
   String _title = "";
+  ServerModel _model = ServerModel();
+
+  bool _combined_state = false;
 
 
-  bool IsOnline(bool refresh_flag) {
+  ServerConnectionWidgetState () {
+    IsOnline (true);
+  }
+
+  Future <bool> IsOnline(bool refresh_flag) async {
     if (refresh_flag) {
-      _FetchHealthStatus();
+      await _model.CheckStatus ();
+      _combined_state = _model.GetCombinedState ();
     }
 
-    //setState(() {
-    _combined_state = ((_django_online == ServerStatus.SS_ONLINE) &&
-        (_mongo_online == ServerStatus.SS_ONLINE));
-    //});
-
+    if (GrassrootsConfig.debug_flag) {
+      print ("IsOnline () returning _combined_state ${_combined_state}");
+    }
     return _combined_state;
   }
 
-
-  }
 
 
   void SetText(String text) {
@@ -175,7 +219,10 @@ class ServerConnectionWidgetState extends State <ServerConnectionWidget> {
   }
 
   Widget build(BuildContext context) {
-    bool isServerHealthy = IsOnline(true);
+
+    if (GrassrootsConfig.debug_flag) {
+      print ("building with _combined_state ${_combined_state}");
+    }
 
     return AppBar(
       title: Text(_title),
@@ -217,11 +264,12 @@ class ServerConnectionWidgetState extends State <ServerConnectionWidget> {
     if (mounted) {
       print("checkHealthStatus called");
       try {
-        final bool old_health_status = IsOnline(false);
-        bool new_health_status = IsOnline(true);
+        final bool old_health_status = await IsOnline (false);
+
+        await IsOnline (true);
 
         /* Are we back online? */
-        if ((!old_health_status) && new_health_status) {
+        if ((!old_health_status) && _combined_state) {
           /* Sync any locally-saved observations */
           SnackBar snack_bar = SnackBar(
             content: Text(
@@ -236,10 +284,9 @@ class ServerConnectionWidgetState extends State <ServerConnectionWidget> {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
         }
 
-        print('Django: $_django_online, Mongo: $_mongo_online');
+        print('_combined_state: $_combined_state');
         // Show snackbar if server is unhealthy
-        if (_django_online != ServerStatus.SS_ONLINE ||
-            _mongo_online == ServerStatus.SS_ONLINE) {
+        if (!_combined_state) {
           final String app_url = ApiRequests.GetPhotoReceiverUrl();
 
           ScaffoldMessenger.of(context).showSnackBar(

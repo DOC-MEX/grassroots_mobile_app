@@ -492,6 +492,15 @@ List <StringEntry> GetStudiesAsList () {
 
     if (id != null) {
       StringLabel sl = StringLabel (study['name'] ?? 'Unknown Study', id);
+      Icon icon = allowedStudyIDs.contains (id)
+          ? Icon (
+            Icons.edit,
+            color: Theme.of(context).primaryColor,
+          ) : Icon (
+            Icons.lock,
+            color: Theme.of(context).primaryColor,
+          );
+
 
       StringEntry se = StringEntry(
         label: study['name'] ?? 'Unknown Study', 
@@ -499,9 +508,10 @@ List <StringEntry> GetStudiesAsList () {
         style: ButtonStyle (
           foregroundColor: WidgetStateProperty.all(Theme.of(context).primaryColor),
         ),
+        trailingIcon: icon,
       );
-      
-      l.add (se);            
+
+      l.add (se);
     } else {
       print ("no id in ${study}");
     }
