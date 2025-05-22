@@ -28,7 +28,7 @@ class GrassrootsRequest {
       throw Exception('Server key "$serverKey" does not correspond to a known server.');
     }
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINE) {
       print (">>> Calling Grassroots Server at ${url}");
     }
     
@@ -52,7 +52,7 @@ class GrassrootsRequest {
     // The rest of your method remains unchanged
     if (response.statusCode == 200) {
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINER) {
         print ("REQUEST: ${response.body}");
         print ("RESPONSE BODY: ${response.body}");
       }

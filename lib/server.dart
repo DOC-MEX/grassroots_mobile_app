@@ -45,7 +45,7 @@ class ServerModel extends ChangeNotifier {
 
     await _FetchHealthStatus();
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_INFO) {
       print ("_django_online to ${_django_online}");
       print ("_mongo_online to ${_mongo_online}");
     }
@@ -71,7 +71,7 @@ class ServerModel extends ChangeNotifier {
 
       final response = await http.get(Uri.parse('${base_url}online_check/'));
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINER) {
         print("called ${base_url}online_check/ got ${response.statusCode}");
       }
 
@@ -79,13 +79,13 @@ class ServerModel extends ChangeNotifier {
         // Parse the JSON response and return it
         final jsonResponse = json.decode(response.body);
 
-        if (GrassrootsConfig.debug_flag) {
+        if (GrassrootsConfig.log_level >= LOG_FINER) {
           print("response: $jsonResponse");
         }
 
         String? s = jsonResponse ["django"];
 
-        if (GrassrootsConfig.debug_flag) {
+        if (GrassrootsConfig.log_level >= LOG_FINER) {
           if (s != null) {
             print("django: ${s}");
           } else {
@@ -97,13 +97,13 @@ class ServerModel extends ChangeNotifier {
           if (s == "running") {
             _django_online = ServerStatus.SS_ONLINE;
 
-            if (GrassrootsConfig.debug_flag) {
+            if (GrassrootsConfig.log_level >= LOG_FINER) {
               print("setting _django_online to SS_ONLINE");
             }
           } else {
             _django_online = ServerStatus.SS_OFFLINE;
 
-            if (GrassrootsConfig.debug_flag) {
+            if (GrassrootsConfig.log_level >= LOG_FINER) {
               print("setting _django_online to SS_OFFLINE");
             }
           }
@@ -111,7 +111,7 @@ class ServerModel extends ChangeNotifier {
 
         s = jsonResponse ["mongo"];
 
-        if (GrassrootsConfig.debug_flag) {
+        if (GrassrootsConfig.log_level >= LOG_FINER) {
           if (s != null) {
             print("mongo: ${s}");
           } else {
@@ -123,14 +123,14 @@ class ServerModel extends ChangeNotifier {
           if (s == "available") {
             _mongo_online = ServerStatus.SS_ONLINE;
 
-            if (GrassrootsConfig.debug_flag) {
+            if (GrassrootsConfig.log_level >= LOG_FINER) {
               print("setting _django_online to SS_ONLINE");
             }
 
           } else {
             _mongo_online = ServerStatus.SS_OFFLINE;
 
-            if (GrassrootsConfig.debug_flag) {
+            if (GrassrootsConfig.log_level >= LOG_FINER) {
               print("setting _django_online to SS_OFFLINE");
             }
 
@@ -142,7 +142,7 @@ class ServerModel extends ChangeNotifier {
         _django_online = ServerStatus.SS_OFFLINE;
         _mongo_online = ServerStatus.SS_OFFLINE;
 
-        if (GrassrootsConfig.debug_flag) {
+        if (GrassrootsConfig.log_level >= LOG_FINER) {
           print("setting _mongo_online to SS_OFFLINE");
           print("setting _django_online to SS_OFFLINE");
         }
@@ -154,7 +154,7 @@ class ServerModel extends ChangeNotifier {
       _django_online = ServerStatus.SS_UNKNOWN;
       _mongo_online = ServerStatus.SS_UNKNOWN;
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINER) {
         print("setting _mongo_online to SS_UNKNOWN");
         print("setting _django_online to SS_UNKNOWN");
       }
@@ -206,7 +206,7 @@ class ServerConnectionWidgetState extends State <ServerConnectionWidget> {
       _combined_state = _model.GetCombinedState ();
     }
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_INFO) {
       print ("IsOnline () returning _combined_state ${_combined_state}");
     }
     return _combined_state;
@@ -220,7 +220,7 @@ class ServerConnectionWidgetState extends State <ServerConnectionWidget> {
 
   Widget build(BuildContext context) {
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_INFO) {
       print ("building with _combined_state ${_combined_state}");
     }
 

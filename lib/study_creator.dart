@@ -382,7 +382,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
                             final String? trial_id = _selected_trial_id;
                             final String? location_id = _selected_location_id;
 
-                            if (GrassrootsConfig.debug_flag) {
+                            if (GrassrootsConfig.log_level >= LOG_INFO) {
                               print ("name ${name}");
                               print ("trial_id ${trial_id}");
                               print ("location_id ${location_id}");
@@ -711,7 +711,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
         }]
       });
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_INFO) {
         print ("About to send:\n${request_string}");
       }
 
@@ -730,7 +730,7 @@ class _NewStudyPageState extends State <NewStudyPage> {
           * list of allowed study ids.
           */
 
-          if (GrassrootsConfig.debug_flag) {
+          if (GrassrootsConfig.log_level >= LOG_INFO) {
             print ("status ${status}");
           }
 

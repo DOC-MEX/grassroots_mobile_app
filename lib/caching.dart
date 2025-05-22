@@ -163,7 +163,7 @@ class IdCache {
   static Future <void> AddId (final String box_name, final String id) async {
     final box = await Hive.openBox <String> (box_name);
  
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINE) {
       print ("adding id ${id} to box ${box_name}");
     }
 
@@ -180,7 +180,7 @@ class IdCache {
       entries.add (id);
     }
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINE) {
       print ("box ${box_name} has ${entries}");
     }
 

@@ -46,7 +46,7 @@ void main() async{
   try {
     await GlobalConfiguration ().loadFromAsset ("custom_config.json");
   } catch (e) {
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINEST) {
       print ("custom_config.json not found");
     }
   }

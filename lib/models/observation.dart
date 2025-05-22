@@ -73,7 +73,7 @@ class Observation extends HiveObject {
     int ret = 0;
 
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINE) {
       print ("BEGIN Observation");
       print ("studyId ${studyId}");
       print ("plotId ${plotId}");
@@ -86,9 +86,9 @@ class Observation extends HiveObject {
     }
        
     // Create the JSON request
-    String jsonString = backendRequests.submitObservationRequest(
+    String jsonString = backendRequests.GetSubmitObservationRequest(
       studyId: studyId,
-      detectedQRCode: plotId,
+      plotId: plotId,
       selectedTrait: trait,
       measurement: value,
       dateString: date,
@@ -96,7 +96,7 @@ class Observation extends HiveObject {
       note: notes,
     );
     
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_INFO) {
       print('Request to server: $jsonString');
     }
 
@@ -107,7 +107,7 @@ class Observation extends HiveObject {
         var response = await GrassrootsRequest.sendRequest(
             jsonString, 'private');
 
-        if (GrassrootsConfig.debug_flag) {
+        if (GrassrootsConfig.log_level >= LOG_INFO) {
           print('Response from server: $response');
         }
 

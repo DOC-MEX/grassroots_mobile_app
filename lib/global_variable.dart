@@ -23,12 +23,16 @@ final String CACHE_MEASURED_VARIABLES = "measured_variables_cache";
 final String LOCAL_ALLOWED_STUDIES = "local_allowed_studies";
 final String CACHE_SERVER_ALLOWED_STUDIES = "server_allowed_studies_cache";
 
+final int LOG_INFO = 10;
+final int LOG_FINE = 20;
+final int LOG_FINER = 30;
+final int LOG_FINEST = 40;
 
 
 class GrassrootsConfig {
   static Map <String, String>? _config;
 
-  static bool debug_flag = true;
+  static int log_level = LOG_FINE;
 
   static Future <Map <String, String>?> LoadConfig () async {
     if (_config == null) {

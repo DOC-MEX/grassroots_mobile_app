@@ -44,41 +44,41 @@ class MeasuredVariable {
 
   factory MeasuredVariable.fromJson (Map <String, dynamic> json) {
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINEST) {
       print (">>> json ${json}");
     }
 
     String mv_id = json ["id"];
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINEST) {
       print ("id ${mv_id}");
     }
 
     if (mv_id != "") {
       var child = json ["unit"];
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINEST) {
         print ("unit ${child}");
       }
 
       if (child != null) {
         String mv_unit_name = child ["so:name"];
       
-        if (GrassrootsConfig.debug_flag) {
+        if (GrassrootsConfig.log_level >= LOG_FINEST) {
           print ("mv_unit_name ${mv_unit_name}");
         }
 
         if (mv_unit_name != "") {
           child = json ["trait"];
 
-          if (GrassrootsConfig.debug_flag) {
+          if (GrassrootsConfig.log_level >= LOG_FINEST) {
              print ("trait ${child}"); 
           }
 
           if (child != null) {
             String mv_trait_name = child ["so:name"];
 
-            if (GrassrootsConfig.debug_flag) {
+            if (GrassrootsConfig.log_level >= LOG_FINEST) {
               print ("mv_trait_name ${mv_trait_name}");
             }
 
@@ -89,20 +89,20 @@ class MeasuredVariable {
                 mv_trait_descrption = null;
               }
 
-              if (GrassrootsConfig.debug_flag) {
+              if (GrassrootsConfig.log_level >= LOG_FINEST) {
                 print ("mv_trait_descrption ${mv_trait_descrption}");
               }
 
               child = json ["measurement"];
 
-              if (GrassrootsConfig.debug_flag) {
+              if (GrassrootsConfig.log_level >= LOG_FINEST) {
                 print ("measurement ${child}"); 
               }
 
               if (child != null) {
                 String mv_measurement_name = child ["so:name"];
                 
-                if (GrassrootsConfig.debug_flag) {
+                if (GrassrootsConfig.log_level >= LOG_FINEST) {
                   print ("mv_measurement_name ${mv_measurement_name}");
                 }
 
@@ -113,20 +113,20 @@ class MeasuredVariable {
                     mv_measurement_description = null;
                   }
 
-                  if (GrassrootsConfig.debug_flag) {
+                  if (GrassrootsConfig.log_level >= LOG_FINEST) {
                     print ("mv_measurement_description ${mv_measurement_description}");
                   }
 
                   child = json ["variable"];
 
-                  if (GrassrootsConfig.debug_flag) {
+                  if (GrassrootsConfig.log_level >= LOG_FINEST) {
                     print ("variable ${child}"); 
                   }
 
                   if (child != null) {
                     String mv_variable_name = child ["so:name"];
 
-                    if (GrassrootsConfig.debug_flag) {
+                    if (GrassrootsConfig.log_level >= LOG_FINEST) {
                       print ("mv_variable_name ${mv_variable_name}");
                     }
 
@@ -206,14 +206,14 @@ class MeasuredVariablesModel with ChangeNotifier {
 
     for (MeasuredVariable mv in new_values) {
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINE) {
         print ("${_name} :: _addValues (): checking ${mv.variable_name}");
       }
 
       if (! (_values.contains (mv))) {
         _values.add (mv);
  
-        if (GrassrootsConfig.debug_flag) {
+        if (GrassrootsConfig.log_level >= LOG_FINE) {
           print ("${_name} :: _addValues (): adding ${mv.variable_name}");
         }
 
@@ -224,7 +224,7 @@ class MeasuredVariablesModel with ChangeNotifier {
     } 
 
     if (added_flag) {
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINE) {
         print ("${_name} :: _addValues (): about to call notifyListeners ()");
       }
 
@@ -341,7 +341,7 @@ class MeasuredVariableSearchDelegate extends SearchDelegate <List <MeasuredVaria
       results = m.getSelectedVariables ();
     }
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_INFO) {
       if (results != null) {
         print ("getSelectedVariables () has ${results.length} entries");
       } else {
@@ -369,7 +369,7 @@ class MeasuredVariablesListWidget extends StatefulWidget {
 
     if (model != null) {
       
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_INFO) {
         print ("USING EXISTING MODEL OF ${model.length} VALUES");
       }
 
@@ -448,14 +448,14 @@ class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidg
   Widget build(BuildContext context) {
     final List  <MeasuredVariable> values = widget._model._values;
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINER) {
       print ("building list of ${values.length} items for ${widget._name}");
     }
 
     if (values.length > 0) {
       final int count = values.length;
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINER) {
         print ("LIST MODE ${count}");
 
         for (int i = 0; i < count; ++ i) {
@@ -471,7 +471,7 @@ class _MeasuredVariablesListWidgetState extends State <MeasuredVariablesListWidg
           MeasuredVariable mv = values [index];
           String item_subtitle = mv.trait_name + " - " + mv.measurement_name + " - " + mv.unit_name;
 
-          if (GrassrootsConfig.debug_flag) {
+          if (GrassrootsConfig.log_level >= LOG_FINEST) {
             print ("ADDING ${index}: ${mv.variable_name}");
           }
          

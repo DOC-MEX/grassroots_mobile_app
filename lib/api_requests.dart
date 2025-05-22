@@ -18,7 +18,7 @@ class ApiRequests {
       url =  'https://grassroots.tools/photo_receiver/';
     }
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_INFO) {
       print ("GetPhotoReceiverUrl () returning ${url}");
     }
 
@@ -201,7 +201,7 @@ static Future<Map<String, String>> fetchHealthStatus() async {
 
       final response = await http.get(Uri.parse('${base_url}online_check/'));
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_INFO) {
         print ("called ${base_url}online_check/ got ${response.statusCode}");
       }
 

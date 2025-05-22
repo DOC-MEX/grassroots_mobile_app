@@ -69,20 +69,20 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
         }
       }
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINEST) {
         print ("1: Allowed studies ${fetchedIDs}");
       }
     } else {
       /* Use any cached data */
       await GetandAddLocallyAllowedStudies (CACHE_SERVER_ALLOWED_STUDIES, fetchedIDs);
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINEST) {
         print ("2: Allowed studies ${fetchedIDs}");
       }
 
     }
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINEST) {
       print ("3: Allowed studies ${fetchedIDs}");
     }
 
@@ -90,7 +90,7 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
     /* Add any user-created studies */
     await GetandAddLocallyAllowedStudies (LOCAL_ALLOWED_STUDIES, fetchedIDs);
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINEST) {
       print ("4: Allowed studies ${fetchedIDs}");
     }
 
@@ -104,14 +104,14 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
         if (!allowedStudyIDs.contains(id)) {
           allowedStudyIDs.add(id);
 
-          if (GrassrootsConfig.debug_flag) {          
+          if (GrassrootsConfig.log_level >= LOG_FINEST) {
             print('Added new ID to Allowed Study IDs: $id');
           }
         }
       }      
     //});
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINEST) {
       print('Final Allowed Study IDs: $allowedStudyIDs'); 
     }
   }
@@ -124,7 +124,7 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
     for (String local_id in local_ids) {
       ids.add (local_id);
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINEST) {
         print ("Getting ${local_id} from ${box_name}");
       }
     }
@@ -174,7 +174,7 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
           String date_str = "";
           date_str = study.date.toString ();
 
-          if (GrassrootsConfig.debug_flag) {
+          if (GrassrootsConfig.log_level >= LOG_FINEST) {
             print("using cached study ${entry ["name"]}, ${entry ["id"]} from ${date_str}");
           }
 
@@ -182,7 +182,7 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
         }
       }
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINEST) {
         print("Got ${gps_studies.length} cached studies");
         print("BEGIN gps_studies");
         print("${gps_studies}");
@@ -195,7 +195,7 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
         setState(() {
           gps_studies = studies_data;
 
-          if (GrassrootsConfig.debug_flag) {
+          if (GrassrootsConfig.log_level >= LOG_FINEST) {
             print("got ${gps_studies.length} studies");
           }
         });
@@ -477,7 +477,7 @@ class GrassrootsPageState extends State<GrassrootsStudies> {
 List <StringEntry> GetStudiesAsList () {
   List <StringEntry> l = [];
 
-  if (GrassrootsConfig.debug_flag) {
+  if (GrassrootsConfig.log_level >= LOG_FINER) {
     print("in GetStudiesAsList ()");
     print("Num studies ${gps_studies}");
   }
@@ -485,7 +485,7 @@ List <StringEntry> GetStudiesAsList () {
   for (final e in gps_studies) {
     var study = e;
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINER) {
       print("STUDY: ${study}");
     }
     var id = study ['id'];
@@ -518,7 +518,7 @@ List <StringEntry> GetStudiesAsList () {
 
   }
 
-  if (GrassrootsConfig.debug_flag) {
+  if (GrassrootsConfig.log_level >= LOG_FINE) {
     print ("num StringEntries for Studies ${l.length}");
   }
 
@@ -535,7 +535,7 @@ GetStudyDetails (selected_study_id) async {
     print (">>>>> Couldn't get study $selected_study_id");
   }
 
-  if (GrassrootsConfig.debug_flag) {
+  if (GrassrootsConfig.log_level  >= LOG_FINE) {
     print("returning\n$study_details");
   }
 
@@ -553,6 +553,9 @@ GetStudyDetails (selected_study_id) async {
     //print('Number of Plots: $numberOfPlots');
 
     final List <StringEntry> all_studies = GetStudiesAsList ();
+
+    TextEditingController accession_controller = TextEditingController (text: _selected_plot_accession);
+
 
     return Scaffold(
       appBar: AppBar(
@@ -618,6 +621,7 @@ GetStudyDetails (selected_study_id) async {
                                 selectedPlotId = null; // Also reset the selected plot ID
                                 selectedPlotDisplayValue = null;
                                 observationCount = 0;
+                                accession_controller.clear();
                               });
                               
                               try {
@@ -826,6 +830,7 @@ GetStudyDetails (selected_study_id) async {
 
                                 onSelected: (String? plot_entry) async {
                                   setState(() {
+
                                     selectedPlotId = plot_entry;
                                     int index = plotIDs.indexOf(plot_entry!);
                                     if (index != -1) {
@@ -848,10 +853,20 @@ GetStudyDetails (selected_study_id) async {
                                         if (observations != null) {
                                           var count = observations.length;
                                           observationCount = count;
+
+                                          if (GrassrootsConfig.log_level >= LOG_FINER) {
+                                            print ("plot has ${observationCount} observations");
+                                          }
+
                                           //  **********lists for phenotypes dropdown menu********
                                           variableToTraitMap.clear();
 
                                           for (var observation in observations) {
+
+                                            if (GrassrootsConfig.log_level >= LOG_FINER) {
+                                              print (">>> Observation:  ${observation}");
+                                            }
+
                                             if (observation.containsKey('phenotype') &&
                                                 observation['phenotype'].containsKey('variable')) {
                                               String variable = observation['phenotype']['variable'];
@@ -874,9 +889,16 @@ GetStudyDetails (selected_study_id) async {
 
                                         if (material != null) {
                                           _selected_plot_accession = material!['accession'];
+
+                                          if (GrassrootsConfig.log_level >= LOG_FINER) {
+                                            print ("accession: ${_selected_plot_accession}");
+                                          }
                                         }
                                       }
                                     }
+
+                                    print ("setting accession controller text to $_selected_plot_accession");
+                                    accession_controller.text = _selected_plot_accession!;
                                   });
                                   // Additional logic when a plot is selected, if needed
                                   print('Selected Plot ID: $plot_entry'); // Print the actual plot ID to console
@@ -884,8 +906,52 @@ GetStudyDetails (selected_study_id) async {
                                 },
 
                                 
-                              )
-                            
+                              ),
+
+
+                              SizedBox(height: 20),
+                              ///// Note field /////
+                              TextField(
+                                controller: accession_controller,
+                                onSubmitted: (accession) {
+                                  print ("accession ${accession}");
+
+                                  String? plot_id = selectedPlotId;
+                                  String? study_id = selectedStudyLabel?.id;
+
+                                  if ((plot_id != null) && (study_id != null)) {
+
+                                    // Create the JSON request
+                                    String jsonString = backendRequests.GetSubmitAccessionRequest (
+                                      studyId: study_id,
+                                      plotId: plot_id,
+                                      accession: accession,
+                                    );
+
+                                    if (GrassrootsConfig.log_level >= LOG_FINER) {
+                                      print('Request to server: $jsonString');
+                                    }
+
+                                  }
+
+
+                                },
+                                decoration: InputDecoration(
+                                  labelText: 'Accession',
+                                  //hintText: 'The accession for the material in this plot',
+                                  border: OutlineInputBorder(),
+                                  labelStyle: TextStyle (color: Theme.of(context).primaryColor),
+                                  hintStyle: TextStyle (color: Theme.of(context).primaryColor),
+
+                                ),
+                                keyboardType: TextInputType.text,
+
+                                style: TextStyle (color: Theme.of(context).primaryColor),
+
+                                //maxLines: 1, // Allow multiline input
+
+                              ),
+
                             ], // end if (plotDisplayValues is not empty)
 
                             // Plots dropdown

@@ -120,7 +120,7 @@ class backendRequests {
     try {
       var response = await GrassrootsRequest.sendRequest(requestString, 'public');
 
-      if (GrassrootsConfig.debug_flag) {
+      if (GrassrootsConfig.log_level >= LOG_FINEST) {
         print ("locations: ${response}");
       }
 
@@ -129,7 +129,7 @@ class backendRequests {
         String name = location['data']['name'] as String? ?? 'Unknown Location';
         String id = location['data']['_id']['\$oid'] as String? ?? 'Unknown ID';
 
-        if (GrassrootsConfig.debug_flag) {
+        if (GrassrootsConfig.log_level >= LOG_FINEST) {
           print ("Adding location ${name}");
         }
 
@@ -173,9 +173,9 @@ class backendRequests {
   }
 
   ////////// request for submitting observation used in new_observation.dart //////////
-  static String submitObservationRequest({
+  static String GetSubmitObservationRequest({
     required String studyId,
-    required String detectedQRCode,
+    required String plotId,
     required String? selectedTrait,
     required String measurement,
     required String dateString,
@@ -196,9 +196,9 @@ class backendRequests {
       return '{}'; // Return a dummy JSON string or handle as needed
     }
 
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINE) {
       print ("studyId ${studyId}");
-      print ("detectedQRCode ${detectedQRCode}");
+      print ("detectedQRCode ${plotId}");
       print ("selectedTrait ${selectedTrait}");
       print ("measurement ${measurement}");
       print ("dateString ${dateString}");
@@ -207,7 +207,7 @@ class backendRequests {
     }
 
     List <Map <String, Object>> params_array = [
-      {"param": "RO Id", "current_value": detectedQRCode, "group": "Plot"},
+      {"param": "RO Id", "current_value": plotId, "group": "Plot"},
       {"param": "RO Append Observations", "current_value": true, "group": "Plot"},
       {
         "param": "RO Measured Variable Name",
@@ -265,12 +265,76 @@ class backendRequests {
     // Convert map to a JSON string
     String req = jsonEncode (requestMap);
     
-    if (GrassrootsConfig.debug_flag) {
+    if (GrassrootsConfig.log_level >= LOG_FINE) {
       print ("Obs req: ${req}");
     }
 
     return req;
   }
+
+  ////////// request for submitting plot_accession used in new_observation.dart //////////
+  static String GetSubmitAccessionRequest({
+    required String studyId,
+    required String plotId,
+    required String accession,
+  }) {
+    String req = "{}";
+
+    // Check if the studyID is in the list of allowed IDs
+    if (allowedStudyIDs.contains(studyId)) {
+      if (accession.isNotEmpty) {
+        if (GrassrootsConfig.log_level >= LOG_FINE) {
+          print ("studyId ${studyId}");
+          print ("detectedQRCode ${plotId}");
+          print ("accession ${accession}");
+        }
+
+        List <Map <String, Object>> params_array = [
+          {"param": "RO Id", "current_value": plotId, "group": "Plot"},
+        ];
+
+        if (accession.isNotEmpty) {
+          params_array.add ({
+            "param": "RO Accession",
+            "current_value": accession,
+            "group": "Plot"
+          });
+        }
+
+        final requestMap = {
+          "services": [
+            {
+              "so:name": "Edit Field Trial Rack",
+              "start_service": true,
+              "parameter_set": {
+                "level": "simple",
+                "parameters": params_array
+              }
+            }
+          ]
+        };
+
+        // Convert map to a JSON string
+        req = jsonEncode (requestMap);
+
+        if (GrassrootsConfig.log_level >= LOG_FINE) {
+          print ("Obs req: ${req}");
+        }
+
+      } else {
+        print ('No accession value specified.');
+      }
+
+    } else {
+      // If not allowed, handle accordingly. For example:
+      print('Modification not allowed for this study.');
+    }
+
+    return req;
+  }
+
+
+
 
 //-- request for clearing cache after submitting observation (Used in new_observation.dart).
   static String clearCacheRequest(String studyID) {
