@@ -1,5 +1,6 @@
 //name: NewObservationPage  (new_observation.dart)
 import 'package:flutter/material.dart';
+import 'package:grassroots_field_trials/widget_util.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 //import 'package:http/http.dart' as http;
@@ -23,14 +24,12 @@ class NewObservationPage extends StatefulWidget {
   final String plotId;
   final Map<String, dynamic> plotDetails;
   final Function(Map<String, dynamic>) onReturn;
-  final String? accession;
   final String? selectedTraitKey;
 
   NewObservationPage({
     required this.studyDetails,
     required this.plotId,
     required this.plotDetails,
-    required this.accession,
     required this.onReturn,
     this.selectedTraitKey,
   });
@@ -46,7 +45,6 @@ class _NewObservationPageState extends State<NewObservationPage> {
   String? selectedTraitKey;
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _valueController = TextEditingController();
-  final TextEditingController _accessionController = TextEditingController();
   final TextEditingController _notesEditingController = TextEditingController();
   final TextEditingController _maxHeightController = TextEditingController();
   final TextEditingController _minHeightController = TextEditingController();
@@ -389,7 +387,6 @@ void _handleUpload() async {
               studyDetails: widget.studyDetails,
               plotId: other_plot_id!,
               plotDetails: other_plot_details ?? {},
-              accession: other_plot_accession,
               onReturn: widget.onReturn,
               selectedTraitKey: selectedTraitKey, // Pass the selected trait to the next plot
             ),
@@ -672,7 +669,6 @@ Future<void> _submitObservation() async {
     String measurement = _valueController.text; // Entered measurement
     String dateString = DateFormat('yyyy-MM-dd').format(selectedDate ?? DateTime.now()); // Date
     String? note = _notesEditingController.text.isEmpty ? null : _notesEditingController.text; // Notes
-    String? accession = _accessionController.text.isEmpty ? null : _accessionController.text;
     print('Plot ID: $plotID');
     print('Trait: $trait');
     print('Measurement: $measurement');
@@ -685,52 +681,33 @@ Future<void> _submitObservation() async {
 
       int ret = await obs.Submit (true);
       String? message;
-      bool error_flag = false;
+      bool success_flag = false;
 
       switch (ret) {
         case 1:
           print('Submission successful *****SET FLAG TO TRUE******');
           message = "Data successfully submitted";
           submissionSuccessful = true;
+          success_flag = true;
           break;
       
         case 0:
           print('Submission failed');
           message = "Failed to submit observation";
           submissionSuccessful = false;
-          error_flag = true;
+          success_flag = false;
           break;
 
         case -1:
           print('NOT ALLOWED');
           message = "Submission not allowed for this study";
           submissionSuccessful = false;
-          error_flag = true;
+          success_flag = false;
           break;
       }
 
       if (message != null) {
-        Icon icon = error_flag ?
-          Icon (Icons.error_outline, color: Colors.red) :
-          Icon (Icons.check_circle_outline, color: Colors.green);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                icon,
-                SizedBox (width: 10),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: TextStyle(fontSize: 16.0),
-                  ),
-                ),
-              ],
-            ),
-
-          ),
-        );
+        WidgetUtil.ShowSnackBar (context, message, success_flag);
       }
     }
 
@@ -804,26 +781,6 @@ void _clearForm() {
             child: Column(
               children: <Widget>[
 
-                // Accession 
-                TextFormField (
-                  controller: _accessionController,
-                  decoration: InputDecoration(
-                    labelText: 'Accession',
-                    hintText: 'The crop accession',
-                    border: OutlineInputBorder (),
-                    labelStyle: TextStyle (color: Theme.of(context).primaryColor),
-                    hintStyle: TextStyle (color: Theme.of(context).primaryColor),
-
-                  ),
-                  keyboardType: TextInputType.text,
-
-                  style: TextStyle (color: Theme.of(context).primaryColor),
-                  validator: (value) {
-                    // Optional: Add validation logic if needed
-                    return null; // No validation error
-                  },
-                ),
-                
                 // Conditional Button for Editing Max and Min Values
                 //if (selectedTraitKey == 'PH_M_cm' || selectedTraitKey == 'FLeafLLng_M_cm')
                 if (isNumericalTrait(selectedTraitKey))

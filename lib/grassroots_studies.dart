@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:grassroots_field_trials/caching.dart';
+import 'package:grassroots_field_trials/widget_util.dart';
 import 'backend_request.dart';
 import 'grassroots_request.dart';
 //import 'study_details_widget.dart';
@@ -784,7 +785,6 @@ GetStudyDetails (selected_study_id) async {
                                             studyDetails: fetchedStudyDetails!,
                                             plotId: selectedPlotId!,
                                             plotDetails: selectedPlot ?? {},
-                                            accession: _selected_plot_accession,
                                             onReturn: onNewObservationReturn,
                                           ),
                                         ),
@@ -910,10 +910,12 @@ GetStudyDetails (selected_study_id) async {
 
 
                               SizedBox(height: 20),
-                              ///// Note field /////
+                              ///// Accession field /////
+
+
                               TextField(
                                 controller: accession_controller,
-                                onSubmitted: (accession) {
+                                onSubmitted: (accession) async {
                                   print ("accession ${accession}");
 
                                   String? plot_id = selectedPlotId;
@@ -931,6 +933,37 @@ GetStudyDetails (selected_study_id) async {
                                     if (GrassrootsConfig.log_level >= LOG_FINER) {
                                       print('Request to server: $jsonString');
                                     }
+
+                                    bool success_flag = false;
+                                    String message = "Failed to update accession to ${accession}";
+
+                                    if (jsonString != "{}") {
+                                      try {
+                                        var response = await GrassrootsRequest.sendRequest(jsonString, 'private');
+
+                                        if (GrassrootsConfig.log_level >=
+                                            LOG_INFO) {
+                                          print(
+                                              'Response from server: $response');
+                                        }
+
+                                        String? statusText = response['results']?[0]['status_text'];
+                                        if ((statusText != null) &&
+                                            (statusText == 'Succeeded')) {
+                                          message =
+                                          "Updated accession to ${accession}";
+                                          success_flag = true;
+                                        } else {
+
+                                        }
+                                      } catch (e) {
+                                        print("failed to send request ${e}");
+                                        message = "Failed to complete request to update accession to ${accession}";
+                                      }
+                                    }
+
+                                    WidgetUtil.ShowSnackBar (context, message, success_flag);
+
 
                                   }
 
