@@ -20,9 +20,17 @@ class GrassrootsRequest {
   static const String _username = 'doc';
   static const String _password = '123_REPLACE_';
 
+
   static Future<Map<String, dynamic>> sendRequest(String requestString, String serverKey,) async {
-    // Determine the URL based on the serverKey provided
-    String? url = GlobalConfiguration().getValue (serverKey);
+    String? url = null;
+
+    if (serverKey == "public") {
+      url = GrassrootsConfig.GetPublicBackendURL ();
+    } else if (serverKey == "private") {
+      url = GrassrootsConfig.GetPrivateBackendURL ();
+    } else if (serverKey == "queen_bee") {
+      url = GrassrootsConfig.GetAdminBackendURL ();
+    }
 
     if (url == null) {
       throw Exception('Server key "$serverKey" does not correspond to a known server.');

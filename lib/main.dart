@@ -40,19 +40,7 @@ void main() async{
   /* Cache allowed study ids for offline use */
   await Hive.openBox <String> (CACHE_SERVER_ALLOWED_STUDIES);
 
-  await GlobalConfiguration ().loadFromAsset ("config");
-
-  /* Load any custom config if it exists */
-  try {
-    await GlobalConfiguration ().loadFromAsset ("custom_config.json");
-  } catch (e) {
-    if (GrassrootsConfig.log_level >= LOG_FINEST) {
-      print ("custom_config.json not found");
-    }
-  }
-
-
-
+  await GrassrootsConfig.LoadConfig ();
 
   try {
     runApp(const MyApp ());

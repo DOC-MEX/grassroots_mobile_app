@@ -1,7 +1,9 @@
 // global_variables.dart
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:global_configuration/global_configuration.dart';
 
 
 List<String> allowedStudyIDs = [
@@ -30,44 +32,81 @@ final int LOG_FINEST = 40;
 
 
 class GrassrootsConfig {
-  static Map <String, String>? _config;
 
   static int log_level = LOG_FINE;
 
-  static Future <Map <String, String>?> LoadConfig () async {
-    if (_config == null) {
-      final String config_path = "assets/config.json";
 
-      try {
-        final String config_data = await rootBundle.loadString (config_path);
-        _config = json.decode (config_data);
-    
-      } on Exception {
-        print ("Could not load ${config_path}");
+  static Future <void> LoadConfig () async {
+    await GlobalConfiguration ().loadFromAsset ("config");
+
+    /* Load any custom config if it exists */
+    try {
+      await GlobalConfiguration ().loadFromAsset ("custom_config");
+    } catch (e) {
+      if (GrassrootsConfig.log_level >= LOG_FINEST) {
+        print ("custom_config.json not found");
+      }
+    }
+  }
+
+
+  static String? GetPublicBackendURL () {
+    return _GetBackendURL ("public");
+  }
+
+  static String? GetPrivateBackendURL () {
+    return _GetBackendURL ("private");
+  }
+
+  static String? GetAdminBackendURL () {
+    return _GetBackendURL ("queen_bee");
+  }
+
+
+  static String? GetPhotoReceiverURL () {
+    return _GetBackendURL ("photo_receiver");
+  }
+
+  static String? GetHost () {
+    return GlobalConfiguration().getValue ("host");
+  }
+
+
+  static String? _GetBackendURL (String key) {
+    String? url = null;
+    String? host = GetHost ();
+
+    if (host != null) {
+      Map <String, dynamic> ? host_config = GlobalConfiguration ().getValue (host);
+
+      if (host_config != null) {
+        String? sub_url = host_config [key];
+
+        if (sub_url != null) {
+          if (host.endsWith ("/")) {
+            url = "${host}${sub_url}";
+          } else {
+            url = "${host}/${sub_url}";
+          }
+        }
       }
     }
 
-    return _config;
+    return url;
   }
 
 
-  static Future <String?> GetConfigValue (String key) async {
-    Map <String, dynamic>? config = await LoadConfig ();
+  static Map <String, dynamic> ? _GetHostConfig () {
+    Map <String, dynamic> ? host_config = null;
+    String? host = GetHost ();
 
-    if (config != null) {
-      return config [key];
-    } else {
-      return null;
+    if (host != null) {
+      host_config = GlobalConfiguration ().getValue (host);
     }
+
+    return host_config;
   }
 
-  static Future <String?> GetPublicBackendURL () {
-    return GetConfigValue ("public");
-  }
-
-  static Future <String?> GetPrivateBackendURL () {
-    return GetConfigValue ("private");
-  }
 
 
 }
