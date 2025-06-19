@@ -66,98 +66,101 @@ class ServerModel extends ChangeNotifier {
 
 
   Future <void> _FetchHealthStatus() async {
-    try {
-      final String base_url = ApiRequests.GetPhotoReceiverUrl();
+      Uri? uri = ApiRequests.GetPhotoReceiverEndpoint ("online_check/");
 
-      final response = await http.get(Uri.parse('${base_url}online_check/'));
+      if (uri != null) {
+        try {
+          final response = await http.get (uri);
 
-      if (GrassrootsConfig.log_level >= LOG_FINER) {
-        print("called ${base_url}online_check/ got ${response.statusCode}");
-      }
-
-      if (response.statusCode == 200) {
-        // Parse the JSON response and return it
-        final jsonResponse = json.decode(response.body);
-
-        if (GrassrootsConfig.log_level >= LOG_FINER) {
-          print("response: $jsonResponse");
-        }
-
-        String? s = jsonResponse ["django"];
-
-        if (GrassrootsConfig.log_level >= LOG_FINER) {
-          if (s != null) {
-            print("django: ${s}");
-          } else {
-            print("django NULL");
+          if (GrassrootsConfig.log_level >= LOG_FINER) {
+            print("called ${uri} got ${response.statusCode}");
           }
-        }
 
-        if (s != null) {
-          if (s == "running") {
-            _django_online = ServerStatus.SS_ONLINE;
+          if (response.statusCode == 200) {
+            // Parse the JSON response and return it
+            final jsonResponse = json.decode(response.body);
 
             if (GrassrootsConfig.log_level >= LOG_FINER) {
-              print("setting _django_online to SS_ONLINE");
+              print("response: $jsonResponse");
+            }
+
+            String? s = jsonResponse ["django"];
+
+            if (GrassrootsConfig.log_level >= LOG_FINER) {
+              if (s != null) {
+                print("django: ${s}");
+              } else {
+                print("django NULL");
+              }
+            }
+
+            if (s != null) {
+              if (s == "running") {
+                _django_online = ServerStatus.SS_ONLINE;
+
+                if (GrassrootsConfig.log_level >= LOG_FINER) {
+                  print("setting _django_online to SS_ONLINE");
+                }
+              } else {
+                _django_online = ServerStatus.SS_OFFLINE;
+
+                if (GrassrootsConfig.log_level >= LOG_FINER) {
+                  print("setting _django_online to SS_OFFLINE");
+                }
+              }
+            }
+
+            s = jsonResponse ["mongo"];
+
+            if (GrassrootsConfig.log_level >= LOG_FINER) {
+              if (s != null) {
+                print("mongo: ${s}");
+              } else {
+                print("mongo NULL");
+              }
+            }
+
+            if (s != null) {
+              if (s == "available") {
+                _mongo_online = ServerStatus.SS_ONLINE;
+
+                if (GrassrootsConfig.log_level >= LOG_FINER) {
+                  print("setting _django_online to SS_ONLINE");
+                }
+
+              } else {
+                _mongo_online = ServerStatus.SS_OFFLINE;
+
+                if (GrassrootsConfig.log_level >= LOG_FINER) {
+                  print("setting _django_online to SS_OFFLINE");
+                }
+
+              }
             }
           } else {
+            // Handle non-200 responses
+
             _django_online = ServerStatus.SS_OFFLINE;
-
-            if (GrassrootsConfig.log_level >= LOG_FINER) {
-              print("setting _django_online to SS_OFFLINE");
-            }
-          }
-        }
-
-        s = jsonResponse ["mongo"];
-
-        if (GrassrootsConfig.log_level >= LOG_FINER) {
-          if (s != null) {
-            print("mongo: ${s}");
-          } else {
-            print("mongo NULL");
-          }
-        }
-
-        if (s != null) {
-          if (s == "available") {
-            _mongo_online = ServerStatus.SS_ONLINE;
-
-            if (GrassrootsConfig.log_level >= LOG_FINER) {
-              print("setting _django_online to SS_ONLINE");
-            }
-
-          } else {
             _mongo_online = ServerStatus.SS_OFFLINE;
 
             if (GrassrootsConfig.log_level >= LOG_FINER) {
+              print("setting _mongo_online to SS_OFFLINE");
               print("setting _django_online to SS_OFFLINE");
             }
 
           }
+        } catch (e) {
+          latest_error = e.toString();
+          // Handle errors like network issues
+          _django_online = ServerStatus.SS_UNKNOWN;
+          _mongo_online = ServerStatus.SS_UNKNOWN;
+
+          if (GrassrootsConfig.log_level >= LOG_FINER) {
+            print("setting _mongo_online to SS_UNKNOWN");
+            print("setting _django_online to SS_UNKNOWN");
+          }
+
         }
-      } else {
-        // Handle non-200 responses
-
-        _django_online = ServerStatus.SS_OFFLINE;
-        _mongo_online = ServerStatus.SS_OFFLINE;
-
-        if (GrassrootsConfig.log_level >= LOG_FINER) {
-          print("setting _mongo_online to SS_OFFLINE");
-          print("setting _django_online to SS_OFFLINE");
-        }
-
-      }
-    } catch (e) {
-      latest_error = e.toString();
-      // Handle errors like network issues
-      _django_online = ServerStatus.SS_UNKNOWN;
-      _mongo_online = ServerStatus.SS_UNKNOWN;
-
-      if (GrassrootsConfig.log_level >= LOG_FINER) {
-        print("setting _mongo_online to SS_UNKNOWN");
-        print("setting _django_online to SS_UNKNOWN");
-      }
 
     }
   }
@@ -287,13 +290,19 @@ class ServerConnectionWidgetState extends State <ServerConnectionWidget> {
         print('_combined_state: $_combined_state');
         // Show snackbar if server is unhealthy
         if (!_combined_state) {
-          final String app_url = ApiRequests.GetPhotoReceiverUrl();
+          final String? app_url = GrassrootsConfig.GetPhotoReceiverURL ();
+          String error_message;
+
+          if (app_url != null) {
+            error_message = "Warning: There is a problem with the server connection to ${app_url}. Error ${ApiRequests.latest_error}";
+          } else {
+            error_message = "Error cannot connect to server ${ApiRequests.latest_error}";
+          }
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Warning: There is a problem with the server connection to ${app_url}. Error ${ApiRequests
-                    .latest_error}',
+                error_message,
                 style: TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.red,

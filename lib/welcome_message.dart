@@ -4,7 +4,7 @@ import 'package:flutter/gestures.dart';
 
 class WelcomeMessageWidget extends StatelessWidget {
   //final String _websiteUrl = "https://grassroots.tools";
-  final Uri _websiteUrl = Uri.parse('https://grassroots.tools/documentation/mobile_app/');
+  final Uri _websiteUrl = Uri.parse('https://grassroots.tools/docs/user/mobile_app/');
 
   @override
   Widget build(BuildContext context) {

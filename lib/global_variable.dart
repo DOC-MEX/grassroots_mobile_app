@@ -33,20 +33,29 @@ final int LOG_FINEST = 40;
 
 class GrassrootsConfig {
 
-  static int log_level = LOG_FINE;
+  static int log_level = LOG_FINER;
 
 
   static Future <void> LoadConfig () async {
-    await GlobalConfiguration ().loadFromAsset ("config");
 
     /* Load any custom config if it exists */
     try {
+      await GlobalConfiguration ().loadFromAsset ("config");
       await GlobalConfiguration ().loadFromAsset ("custom_config");
     } catch (e) {
       if (GrassrootsConfig.log_level >= LOG_FINEST) {
         print ("custom_config.json not found");
       }
     }
+  }
+
+
+  static void PrintConfig () {
+    print ("GetHost () ${GetHost ()}");
+    print ("GetPublicBackendURL () ${GetPublicBackendURL ()}");
+    print ("GetPrivateBackendURL () ${GetPrivateBackendURL ()}");
+    print ("GetAdminBackendURL () ${GetAdminBackendURL ()}");
+    print ("GetPhotoReceiverURL () ${GetPhotoReceiverURL ()}");
   }
 
 

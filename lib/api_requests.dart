@@ -12,18 +12,20 @@ class ApiRequests {
   static String latest_error = "";
 
 
-  static Uri? _GetPhotoReceiverEndpoint (final String url) {
+  static Uri? GetPhotoReceiverEndpoint (final String url) {
     Uri? uri = null;
     final String? base_url = GrassrootsConfig.GetPhotoReceiverURL ();
+    String s;
 
     if (base_url != null) {
-      var uri;
-
       if (base_url.endsWith ("/")) {
-        uri = Uri.parse ('${base_url}${url}');
+        s = "${base_url}${url}";
       } else {
-        uri = Uri.parse ('${base_url}/${url}');
+        s = "${base_url}/${url}";
       }
+
+      uri = Uri.parse (s);
+
     }
 
     return uri;
@@ -33,7 +35,7 @@ class ApiRequests {
     bool success_flag = false;
 
     try {
-      Uri? uri = _GetPhotoReceiverEndpoint ("upload/");
+      Uri? uri = GetPhotoReceiverEndpoint ("upload/");
 
       if (uri != null) {
         // Include the current date in the file name
@@ -62,94 +64,96 @@ class ApiRequests {
   }
 
   static Future<Map<String, dynamic>> retrievePhoto(String studyID, int plotNumber) async {
+    Map<String, dynamic> res = {'status': 'not_found'};
+
     try {
       String subfolder = studyID;
       String photoName = 'photo_plot_${plotNumber.toString()}.jpg';
-      final String base_url = GrassrootsConfig.GetPhotoReceiverURL();
-
-      var apiUrl = Uri.parse('${base_url}retrieve_photo/$subfolder/$photoName');
-
-      Uri? uri = _GetPhotoReceiverEndpoint ("retrieve_photo/$subfolder/$photoName");
+      Uri? uri = GetPhotoReceiverEndpoint ("retrieve_photo/$subfolder/$photoName");
 
       if (uri != null) {
+        var response = await http.get(uri);
 
-
-      var response = await http.get(apiUrl);
-
-      if (response.statusCode == 200) {
-        return {'status': 'success', 'data': response.bodyBytes};
-      } else {
-        return {'status': 'not_found'};
+        if (response.statusCode == 200) {
+          res = {'status': 'success', 'data': response.bodyBytes};
+        } else {
+        }
       }
     } catch (e) {
       print('Error: $e');
-      return {'status': 'error', 'message': 'Error: $e'};
+      res = {'status': 'error', 'message': 'Error: $e'};
     }
+
+    return res;
   }
 
   static Future<Map<String, dynamic>> retrieveLastestPhoto(String studyID, int plotNumber) async {
+    Map <String, dynamic> res = {'status': 'not_found'};
+
     try {
       // Updated API URL to match the new endpoint
       //print path used for the API
-      final String base_url = GrassrootsConfig.GetPhotoReceiverURL ();
+      Uri? uri = GetPhotoReceiverEndpoint ("retrieve_latest_photo/$studyID/$plotNumber/");
 
-      print('${base_url}retrieve_latest_photo/$studyID/$plotNumber/');
+      if (uri != null) {
+        var response = await http.get (uri);
 
-      var apiUrl = Uri.parse('${base_url}retrieve_latest_photo/$studyID/$plotNumber/');
-      var response = await http.get(apiUrl);
+        if (response.statusCode == 200) {
+          // Parse the JSON response
+          var jsonResponse = json.decode(response.body);
 
-      if (response.statusCode == 200) {
-        // Parse the JSON response
-        var jsonResponse = json.decode(response.body);
-
-        // Check if the status is success and extract URL
-        if (jsonResponse['status'] == 'success') {
-          return {
-            'status': 'success',
-            'url': jsonResponse['url'], // Extract and return the URL instead of bytes
-          };
+          // Check if the status is success and extract URL
+          if (jsonResponse['status'] == 'success') {
+            res = {
+              'status': 'success',
+              'url': jsonResponse['url'], // Extract and return the URL instead of bytes
+            };
+          }
         } else {
-          return {'status': 'not_found'};
         }
-      } else {
-        // Handle not found or other errors
-        return {'status': 'not_found'};
+
+
       }
-    } catch (e) {
+
+   } catch (e) {
       print('Error: $e');
-      return {'status': 'error', 'message': 'Error: $e'};
+      res = {'status': 'error', 'message': 'Error: $e'};
     }
+
+    return res;
   }
 
   static Future<Map<String, Map<String, int?>>?> retrieveLimits(String studyID) async {
     try {
       String subfolder = studyID;
-      final String base_url = GetPhotoReceiverUrl ();
+      Uri? uri = GetPhotoReceiverEndpoint ("retrieve_limits/$subfolder/");
 
-      var apiUrl = Uri.parse('${base_url}retrieve_limits/$subfolder/');
-      var response = await http.get(apiUrl);
+      if (uri != null) {
+        var response = await http.get(uri);
 
-      if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
-        print('JSON Response: $jsonResponse');
+        if (response.statusCode == 200) {
+          var jsonResponse = jsonDecode(response.body);
+          print('JSON Response: $jsonResponse');
 
-        // Initialize a result map
-        Map<String, Map<String, int?>> limits = {};
+          // Initialize a result map
+          Map<String, Map<String, int?>> limits = {};
 
-        // Iterate over the keys in the JSON response and store limits dynamically
-        jsonResponse.forEach((traitKey, traitLimits) {
-          if (traitLimits['min'] != null && traitLimits['max'] != null) {
-            limits[traitKey] = {
-              'min': traitLimits['min'],
-              'max': traitLimits['max'],
-            };
-            print('-----Trait: $traitKey, Min: ${traitLimits['min']}, Max: ${traitLimits['max']}');
-          }
-        });
+          // Iterate over the keys in the JSON response and store limits dynamically
+          jsonResponse.forEach((traitKey, traitLimits) {
+            if (traitLimits['min'] != null && traitLimits['max'] != null) {
+              limits[traitKey] = {
+                'min': traitLimits['min'],
+                'max': traitLimits['max'],
+              };
+              print(
+                  '-----Trait: $traitKey, Min: ${traitLimits['min']}, Max: ${traitLimits['max']}');
+            }
+          });
 
-        return limits;
-      } else {
-        print('Failed to retrieve limits.json: ${response.statusCode}');
+          return limits;
+        } else {
+          print('Failed to retrieve limits.json: ${response.statusCode}');
+        }
       }
     } catch (e) {
       print('Error retrieving limits.json: $e');
@@ -159,90 +163,103 @@ class ApiRequests {
   }
 
   static Future<bool> updateLimits(String studyID, int newMin, int newMax, String traitKey) async {
+    bool success_flag = false;
     String subfolder = studyID;
-    final String base_url = GetPhotoReceiverUrl ();
+    Uri? uri = GetPhotoReceiverEndpoint ("update_limits/$subfolder/");
 
-    var url = Uri.parse('${base_url}update_limits/$subfolder/');
+    if (uri != null) {
+      try {
+        final response = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            traitKey: {'min': newMin, 'max': newMax}
+          }),
+        );
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          traitKey: {'min': newMin, 'max': newMax}
-        }),
-      );
+        // Log the status code and response body for debugging
+        print('Status Code: ${response.statusCode}');
+        print('Response Body: ${response.body}');
 
-      // Log the status code and response body for debugging
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-
-      return response.statusCode == 200;
-    } catch (e) {
-      print('Error updating limits: $e');
-      return false;
+        success_flag = response.statusCode == 200;
+      } catch (e) {
+        print('Error updating limits: $e');
+      }
     }
+
+    return success_flag;
   }
 
   static Future<List<String>?> fetchAllowedStudyIDs() async {
-    final String base_url = GetPhotoReceiverUrl ();
+    List <String> ? ids = null;
+    Uri? uri = GetPhotoReceiverEndpoint ("allowed_studies/");
 
-    String allowedStudyIDsUrl = '${base_url}allowed_studies/';
+    if (uri != null) {
 
-    try {
-      final response = await http.get(Uri.parse(allowedStudyIDsUrl));
+      try {
+        final response = await http.get (uri);
 
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
+        if (response.statusCode == 200) {
+          final jsonResponse = json.decode(response.body);
 
-        List <String> allowed_studies = List<String>.from(jsonResponse['allowed_studies']);
+          List <String> allowed_studies = List<String>.from(jsonResponse['allowed_studies']);
 
-        //IdsCache.cacheIds (allowed_studies);
+          //IdsCache.cacheIds (allowed_studies);
 
-        return allowed_studies;
+          ids = allowed_studies;
 
-      } else {
-        print('Error fetching allowed study IDs: ${response.statusCode}');
-        return null;
+        } else {
+          print('Error fetching allowed study IDs: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('Error fetching allowed study IDs: $e');
       }
-    } catch (e) {
-      print('Error fetching allowed study IDs: $e');
-      return null;
     }
+
+    return ids;
   }
 
-static Future<Map<String, String>> fetchHealthStatus() async {
-    try {
-      final String base_url = GetPhotoReceiverUrl ();
+  static Future<Map<String, String>> fetchHealthStatus() async {
+    Map <String, String> res =  {
+      'django': 'error',
+      'mongo': 'error',
+    };
 
-      final response = await http.get(Uri.parse('${base_url}online_check/'));
+    Uri? uri = GetPhotoReceiverEndpoint ("online_check/");
 
-      if (GrassrootsConfig.log_level >= LOG_INFO) {
-        print ("called ${base_url}online_check/ got ${response.statusCode}");
+    if (uri != null) {
+      try {
+
+        final response = await http.get (uri);
+
+        if (GrassrootsConfig.log_level >= LOG_INFO) {
+          print ("called ${uri} got ${response.statusCode}");
+        }
+
+        if (response.statusCode == 200) {
+          // Parse the JSON response and return it
+          final jsonResponse = json.decode(response.body);
+
+          res = {
+            'django': jsonResponse['django'] ?? 'unknown',
+            'mongo': jsonResponse['mongo'] ?? 'unknown',
+          };
+
+        } else {
+          // Handle non-200 responses
+          res = {
+            'django': 'unreachable',
+            'mongo': 'unknown',
+          };
+        }
+      } catch (e) {
+        latest_error = e.toString();
+        // Handle errors like network issues
       }
 
-      if (response.statusCode == 200) {
-        // Parse the JSON response and return it
-        final jsonResponse = json.decode(response.body);
-        return {
-          'django': jsonResponse['django'] ?? 'unknown',
-          'mongo': jsonResponse['mongo'] ?? 'unknown',
-        };
-      } else {
-        // Handle non-200 responses
-        return {
-          'django': 'unreachable',
-          'mongo': 'unknown',
-        };
-      }
-    } catch (e) {
-      latest_error = e.toString();
-      // Handle errors like network issues
-      return {
-        'django': 'error',
-        'mongo': 'error',
-      };
     }
+
+    return res;
   }
 
 

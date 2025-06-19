@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:grassroots_field_trials/global_variable.dart';
@@ -89,18 +90,26 @@ class _HomePageState extends State<HomePage> {
       print('Django: $hps_djangoStatus, Mongo: $hps_mongoStatus');
       // Show snackbar if server is unhealthy
       if (hps_djangoStatus != 'running' || hps_mongoStatus != 'available') {
-        final String app_url = ApiRequests.GetPhotoReceiverUrl();
+        final String? app_url = GrassrootsConfig.GetPhotoReceiverURL ();
+        String error_message = "Error: No Grassroots Server has been specified";
+
+        if (app_url != null) {
+          error_message = "Warning: There is a problem with the server connection to ${app_url}. Error ${ApiRequests.latest_error}";
+        } else {
+
+        }
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Warning: There is a problem with the server connection to ${app_url}. Error ${ApiRequests.latest_error}',
+              error_message,
               style: TextStyle(color: Colors.white),
             ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 5),
-          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 5),
+          )
         );
+
       }
     } catch (e) {
       print ('>>>>> e: $e');
@@ -128,7 +137,9 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     bool isServerHealthy = _GetServerHealth (false);
-    final String app_url =  ApiRequests.GetPhotoReceiverUrl();
+    //final String? app_url = GrassrootsConfig.GetPhotoReceiverURL ();
+
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -223,12 +234,15 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
 
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        SystemNavigator.pop();
-                                      },
-                                      child: Text('Exit'),
-                                    ),
+                                   // if (Platform.isAndroid) {
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          SystemNavigator.pop();
+                                        },
+                                        child: Text('Exit'),
+                                      ),
+
+                                   // }
 
                                     /*
                                 ElevatedButton(

@@ -1,5 +1,6 @@
 //name: NewObservationPage  (new_observation.dart)
 import 'package:flutter/material.dart';
+import 'package:grassroots_field_trials/speech_text_box.dart';
 import 'package:grassroots_field_trials/widget_util.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
@@ -965,7 +966,8 @@ void _clearForm() {
                 //////////// Date Picker  //////////////
                 SizedBox(height: 20),
                 ///// Note field /////
-                TextFormField(
+                //TextFormField(
+                SpeechToTextWidget(
                   controller: _notesEditingController,
                   decoration: InputDecoration(
                     labelText: 'Notes (Optional)',
@@ -980,6 +982,7 @@ void _clearForm() {
                   style: TextStyle (color: Theme.of(context).primaryColor),
 
                   //maxLines: 1, // Allow multiline input
+                  /*
                   validator: (value) {
                     // Optional: Add validation logic if needed
                     if (value!.length > 500) {
@@ -987,6 +990,7 @@ void _clearForm() {
                     }
                     return null; // No validation error
                   },
+                  */
                 ),
                 //////
                 SizedBox(height: 20),

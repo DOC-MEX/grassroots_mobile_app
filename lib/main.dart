@@ -42,6 +42,10 @@ void main() async{
 
   await GrassrootsConfig.LoadConfig ();
 
+  if (GrassrootsConfig.log_level >= LOG_FINER) {
+    GrassrootsConfig.PrintConfig ();
+  }
+
   try {
     runApp(const MyApp ());
   } catch (e) {
