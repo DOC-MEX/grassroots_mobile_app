@@ -190,7 +190,7 @@ class backendRequests {
   //  ];
 
     // Check if the studyID is in the list of allowed IDs
-    if (!allowedStudyIDs.contains(studyId)) {
+    if (!GrassrootsConfig.IsStudyEditable (studyId)) {
       // If not allowed, handle accordingly. For example:
       print('Modification not allowed for this study.');
       return '{}'; // Return a dummy JSON string or handle as needed
@@ -281,7 +281,7 @@ class backendRequests {
     String req = "{}";
 
     // Check if the studyID is in the list of allowed IDs
-    if (allowedStudyIDs.contains(studyId)) {
+    if (GrassrootsConfig.IsStudyEditable (studyId)) {
       if (accession.isNotEmpty) {
         if (GrassrootsConfig.log_level >= LOG_FINE) {
           print ("studyId ${studyId}");

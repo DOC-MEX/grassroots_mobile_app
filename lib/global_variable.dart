@@ -116,6 +116,10 @@ class GrassrootsConfig {
     return host_config;
   }
 
+  static bool IsStudyEditable (String study_id) {
+    /* bool editable_flag = true; */
+    bool editable_flag = allowedStudyIDs.contains (study_id);
 
-
+    return editable_flag;
+  }
 }

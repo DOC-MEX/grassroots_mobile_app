@@ -493,7 +493,7 @@ List <StringEntry> GetStudiesAsList () {
 
     if (id != null) {
       StringLabel sl = StringLabel (study['name'] ?? 'Unknown Study', id);
-      Icon icon = allowedStudyIDs.contains (id)
+      Icon icon = GrassrootsConfig.IsStudyEditable (id)
           ? Icon (
             Icons.edit,
             color: Theme.of(context).primaryColor,
